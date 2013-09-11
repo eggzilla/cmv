@@ -15,6 +15,6 @@ build-type:          Simple
 cabal-version:       >=1.8
 
 executable cmcv
-  -- main-is:             
+  main-is:	       src/Bio/CmcVisualization.hs     
   -- other-modules:       
-  build-depends:       base ==4.5.*
+  build-depends:       base ==4.5.*, cmdargs, BiobaseInfernal, BiobaseXNA, diagrams-svg, diagrams-lib
