@@ -17,4 +17,4 @@ cabal-version:       >=1.8
 executable cmcv
   main-is:	       src/Bio/CmcVisualization.hs     
   -- other-modules:       
-  build-depends:       base ==4.5.*, cmdargs, BiobaseInfernal, BiobaseXNA, diagrams-svg, diagrams-lib
+  build-depends:       base ==4.5.*, cmdargs, BiobaseInfernal, BiobaseXNA, diagrams-svg, diagrams-lib, parsec
