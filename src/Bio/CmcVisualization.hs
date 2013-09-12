@@ -7,6 +7,7 @@
 --   Visualization is accomplished with diagrams-svg
 --   For more information on Infernal consult <http://meme.nbcr.net/meme/>
 
+
 module Main where
 
 import Diagrams.Prelude
@@ -14,19 +15,19 @@ import Diagrams.Backend.SVG
 import Control.Monad
     
 import Biobase.Primary
-import Biobase.SElab.CM
+import qualified Biobase.SElab.CM as CM
 import Biobase.SElab.CM.Import
 
 import System.Console.CmdArgs
-import System.Environment (getArgs)
 import Text.Printf
 
 data Options = Options            
   { cmcompareResultFile :: CmcompareResultFile,
-    models :: [String]
+    modelsFile :: ModelsFile
   } deriving (Show,Data,Typeable)
 
-type  CmcompareResultFile = String
+type CmcompareResultFile = String
+type ModelsFile = String
              
 data CmcompareResult = CmcompareResult           
   { model1Name :: String,
@@ -42,20 +43,16 @@ data CmcompareResult = CmcompareResult
 
              
 options = Options
-  { cmcompareResultFile = def &= help "CMCompare Result string",
-    models = def &= args -- &= help "path to exactly two covariance models"
-  } &= summary "CMCV devel version" &= help "2013, egg" &= verbosity
+  { cmcompareResultFile = def &= name "r" &= help "Path to CMCompare result file",
+    modelsFile = def &= name "m" &= help "Path to covariance model file"
+  } &= summary "CMCV devel version" &= help "egg 2013" &= verbosity
 
 
 main = do
   Options{..} <- cmdArgs options
-  unless (length models == 2) $ do
-    fail "give exactly two CMs"
-  let [a,b] = models
-  let c = cmcompareResultFile
-  [theA] <- fromFile a
-  [theB] <- fromFile b
-  cmcresult <- fromFile c         
-  print [theA]
-  print [theB]
+  let a = modelsFile
+  let b = cmcompareResultFile
+  models <- fromFile a
+  cmcresult <- fromFile b
+  print models
   print cmcresult     
