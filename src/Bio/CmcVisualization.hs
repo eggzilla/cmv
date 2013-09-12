@@ -40,10 +40,11 @@ data CmcompareResult = CmcompareResult
     linksequence  :: String,
     model1structure :: String,
     model2structure :: String,
-    model1matchednodes :: String,
-    model2matchednodes :: String
+    model1matchednodes :: MatchedNodes,
+    model2matchednodes :: MatchedNodes
   } deriving (Show,Data,Typeable)
 
+type MatchedNodes = [Int]
              
 options = Options
   { cmcompareResultFile = def &= name "r" &= help "Path to CMCompare result file",
@@ -52,6 +53,9 @@ options = Options
 
 readDouble :: String -> Double
 readDouble = read              
+
+readInt :: String -> Int
+readInt = read
 
 parseFloat :: GenParser Char st Double
 parseFloat = do sign <- option 1 (do s <- oneOf "+-"
@@ -74,10 +78,19 @@ parseCmcompareResult = do
     many1 space
     structure2 <- many1 (oneOf "(,.)")
     many1 space
-    nodes1 <- many1 (noneOf " ")
+    char '['
+    nodes1 <- many1 parseMatchedNodes
+    char ']'
     many1 space
-    nodes2 <- many1 (noneOf " ")
+    char '['
+    nodes2 <- many1 parseMatchedNodes
+    char ']'
     return $ CmcompareResult name1 name2 (readDouble score1) (readDouble score2) linkseq structure1 structure2 nodes1 nodes2
+
+parseMatchedNodes = do
+    nodeNumber <- many1 digit
+    optional (char ',')
+    return $ (readInt nodeNumber)
 
 getCmcompareResults filePath = let
         fp = filePath
