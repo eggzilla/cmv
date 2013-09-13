@@ -7,23 +7,22 @@
 --   Visualization is accomplished with diagrams-svg
 --   For more information on Infernal consult <http://meme.nbcr.net/meme/>
 
-
 module Main where
 
-import qualified Diagrams.Prelude as Diag
+import CmcompareResult    
+import Diagrams.Prelude
+import Diagrams.TwoD
 import Diagrams.Backend.SVG
 import Control.Monad
     
 import Biobase.Primary
 import qualified Biobase.SElab.CM as CM
-import Biobase.SElab.CM.Import
-import Text.ParserCombinators.Parsec
-import Text.ParserCombinators.Parsec.Token
-import Text.ParserCombinators.Parsec.Language (emptyDef)    
+import Biobase.SElab.CM.Import 
     
 import System.Console.CmdArgs
 import Text.Printf
 
+    
 data Options = Options            
   { cmcompareResultFile :: CmcompareResultFile,
     modelsFile :: ModelsFile
@@ -31,77 +30,16 @@ data Options = Options
 
 type CmcompareResultFile = String
 type ModelsFile = String
-             
-data CmcompareResult = CmcompareResult           
-  { model1Name :: String,
-    model2Name :: String,
-    linkscore1 :: Double,
-    linkscore2 :: Double,
-    linksequence  :: String,
-    model1structure :: String,
-    model2structure :: String,
-    model1matchednodes :: MatchedNodes,
-    model2matchednodes :: MatchedNodes
-  } deriving (Show,Data,Typeable)
-
-type MatchedNodes = [Int]
-             
+                         
 options = Options
   { cmcompareResultFile = def &= name "r" &= help "Path to CMCompare result file",
     modelsFile = def &= name "m" &= help "Path to covariance model file"
   } &= summary "CMCV devel version" &= help "Florian Eggenhofer - 2013" &= verbosity
 
-readDouble :: String -> Double
-readDouble = read              
-
-readInt :: String -> Int
-readInt = read
-
-parseFloat :: GenParser Char st Double
-parseFloat = do sign <- option 1 (do s <- oneOf "+-"
-                                     return $ if s == '-' then-1.0 else 1.0)
-                x  <- float $ makeTokenParser emptyDef
-                return $ sign * x
              
-parseCmcompareResult = do
-    name1 <-  many1 (noneOf " ")
-    many1 space
-    name2 <-  many1 (noneOf " ")
-    many1 space
-    score1 <- many1 (noneOf " ")
-    many1 space
-    score2 <- many1 (noneOf " ")
-    many1 space
-    linkseq <- many1 (oneOf "AGTCUagtcu")
-    many1 space
-    structure1 <- many1 (oneOf "(,.)")
-    many1 space
-    structure2 <- many1 (oneOf "(,.)")
-    many1 space
-    char '['
-    nodes1 <- many1 parseMatchedNodes
-    char ']'
-    many1 space
-    char '['
-    nodes2 <- many1 parseMatchedNodes
-    char ']'
-    return $ CmcompareResult name1 name2 (readDouble score1) (readDouble score2) linkseq structure1 structure2 nodes1 nodes2
 
-parseMatchedNodes = do
-    nodeNumber <- many1 digit
-    optional (char ',')
-    return $ (readInt nodeNumber)
-
-getCmcompareResults filePath = let
-        fp = filePath
-        doParseLine' = parse parseCmcompareResult "parseCMCompareResults"
-        doParseLine l = case (doParseLine' l) of
-            Right x -> x
-            Left _ -> error "Failed to parse line"
-    in do
-        fileContent <- liftM lines $ readFile fp
-        return $ map doParseLine' fileContent
-           
+example = circle 0.5 <> unitCircle
+               
 main = do
   Options{..} <- cmdArgs options
   let a = modelsFile
