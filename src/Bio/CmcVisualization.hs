@@ -9,20 +9,15 @@
 
 module Main where
 
-import CmcompareResult    
-import Diagrams.Prelude
-import Diagrams.TwoD
-import Diagrams.Backend.SVG
-import Control.Monad
-    
+import CmcompareResult
+import CmDraw
+import Control.Monad    
 import Biobase.Primary
 import qualified Biobase.SElab.CM as CM
-import Biobase.SElab.CM.Import 
-    
+import Biobase.SElab.CM.Import     
 import System.Console.CmdArgs
 import Text.Printf
-
-    
+ 
 data Options = Options            
   { cmcompareResultFile :: CmcompareResultFile,
     modelsFile :: ModelsFile
@@ -37,7 +32,6 @@ options = Options
   } &= summary "CMCV devel version" &= help "Florian Eggenhofer - 2013" &= verbosity
 
 
-example = circle 1
                
 main = do
   Options{..} <- cmdArgs options
@@ -47,12 +41,10 @@ main = do
   print a
   print b
   cmResultParsed <- getCmcompareResults b
-  --print models
-  --Diagram SVG R2 = QDiagram SVG R2 Any                  
-  --renderDia SVG (SVGOptions (Width 250)) example
-  let width = Just 100
-  let length = Just 100         
-  let testdiagramsize = mkSizeSpec width length                   
-  renderSVG "./testdiagram" testdiagramsize example   
+  --let width = Just 100
+  --let length = Just 100         
+  --let testdiagramsize = mkSizeSpec width length                   
+  --renderSVG "./testdiagram" testdiagramsize example
+  printSVG                      
   print cmResultParsed
   
