@@ -36,9 +36,8 @@ options = Options
     modelsFile = def &= name "m" &= help "Path to covariance model file"
   } &= summary "CMCV devel version" &= help "Florian Eggenhofer - 2013" &= verbosity
 
-             
 
-example = circle 0.5 <> unitCircle
+example = circle 1
                
 main = do
   Options{..} <- cmdArgs options
@@ -49,4 +48,11 @@ main = do
   print b
   cmResultParsed <- getCmcompareResults b
   --print models
-  print cmResultParsed  
+  --Diagram SVG R2 = QDiagram SVG R2 Any                  
+  --renderDia SVG (SVGOptions (Width 250)) example
+  let width = Just 100
+  let length = Just 100         
+  let testdiagramsize = mkSizeSpec width length                   
+  renderSVG "./testdiagram" testdiagramsize example   
+  print cmResultParsed
+  
