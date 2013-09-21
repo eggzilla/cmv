@@ -1,6 +1,9 @@
 module CmDraw
     (
-     printSVG
+     drawCMGuideTree,
+     text',
+     svgsize,
+     printSVG,
     ) where
   
 import Diagrams.Prelude
@@ -10,10 +13,15 @@ import Data.Colour.SRGB
 import Graphics.SVGFonts.ReadFont
 
 -- | Draw the guide Tree of a single CM, utilizes drawCMGuideNode
---drawCMGuideTree :: CM -> 
+--drawCMGuideTree  ->
+drawCMGuideTree nodes = hcat (drawCMGuideNodes nodes)
+
+--drawCMGuideNodes :: [(String,String)] ->  [Diagram b0 R2]               
+drawCMGuideNodes nodes = map drawCMGuideNode nodes
+                                       
 
 -- | Draws the guide tree nodes of a CM
-drawCMGuideNode label number =  text' label # translate (r2 (0,20)) <> text' number # translate (r2 (0,-20)) <> rect 100 100 # lw 1 # fc (labelToColor label)
+drawCMGuideNode (number,label) =  text' label # translate (r2 (0,20)) <> text' number # translate (r2 (0,-20)) <> rect 100 100 # lw 1 # fc (labelToColor label)
 text' t = stroke (textSVG t 40) # fc black # fillRule EvenOdd
 
 --labelToColor :: String -> Color
@@ -32,5 +40,4 @@ labelToColor _ = sRGB24 245 245 245
 svgwidth = Just 100
 svglength = Just 100            
 svgsize = mkSizeSpec svgwidth svglength
-testdrawing = drawCMGuideNode "ROOT" "1" ||| drawCMGuideNode "BIF" "2"||| drawCMGuideNode "BEGL" "3"||| drawCMGuideNode "END" "4"  
-printSVG = renderSVG "./testdiagram.svg" svgsize testdrawing
+printSVG = renderSVG "./testdiagram.svg" svgsize --testdrawing

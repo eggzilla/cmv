@@ -14,6 +14,7 @@ import CmDraw
 import Control.Monad    
 import Biobase.Primary
 import qualified Biobase.SElab.CM as CM
+import qualified Data.Map as Map
 import Biobase.SElab.CM.Import     
 import System.Console.CmdArgs
 import Text.Printf
@@ -30,21 +31,16 @@ options = Options
   { cmcompareResultFile = def &= name "r" &= help "Path to CMCompare result file",
     modelsFile = def &= name "m" &= help "Path to covariance model file"
   } &= summary "CMCV devel version" &= help "Florian Eggenhofer - 2013" &= verbosity
-               
+
+processCMGuideTree cm = map getNodeInfo (Map.assocs (CM._nodes (head cm)))
+getNodeInfo (nodeid, (nodetype, _ )) = (show (CM.unNodeID nodeid) , (show nodetype))
+
 main = do
   Options{..} <- cmdArgs options
   let a = modelsFile
   let b = cmcompareResultFile
   models <- fromFile a
-  --print a
-  --print b
-  cmResultParsed <- getCmcompareResults b
+  cmResultParsed <- getCmcompareResults b              
+  printSVG (drawCMGuideTree (processCMGuideTree models))
 
-  
-  --let width = Just 100
-  --let length = Just 100         
-  --let testdiagramsize = mkSizeSpec width length                   
-  --renderSVG "./testdiagram" testdiagramsize example
-  printSVG                      
-  print cmResultParsed
   
