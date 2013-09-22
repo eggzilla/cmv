@@ -32,8 +32,12 @@ options = Options
     modelsFile = def &= name "m" &= help "Path to covariance model file"
   } &= summary "CMCV devel version" &= help "Florian Eggenhofer - 2013" &= verbosity
 
-processCMGuideTree cm = map getNodeInfo (Map.assocs (CM._nodes (head cm)))
+processCMs :: [CM.CM] -> [[(String,String)]]
+processCMs cms = map processCMGuideTree cms
+processCMGuideTree :: CM.CM -> [(String,String)]
+processCMGuideTree cm = map getNodeInfo (Map.assocs (CM._nodes cm))
 getNodeInfo (nodeid, (nodetype, _ )) = (show (CM.unNodeID nodeid) , (show nodetype))
+
 
 main = do
   Options{..} <- cmdArgs options
@@ -41,6 +45,6 @@ main = do
   let b = cmcompareResultFile
   models <- fromFile a
   cmResultParsed <- getCmcompareResults b              
-  printSVG (drawCMGuideTree (processCMGuideTree models))
+  printSVG (drawCMGuideForest (processCMs models))
 
   

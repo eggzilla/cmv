@@ -1,5 +1,7 @@
 module CmDraw
     (
+     drawCMGuideForest,
+     drawCMGuideTrees,
      drawCMGuideTree,
      text',
      svgsize,
@@ -11,6 +13,13 @@ import Diagrams.TwoD
 import Diagrams.Backend.SVG
 import Data.Colour.SRGB
 import Graphics.SVGFonts.ReadFont
+
+drawCMGuideForest cms = vcat (drawCMGuideTrees cms)
+
+-- | Draw the guide Tree of a single CM, utilizes drawCMGuideNode
+--drawCMGuideTree  ->
+drawCMGuideTrees cms  = map drawCMGuideTree cms
+
 
 -- | Draw the guide Tree of a single CM, utilizes drawCMGuideNode
 --drawCMGuideTree  ->
