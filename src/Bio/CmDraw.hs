@@ -14,11 +14,12 @@ import Diagrams.Backend.SVG
 import Data.Colour.SRGB
 import Graphics.SVGFonts.ReadFont
 
-drawCMGuideForest cms = vcat (drawCMGuideTrees cms)
+drawCMGuideForest cms = vcat' with { sep = 100 } (drawCMGuideTrees cms)
 
 -- | Draw the guide Tree of a single CM, utilizes drawCMGuideNode
 --drawCMGuideTree  ->
 drawCMGuideTrees cms  = map drawCMGuideTree cms
+
 
 
 -- | Draw the guide Tree of a single CM, utilizes drawCMGuideNode
