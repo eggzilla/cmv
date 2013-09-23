@@ -1,6 +1,6 @@
 -- | Parse CMCompare output
 --   parsing is done with parsec
---   For more information on CMCompare consult: <>
+--   For more information on CMCompare consult: <http://www.tbi.univie.ac.at/software/cmcompare/>
 
 module CmcompareResult
     (
@@ -11,7 +11,8 @@ import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Token
 import Text.ParserCombinators.Parsec.Language (emptyDef)    
 import Control.Monad
-    
+
+-- | Datastructure for result strings of comparisons between covariance models by CMCompare
 data CmcompareResult = CmcompareResult           
   { model1Name :: String,
     model2Name :: String,
@@ -24,6 +25,7 @@ data CmcompareResult = CmcompareResult
     model2matchednodes :: MatchedNodes
   } deriving (Show)
 
+-- | Type alias for matched nodes
 type MatchedNodes = [Int]
 
 readDouble :: String -> Double
@@ -32,12 +34,15 @@ readDouble = read
 readInt :: String -> Int
 readInt = read
 
+-- | Parse a floating point number.
 parseFloat :: GenParser Char st Double
 parseFloat = do sign <- option 1 (do s <- oneOf "+-"
                                      return $ if s == '-' then-1.0 else 1.0)
                 x  <- float $ makeTokenParser emptyDef
                 return $ sign * x
-             
+
+-- | Parse a CMcompare result string
+parseCmcompareResult :: GenParser Char st CmcompareResult
 parseCmcompareResult = do
     name1 <-  many1 (noneOf " ")
     many1 space
@@ -62,11 +67,14 @@ parseCmcompareResult = do
     char ']'
     return $ CmcompareResult name1 name2 (readDouble score1) (readDouble score2) linkseq structure1 structure2 nodes1 nodes2
 
+-- | Parse indices of matched nodes between models as integers
+parseMatchedNodes :: GenParser Char st Int 
 parseMatchedNodes = do
     nodeNumber <- many1 digit
     optional (char ',')
     return $ (readInt nodeNumber)
 
+-- | Parser for CMCompare result strings
 getCmcompareResults filePath = let
         fp = filePath
         doParseLine' = parse parseCmcompareResult "parseCMCompareResults"

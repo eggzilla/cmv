@@ -1,3 +1,6 @@
+-- | Drawing of covariance model (http://www.tbi.univie.ac.at/software/cmcompare/) guide trees and highlighting comparison results
+-- Drawing is done with the diagrams package
+
 module CmDraw
     (
      drawCMGuideForest,
@@ -14,27 +17,31 @@ import Diagrams.Backend.SVG
 import Data.Colour.SRGB
 import Graphics.SVGFonts.ReadFont
 
+-- | Draw one or more CM guide trees and concatenate them vertically
 drawCMGuideForest cms = vcat' with { sep = 100 } (drawCMGuideTrees cms)
 
--- | Draw the guide Tree of a single CM, utilizes drawCMGuideNode
+-- | Draw the Guide Trees of multiple CMs, utilizes drawCMGuideNode
 --drawCMGuideTree  ->
 drawCMGuideTrees cms  = map drawCMGuideTree cms
-
-
 
 -- | Draw the guide Tree of a single CM, utilizes drawCMGuideNode
 --drawCMGuideTree  ->
 drawCMGuideTree nodes = hcat (drawCMGuideNodes nodes)
 
+-- | Draw the guide Tree of a single CM, utilizes drawCMGuideNode
 --drawCMGuideNodes :: [(String,String)] ->  [Diagram b0 R2]               
 drawCMGuideNodes nodes = map drawCMGuideNode nodes
                                        
 
 -- | Draws the guide tree nodes of a CM
+--drawCMGuideNode :: (String,String) ->  Diagram b0 R2
 drawCMGuideNode (number,label) =  text' label # translate (r2 (0,20)) <> text' number # translate (r2 (0,-20)) <> rect 100 100 # lw 1 # fc (labelToColor label)
+
+-- | Render text as SVG
 text' t = stroke (textSVG t 40) # fc black # fillRule EvenOdd
 
---labelToColor :: String -> Color
+-- | Transform covariance model node labels to colors
+--labelToColor :: String -> Color  
 labelToColor label
    | label == "MATP" = sRGB24 211 211 211 -- P
    | label == "MATL" = sRGB24 211 211 211 -- L

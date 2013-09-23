@@ -35,9 +35,10 @@ options = Options
 processCMs :: [CM.CM] -> [[(String,String)]]
 processCMs cms = map processCMGuideTree cms
 processCMGuideTree :: CM.CM -> [(String,String)]
-processCMGuideTree cm = map getNodeInfo (Map.assocs (CM._nodes cm))
-getNodeInfo (nodeid, (nodetype, _ )) = (show (CM.unNodeID nodeid) , (show nodetype))
 
+processCMGuideTree cm = map getNodeInfo (Map.assocs (CM._nodes cm))
+
+getNodeInfo (nodeid, (nodetype, _ )) = (show (CM.unNodeID nodeid) , (show nodetype))
 
 main = do
   Options{..} <- cmdArgs options
