@@ -46,6 +46,6 @@ main = do
   let b = cmcompareResultFile
   models <- fromFile a
   cmResultParsed <- getCmcompareResults b              
-  printSVG (drawCMGuideForest (processCMs models))
+  printSVG (svgsize (processCMs models)) (drawCMGuideForest (processCMs models))
 
   

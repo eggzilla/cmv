@@ -35,10 +35,10 @@ drawCMGuideNodes nodes = map drawCMGuideNode nodes
 
 -- | Draws the guide tree nodes of a CM
 --drawCMGuideNode :: (String,String) ->  Diagram b0 R2
-drawCMGuideNode (number,label) =  text' label # translate (r2 (0,20)) <> text' number # translate (r2 (0,-20)) <> rect 100 100 # lw 1 # fc (labelToColor label)
+drawCMGuideNode (number,label) =  text' label # translate (r2 (0,2)) <> text' number # translate (r2 (0,-2)) <> rect 10 10 # lw 1 # fc (labelToColor label)
 
 -- | Render text as SVG
-text' t = stroke (textSVG t 40) # fc black # fillRule EvenOdd
+text' t = stroke (textSVG t 4) # fc black # fillRule EvenOdd
 
 -- | Transform covariance model node labels to colors
 --labelToColor :: String -> Color  
@@ -53,8 +53,20 @@ labelToColor label
    | label == "END"  = sRGB24 245 245 245 -- E
 labelToColor _ = sRGB24 245 245 245
           
---print svg          
-svgwidth = Just 100
-svglength = Just 100            
-svgsize = mkSizeSpec svgwidth svglength
-printSVG = renderSVG "./testdiagram.svg" svgsize --testdrawing
+--scaling
+
+-- | Width of the drawing is determinded by the model with the max node number
+svgwidth :: [[(String,String)]] -> Maybe Double
+svgwidth processedCMs = Just (fromIntegral (maximum (map length processedCMs)))
+
+-- | Length of the diagram is determined by the number of compared models
+svglength :: [[(String,String)]] -> Maybe Double
+svglength processedCMs = Just (fromIntegral (length processedCMs) * 40)
+
+-- | Specifies the size of the diagram          
+svgsize processedCMs = mkSizeSpec (svgwidth processedCMs) (svglength processedCMs)
+
+diagramName = "./testdiagram.svg"
+
+-- | Print drawn diagram as svg, already curried with diagram name, svgsize and the drawing have to specified
+printSVG = renderSVG diagramName --svgsize --testdrawing
