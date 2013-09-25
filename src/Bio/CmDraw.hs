@@ -18,7 +18,7 @@ import Data.Colour.SRGB
 import Graphics.SVGFonts.ReadFont
 
 -- | Draw one or more CM guide trees and concatenate them vertically
-drawCMGuideForest cms = vcat' with { sep = 100 } (drawCMGuideTrees cms)
+drawCMGuideForest cms = alignTL (vcat' with { sep = 20 } (drawCMGuideTrees cms))
 
 -- | Draw the Guide Trees of multiple CMs, utilizes drawCMGuideNode
 --drawCMGuideTree  ->
@@ -35,7 +35,7 @@ drawCMGuideNodes nodes = map drawCMGuideNode nodes
 
 -- | Draws the guide tree nodes of a CM
 --drawCMGuideNode :: (String,String) ->  Diagram b0 R2
-drawCMGuideNode (number,label) =  text' label # translate (r2 (0,2)) <> text' number # translate (r2 (0,-2)) <> rect 10 10 # lw 1 # fc (labelToColor label)
+drawCMGuideNode (number,label) =  text' label # translate (r2 (0,2)) <> text' number # translate (r2 (0,-2)) <> rect 10 10 # lw 0.5 # fc (labelToColor label)
 
 -- | Render text as SVG
 text' t = stroke (textSVG t 4) # fc black # fillRule EvenOdd
@@ -57,15 +57,15 @@ labelToColor _ = sRGB24 245 245 245
 
 -- | Width of the drawing is determinded by the model with the max node number
 svgwidth :: [[(String,String)]] -> Maybe Double
-svgwidth processedCMs = Just (fromIntegral (maximum (map length processedCMs)))
+svgwidth processedCMs = Just (fromIntegral 1) --Just (fromIntegral (maximum (map length processedCMs)))
 
 -- | Length of the diagram is determined by the number of compared models
 svglength :: [[(String,String)]] -> Maybe Double
-svglength processedCMs = Just (fromIntegral (length processedCMs) * 40)
+svglength processedCMs = Just (fromIntegral (length processedCMs))
 
 -- | Specifies the size of the diagram          
-svgsize processedCMs = mkSizeSpec (svgwidth processedCMs) (svglength processedCMs)
-
+--svgsize processedCMs = mkSizeSpec (svgwidth processedCMs) (svglength processedCMs)
+svgsize = Absolute
 diagramName = "./testdiagram.svg"
 
 -- | Print drawn diagram as svg, already curried with diagram name, svgsize and the drawing have to specified
