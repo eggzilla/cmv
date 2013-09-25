@@ -18,7 +18,7 @@ import Data.Colour.SRGB
 import Graphics.SVGFonts.ReadFont
 
 -- | Draw one or more CM guide trees and concatenate them vertically
-drawCMGuideForest cms = alignTL (vcat' with { sep = 20 } (drawCMGuideTrees cms))
+drawCMGuideForest cms = (vcat' with { sep = 20 } (drawCMGuideTrees cms) <> (alignY (-5)  (alignX (-5) (fromVertices (map p2 [(0,0),(0,50)])) # lw 1)))
 
 -- | Draw the Guide Trees of multiple CMs, utilizes drawCMGuideNode
 --drawCMGuideTree  ->
