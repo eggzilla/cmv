@@ -17,29 +17,33 @@ import Diagrams.Backend.SVG
 import Data.Colour.SRGB
 import Graphics.SVGFonts.ReadFont
 
--- | Draw one or more CM guide trees and concatenate them vertically
-drawCMGuideForest cms = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees cms)) <> highlightComparison 1 5 2 10 <> highlightComparison 1 50 2 80
+--ComparisonBoundry = data ComparisonBoundry{
+                      
 
+    
+-- | Draw one or more CM guide trees and concatenate them vertically
+drawCMGuideForest cms = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees cms)) <> highlightComparisonTrail 1 5 2 10 1 50 2 80 
+
+                        
 -- | Highlight comparison by connecting the delimiting nodes of the aligned nodes of both models
 -- takes the model identifier of both models and the starting and ending nodes of both models as arguments.
- 
-highlightComparison model1index node1index model2index node2index = connection (getNodeCoordinates model1index node1index) (getNodeCoordinates model2index node2index)
+highlightComparisonLines a b c d e f g h = highlightComparisonIntervalBoundry a b c d <> highlightComparisonIntervalBoundry e f g h
+highlightComparisonTrail a b c d e f g h = connectionTrail (getNodeCoordinates a b) (getNodeCoordinates c d) (getNodeCoordinates e f) (getNodeCoordinates g h)
+highlightComparisonIntervalBoundry model1index node1index model2index node2index = connectionLine (getNodeCoordinates model1index node1index) (getNodeCoordinates model2index node2index)
 
 -- | returns the center coordinates for an Covariance model guide tree node
 getNodeCoordinates :: Int -> Int -> P2
 getNodeCoordinates modelindex nodeindex = p2 (fromIntegral x, fromIntegral y)
-   where y = (10 + (40 * (modelindex - 1))) * (-1)
+   where y = (10 + (45 * (modelindex - 1))) * (-1)
          x = (5 + (10 * (nodeindex - 1 )))
 
 --connection1 :: Int-> Int -> Int -> Int -> 
-connection a b = fromVertices [a,b] # lw 0.5 # lc green
+connectionLine a b = fromVertices [a,b] # lw 0.5 # lc green
+connectionTrail a b c d = strokeLoop (glueLine (paralellogram a b c d )) # fillRule EvenOdd # fc black 
+paralellogram :: P2 -> P2 -> P2 -> P2 -> Trail' Line R2
+paralellogram a b c d = lineFromVertices [a,b,d,c,a]
 
-
--- polygon with { polyType = PolySides [13,23,43,53] [5,3,5,2,53,3,34,34], polyOrient = OrientV }
---fromVertices (map p2 [(-5,5),(0,-20)]) # lw 1 <> fromVertices (map p2 [(5,-5),(0,-20)]) # lw 1
---(-5,5)
--- alignX 0 (alignY 0 ((rect 1 1) # fc black)) 
-
+                          
 -- | Draw the Guide Trees of multiple CMs, utilizes drawCMGuideNode
 --drawCMGuideTree  ->
 drawCMGuideTrees cms  = map drawCMGuideTree cms
