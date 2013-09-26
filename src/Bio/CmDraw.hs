@@ -18,7 +18,27 @@ import Data.Colour.SRGB
 import Graphics.SVGFonts.ReadFont
 
 -- | Draw one or more CM guide trees and concatenate them vertically
-drawCMGuideForest cms = (vcat' with { sep = 20 } (drawCMGuideTrees cms) <> (alignY (-5)  (alignX (-5) (fromVertices (map p2 [(0,0),(0,50)])) # lw 1)))
+drawCMGuideForest cms = alignTL (vcat' with { sep = 30 } (drawCMGuideTrees cms)) <> highlightComparison 1 5 2 10 <> highlightComparison 1 50 2 100
+
+-- | Highlight comparison by connecting the delimiting nodes of the aligned nodes of both models
+-- takes the model identifier of both models and the starting and ending nodes of both models as arguments.
+ 
+highlightComparison model1index node1index model2index node2index = connection (getNodeCoordinates model1index node1index) (getNodeCoordinates model2index node2index)
+
+-- | returns the center coordinates for an Covariance model guide tree node
+getNodeCoordinates :: Int -> Int -> P2
+getNodeCoordinates modelindex nodeindex = p2 (fromIntegral x, fromIntegral y)
+   where y = (5 + (40 * (modelindex - 1))) * (-1)
+         x = (5 + (10 * (nodeindex - 1 )))
+
+--connection1 :: Int-> Int -> Int -> Int -> 
+connection a b = fromVertices [a,b] # lw 4 # lc red
+
+
+-- polygon with { polyType = PolySides [13,23,43,53] [5,3,5,2,53,3,34,34], polyOrient = OrientV }
+--fromVertices (map p2 [(-5,5),(0,-20)]) # lw 1 <> fromVertices (map p2 [(5,-5),(0,-20)]) # lw 1
+--(-5,5)
+-- alignX 0 (alignY 0 ((rect 1 1) # fc black)) 
 
 -- | Draw the Guide Trees of multiple CMs, utilizes drawCMGuideNode
 --drawCMGuideTree  ->
@@ -32,7 +52,6 @@ drawCMGuideTree nodes = hcat (drawCMGuideNodes nodes)
 --drawCMGuideNodes :: [(String,String)] ->  [Diagram b0 R2]               
 drawCMGuideNodes nodes = map drawCMGuideNode nodes
                                        
-
 -- | Draws the guide tree nodes of a CM
 --drawCMGuideNode :: (String,String) ->  Diagram b0 R2
 drawCMGuideNode (number,label) =  text' label # translate (r2 (0,2)) <> text' number # translate (r2 (0,-2)) <> rect 10 10 # lw 0.5 # fc (labelToColor label)
