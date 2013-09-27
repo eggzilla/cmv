@@ -18,8 +18,6 @@ import Data.Colour.SRGB
 import Graphics.SVGFonts.ReadFont
 
 --ComparisonBoundry = data ComparisonBoundry{
-                      
-
     
 -- | Draw one or more CM guide trees and concatenate them vertically
 drawCMGuideForest cms = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees cms)) <> highlightComparisonTrail 1 5 2 10 1 50 2 80 
@@ -34,15 +32,19 @@ highlightComparisonIntervalBoundry model1index node1index model2index node2index
 -- | returns the center coordinates for an Covariance model guide tree node
 getNodeCoordinates :: Int -> Int -> P2
 getNodeCoordinates modelindex nodeindex = p2 (fromIntegral x, fromIntegral y)
-   where y = (10 + (45 * (modelindex - 1))) * (-1)
+   where y = (getYCoordinate modelindex 0) * (-1)
          x = (5 + (10 * (nodeindex - 1 )))
 
---connection1 :: Int-> Int -> Int -> Int -> 
-connectionLine a b = fromVertices [a,b] # lw 0.5 # lc green
-connectionTrail a b c d = strokeLoop (glueLine (paralellogram a b c d )) # fillRule EvenOdd # fc black 
-paralellogram :: P2 -> P2 -> P2 -> P2 -> Trail' Line R2
-paralellogram a b c d = lineFromVertices [a,b,d,c,a]
+getYCoordinate modelindex ycoordinate
+    | modelindex == 0 = ycoordinate 
+    | even modelindex = getYCoordinate (modelindex - 1) (ycoordinate + 40) 
+    | odd modelindex = getYCoordinate (modelindex - 1) (ycoordinate + 10) 
 
+--connectionLine :: Int-> Int -> Int -> Int -> 
+connectionLine a b = fromVertices [a,b] # lw 0.5 # lc green
+connectionTrail a b c d = stroke (paralellogram a b c d )# fillRule EvenOdd # fc aqua # lc darkgrey 
+paralellogram :: P2 -> P2 -> P2 -> P2 -> Path R2
+paralellogram a b c d = fromVertices [a,b,d,c,a] 
                           
 -- | Draw the Guide Trees of multiple CMs, utilizes drawCMGuideNode
 --drawCMGuideTree  ->
