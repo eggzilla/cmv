@@ -13,6 +13,7 @@ module CmDraw
   
 import Diagrams.Prelude
 import Diagrams.TwoD
+import Diagrams.Path
 import Diagrams.Backend.SVG
 import Data.Colour.SRGB
 import Graphics.SVGFonts.ReadFont
@@ -42,10 +43,13 @@ getYCoordinate modelindex ycoordinate
 
 --connectionLine :: Int-> Int -> Int -> Int -> 
 connectionLine a b = fromVertices [a,b] # lw 0.5 # lc green
-connectionTrail a b c d = stroke (paralellogram a b c d )# fillRule EvenOdd # fc aqua # lc darkgrey 
+connectionTrail a b c d = stroke (paralellogram a b c d ) # fc aqua # fillRule EvenOdd # lc grey
+mkPath a b c d = position [a,b,c,d,a]
+              
 paralellogram :: P2 -> P2 -> P2 -> P2 -> Path R2
-paralellogram a b c d = fromVertices [a,b,d,c,a] 
-                          
+--paralellogram a b c d = fromVertices [a,b,d,c,a] 
+paralellogram a b c d = pathFromTrailAt (closeTrail (trailFromVertices [a,b,d,c,a])) a
+
 -- | Draw the Guide Trees of multiple CMs, utilizes drawCMGuideNode
 --drawCMGuideTree  ->
 drawCMGuideTrees cms  = map drawCMGuideTree cms
