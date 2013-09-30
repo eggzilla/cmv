@@ -19,20 +19,23 @@ import Data.Colour.SRGB
 import Graphics.SVGFonts.ReadFont
   
 -- | Draw one or more CM guide trees and concatenate them vertically
---drawCMGuideForest :: (Renderable a b) => [[(String,String)]] -> QDiagram b0 R2 Any
-drawCMGuideForest cms = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees cms)) <> highlightComparisonTrail 1 5 2 10 1 50 2 80 
+-- drawCMGuideForest :: (Renderable a b) => [[(String,String)]] -> QDiagram b0 R2 Any
+drawCMGuideForest modelDetail cms 
+  | modelDetail == "simple" = alignTL (vcat' with { sep = 8 } (drawCMGuideTrees cms)) <> highlightComparisonTrail 1 5 2 10 1 50 2 80 
+  | modelDetail == "detailed" = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees cms)) <> highlightComparisonTrail 1 5 2 10 1 50 2 80 
+  | otherwise = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees cms)) <> highlightComparisonTrail 1 5 2 10 1 50 2 80 
 
 -- | Highlight comparison by connecting the delimiting nodes of the aligned nodes of both models
 -- takes the model identifier of both models and the starting and ending nodes of both models as arguments.
---highlightComparisonLines ::
+-- highlightComparisonLines ::
 highlightComparisonLines a b c d e f g h = highlightComparisonIntervalBoundry a b c d <> highlightComparisonIntervalBoundry e f g h
 
--- | Highlight comparison by connecting the all of the aligned nodes of both models
---highlightComparisonTrail ::
-highlightComparisonTrail a b c d e f g h = connectionTrail (getNodeCoordinates a b) (getNodeCoordinates c d) (getNodeCoordinates e f) (getNodeCoordinates g h)
-
---highlightComparisonIntervalBoundry ::
+-- highlightComparisonIntervalBoundry ::
 highlightComparisonIntervalBoundry model1index node1index model2index node2index = connectionLine (getNodeCoordinates model1index node1index) (getNodeCoordinates model2index node2index)
+
+-- | Highlight comparison by connecting the all of the aligned nodes of both models
+-- highlightComparisonTrail ::
+highlightComparisonTrail a b c d e f g h = connectionTrail (getNodeCoordinates a b) (getNodeCoordinates c d) (getNodeCoordinates e f) (getNodeCoordinates g h)
 
 -- | Returns the center coordinates for an Covariance model guide tree node
 getNodeCoordinates :: Int -> Int -> P2
@@ -49,10 +52,10 @@ getYCoordinate modelindex ycoordinate
     | odd modelindex = getYCoordinate (modelindex - 1) (ycoordinate + 10) 
 
 
---connectionLine :: Int-> Int -> Int -> Int -> 
+-- connectionLine :: Int-> Int -> Int -> Int -> 
 connectionLine a b = fromVertices [a,b] # lw 0.5 # lc green
 
---connectionTrail ::
+-- connectionTrail ::
 connectionTrail a b c d = stroke (paralellogram a b c d ) # fc aqua # fillRule EvenOdd # lc grey # lw 0.5
 mkPath a b c d = position [a,b,c,d,a]
               
@@ -60,20 +63,24 @@ paralellogram :: P2 -> P2 -> P2 -> P2 -> Path R2
 paralellogram a b c d = pathFromTrailAt (closeTrail (trailFromVertices [a,b,d,c,a])) a
 
 -- | Draw the Guide Trees of multiple CMs, utilizes drawCMGuideNode
---drawCMGuideTree  ->
+-- drawCMGuideTree  ->
 drawCMGuideTrees cms  = map drawCMGuideTree cms
 
 -- | Draw the guide Tree of a single CM, utilizes drawCMGuideNode
---drawCMGuideTree  ->
+-- drawCMGuideTree  ->
 drawCMGuideTree nodes = hcat (drawCMGuideNodes nodes)
 
 -- | Draw the guide Tree of a single CM, utilizes drawCMGuideNode
---drawCMGuideNodes :: [(String,String)] ->  [Diagram b0 R2]               
-drawCMGuideNodes nodes = map drawCMGuideNode nodes
+-- drawCMGuideNodes :: [(String,String)] ->  [Diagram b0 R2]             
+drawCMGuideNodes nodes = map drawCMGuideNodeVerbose nodes
                                        
--- | Draws the guide tree nodes of a CM
---drawCMGuideNode :: (String,String) ->  Diagram b0 R2
-drawCMGuideNode (number,label) =  text' label # translate (r2 (0,2)) <> text' number # translate (r2 (0,-2)) <> rect 10 10 # lw 0.5 # fc (labelToColor label)
+-- | Draws the guide tree nodes of a CM, verbose with label and index
+-- drawCMGuideNode :: (String,String) ->  Diagram b0 R2
+drawCMGuideNodeVerbose (number,label) =  text' label # translate (r2 (0,2)) <> text' number # translate (r2 (0,-2)) <> rect 10 10 # lw 0.5 # fc (labelToColor label)
+
+-- | Draws the guide tree nodes of a CM, simplified
+-- drawCMGuideNode :: (String,String) ->  Diagram b0 R2
+drawCMGuideNodeSimple (_,label) =  rect 2 2 # lw 0.5 # fc (labelToColor label)
 
 -- | Render text as SVG
 text' t = stroke (textSVG t 4) # fc black # fillRule EvenOdd
@@ -98,4 +105,4 @@ svgsize = Absolute
 diagramName = "./testdiagram.svg"
 
 -- | Print drawn diagram as svg, already curried with diagram name, svgsize and the drawing have to specified
-printSVG = renderSVG diagramName --svgsize --testdrawing
+printSVG = renderSVG diagramName 

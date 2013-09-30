@@ -80,7 +80,7 @@ getCmcompareResults filePath = let
         doParseLine' = parse parseCmcompareResult "parseCMCompareResults"
         doParseLine l = case (doParseLine' l) of
             Right x -> x
-            Left _ -> error "Failed to parse line"
+            Left _  -> error "Failed to parse line"
     in do
         fileContent <- liftM lines $ readFile fp
         return $ map doParseLine' fileContent
