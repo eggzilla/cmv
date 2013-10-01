@@ -4,7 +4,10 @@
 
 module CmcompareResult
     (
-     getCmcompareResults
+     CmcompareResult,
+     getCmcompareResults,
+     getModelsNames,
+     getModelNames
     ) where
 
 import Text.ParserCombinators.Parsec 
@@ -84,3 +87,9 @@ getCmcompareResults filePath = let
     in do
         fileContent <- liftM lines $ readFile fp
         return $ map doParseLine' fileContent
+
+getModelsNames :: [CmcompareResult] -> [String]
+getModelsNames models = concat (map getModelNames models)
+
+getModelNames :: CmcompareResult -> [String]
+getModelNames model = [model1Name model,model2Name model]

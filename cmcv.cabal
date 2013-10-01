@@ -17,4 +17,4 @@ cabal-version:       >=1.8
 executable cmcv
   Hs-Source-Dirs:      ./src/Bio/
   main-is:	       CmcVisualization.hs    
-  build-depends:       base >=4.5, cmdargs, BiobaseInfernal, BiobaseXNA, diagrams-svg, diagrams-lib, parsec, SVGFonts, colour, containers
+  build-depends:       base >=4.5, cmdargs, BiobaseInfernal, BiobaseXNA, diagrams-svg, diagrams-lib, parsec, SVGFonts, colour, containers,bytestring,template-haskell

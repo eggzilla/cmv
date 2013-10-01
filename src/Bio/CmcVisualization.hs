@@ -14,10 +14,15 @@ import CmDraw
 import Control.Monad    
 import Biobase.Primary
 import qualified Biobase.SElab.CM as CM
+import Biobase.SElab.Types
 import qualified Data.Map as Map
 import Biobase.SElab.CM.Import     
 import System.Console.CmdArgs
 import Text.Printf
+import Data.List
+import Data.Either
+import qualified Data.ByteString as BS
+import Language.Haskell.TH.Ppr
  
 data Options = Options            
   { cmcompareResultFile :: CmcompareResultFile,
@@ -44,13 +49,24 @@ processCMGuideTree cm = map getNodeInfo (Map.assocs (CM._nodes cm))
 getNodeInfo :: (CM.NodeID, (CM.NodeType, [CM.StateID])) -> (String,String)
 getNodeInfo (nodeid, (nodetype, _ )) = (show (CM.unNodeID nodeid) , (show nodetype))
 
+sortModelsByComparisonResults :: [String] -> [CM.CM] -> [Maybe CM.CM]
+sortModelsByComparisonResults cmComparisonNames models = map (\x -> findModel x models) cmComparisonNames
+--(map findComparisonInModels (getComparisonOrder(cmcResultsParsed)))
+
+findModel :: String -> [CM.CM] -> Maybe CM.CM
+findModel check models = find (\x -> getCMName x == check) models
+
+getCMName :: CM.CM -> String
+getCMName x = bytesToString (BS.unpack (unIDD (CM._name x)))
+
 main = do
   Options{..} <- cmdArgs options
   let a = modelsFile
   let b = cmcompareResultFile
   let c = modelDetail 
   models <- fromFile a
-  cmResultParsed <- getCmcompareResults b              
+  cmcResultParsed <- getCmcompareResults b              
+  let sortedModels = sortModelsByComparisonResults (getModelsNames (rights cmcResultParsed)) models
   printSVG svgsize (drawCMGuideForest c (processCMs models))
 
   
