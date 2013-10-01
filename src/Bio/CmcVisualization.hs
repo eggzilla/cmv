@@ -19,6 +19,7 @@ import qualified Data.Map as Map
 import Biobase.SElab.CM.Import     
 import System.Console.CmdArgs
 import Text.Printf
+import Data.Maybe
 import Data.List
 import Data.Either
 import qualified Data.ByteString as BS
@@ -50,11 +51,13 @@ getNodeInfo :: (CM.NodeID, (CM.NodeType, [CM.StateID])) -> (String,String)
 getNodeInfo (nodeid, (nodetype, _ )) = (show (CM.unNodeID nodeid) , (show nodetype))
 
 sortModelsByComparisonResults :: [String] -> [CM.CM] -> [Maybe CM.CM]
-sortModelsByComparisonResults cmComparisonNames models = map (\x -> findModel x models) cmComparisonNames
---(map findComparisonInModels (getComparisonOrder(cmcResultsParsed)))
+sortModelsByComparisonResults cmComparisonNames models = (map (\x -> findModel x models) cmComparisonNames) ++ (map (\x -> findMissing x models) cmComparisonNames)
 
 findModel :: String -> [CM.CM] -> Maybe CM.CM
 findModel check models = find (\x -> getCMName x == check) models
+
+findMissing :: String -> [CM.CM] -> Maybe CM.CM
+findMissing check models = find (\x -> getCMName x /= check) models
 
 getCMName :: CM.CM -> String
 getCMName x = bytesToString (BS.unpack (unIDD (CM._name x)))
@@ -67,6 +70,6 @@ main = do
   models <- fromFile a
   cmcResultParsed <- getCmcompareResults b              
   let sortedModels = sortModelsByComparisonResults (getModelsNames (rights cmcResultParsed)) models
-  printSVG svgsize (drawCMGuideForest c (processCMs models))
+  printSVG svgsize (drawCMGuideForest c (processCMs (map fromJust sortedModels)))
 
   
