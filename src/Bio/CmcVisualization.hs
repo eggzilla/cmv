@@ -24,6 +24,7 @@ import Data.List
 import Data.Either
 import qualified Data.ByteString as BS
 import Language.Haskell.TH.Ppr
+import Text.Parsec.Error
  
 data Options = Options            
   { cmcompareResultFile :: CmcompareResultFile,
@@ -66,9 +67,15 @@ findMissing check models = find (\x -> getCMName x /= check) models
 getCMName :: CM.CM -> String
 getCMName x = bytesToString (BS.unpack (unIDD (CM._name x)))
 
-checkCmcResultParsed x
-  | x == [] = print "Parsing comparisons - done\n" 
-  | otherwise = error ("Following errors occured :" ++ show (concat x))
+checkCMCResultsParsed x 
+  | null x = print "Parsing comparisons - done\n"
+  | otherwise = error ("Following errors occured:" ++ (concat (map checkCmcResultParsed x)))
+
+checkCmcResultParsed x = (concat (map messageString (errorMessages x)))
+--  | (errorIsUnknown x) = print "Parsing comparisons - done\n" 
+--  | x == [] = print "Parsing comparisons - done\n"
+--  | otherwise = (concat (map messageString (errorMessages x)))
+--  | otherwise = error ("Following errors occured :" ++ (concat (map (\y -> (concat (map messageString (errorMessages y)))) x)))
 
 checkSortedModels x
   | x == [] = print "Sorting input models to comparison list - done\n" 
@@ -81,10 +88,10 @@ main = do
   let c = modelDetail 
   models <- fromFile a
   cmcResultParsed <- getCmcompareResults b              
-  checkCmcResultParsed (lefts cmcResultParsed)
+  checkCMCResultsParsed (lefts cmcResultParsed)
   let sortedModels = sortModelsByComparisonResults (getModelsNames (rights cmcResultParsed)) models
   checkSortedModels (lefts sortedModels)
-  rightSortedModels = (rights sortedModels)
+  let rightSortedModels = (rights sortedModels)
   printSVG svgsize (drawCMGuideForest c (processCMs (rightSortedModels)))
 
   
