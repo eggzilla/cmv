@@ -5,6 +5,10 @@
 module CmcompareResult
     (
      CmcompareResult,
+     model1Name,
+     model2Name,
+     model1matchednodes,
+     model2matchednodes,
      getCmcompareResults,
      getModelsNames,
      getModelNames

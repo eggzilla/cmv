@@ -20,10 +20,11 @@ import Graphics.SVGFonts.ReadFont
   
 -- | Draw one or more CM guide trees and concatenate them vertically
 -- drawCMGuideForest :: (Renderable a b) => [[(String,String)]] -> QDiagram b0 R2 Any
-drawCMGuideForest modelDetail cms 
-  | modelDetail == "simple" = alignTL (vcat' with { sep = 8 } (drawCMGuideTrees cms)) <> highlightComparisonTrail 1 5 2 10 1 50 2 80 
-  | modelDetail == "detailed" = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees cms)) <> highlightComparisonTrail 1 5 2 10 1 50 2 80 
-  | otherwise = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees cms)) <> highlightComparisonTrail 1 5 2 10 1 50 2 80 
+drawCMGuideForest modelDetail cms comparisonshighlightparameter 
+  | modelDetail == "simple" = alignTL (vcat' with { sep = 8 } (drawCMGuideTrees cms)) <> (cat (r2 (0,0)) (highlightComparisonTrails comparisonshighlightparameter))
+--  | modelDetail == "detailed" = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees cms)) <> highlightComparisonTrail 1 5 2 10 1 50 2 80 
+  | modelDetail == "detailed" = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees cms)) <> (cat (r2 (0,0)) (highlightComparisonTrails comparisonshighlightparameter))
+  | otherwise = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees cms)) <> (cat (r2 (0,0)) (highlightComparisonTrails comparisonshighlightparameter))
 
 -- | Highlight comparison by connecting the delimiting nodes of the aligned nodes of both models
 -- takes the model identifier of both models and the starting and ending nodes of both models as arguments.
@@ -33,9 +34,12 @@ highlightComparisonLines a b c d e f g h = highlightComparisonIntervalBoundry a 
 -- highlightComparisonIntervalBoundry ::
 highlightComparisonIntervalBoundry model1index node1index model2index node2index = connectionLine (getNodeCoordinates model1index node1index) (getNodeCoordinates model2index node2index)
 
+
+highlightComparisonTrails trails  = map highlightComparisonTrail trails
+
 -- | Highlight comparison by connecting the all of the aligned nodes of both models
 -- highlightComparisonTrail ::
-highlightComparisonTrail a b c d e f g h = connectionTrail (getNodeCoordinates a b) (getNodeCoordinates c d) (getNodeCoordinates e f) (getNodeCoordinates g h)
+highlightComparisonTrail (a,b,c,d,e,f,g,h) = connectionTrail (getNodeCoordinates a b) (getNodeCoordinates c d) (getNodeCoordinates e f) (getNodeCoordinates g h)
 
 -- | Returns the center coordinates for an Covariance model guide tree node
 getNodeCoordinates :: Int -> Int -> P2
@@ -56,7 +60,7 @@ getYCoordinate modelindex ycoordinate
 connectionLine a b = fromVertices [a,b] # lw 0.5 # lc green
 
 -- connectionTrail ::
-connectionTrail a b c d = stroke (paralellogram a b c d ) # fc aqua # fillRule EvenOdd # lc grey # lw 0.5
+connectionTrail a b c d = stroke (paralellogram a b c d ) # fc aqua # fillRule EvenOdd # lc black # lw 0.1
 mkPath a b c d = position [a,b,c,d,a]
               
 paralellogram :: P2 -> P2 -> P2 -> P2 -> Path R2
