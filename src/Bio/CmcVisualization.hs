@@ -50,8 +50,12 @@ processCMGuideTree cm = map getNodeInfo (Map.assocs (CM._nodes cm))
 getNodeInfo :: (CM.NodeID, (CM.NodeType, [CM.StateID])) -> (String,String)
 getNodeInfo (nodeid, (nodetype, _ )) = (show (CM.unNodeID nodeid) , (show nodetype))
 
-sortModelsByComparisonResults :: [String] -> [CM.CM] -> [Maybe CM.CM]
-sortModelsByComparisonResults cmComparisonNames models = (map (\x -> findModel x models) cmComparisonNames) ++ (map (\x -> findMissing x models) cmComparisonNames)
+sortModelsByComparisonResults :: [String] -> [CM.CM] -> [Either String CM.CM]
+sortModelsByComparisonResults cmComparisonNames models = (map (\x -> findModelError x (findModel x models)) cmComparisonNames) ++ (map (\x -> findModelError x (findMissing x models)) cmComparisonNames)
+
+findModelError :: String -> Maybe CM.CM -> Either String CM.CM
+findModelError name (Just model) = Right model
+findModelError name Nothing = Left ("Model" ++ name ++ "that is present in comparison file is not present in model file")
 
 findModel :: String -> [CM.CM] -> Maybe CM.CM
 findModel check models = find (\x -> getCMName x == check) models
@@ -62,6 +66,14 @@ findMissing check models = find (\x -> getCMName x /= check) models
 getCMName :: CM.CM -> String
 getCMName x = bytesToString (BS.unpack (unIDD (CM._name x)))
 
+checkCmcResultParsed x
+  | x == [] = print "Parsing comparisons - done\n" 
+  | otherwise = error ("Following errors occured :" ++ show (concat x))
+
+checkSortedModels x
+  | x == [] = print "Sorting input models to comparison list - done\n" 
+  | otherwise = error ("Following errors occured :" ++ show (concat x))
+
 main = do
   Options{..} <- cmdArgs options
   let a = modelsFile
@@ -69,7 +81,10 @@ main = do
   let c = modelDetail 
   models <- fromFile a
   cmcResultParsed <- getCmcompareResults b              
+  checkCmcResultParsed (lefts cmcResultParsed)
   let sortedModels = sortModelsByComparisonResults (getModelsNames (rights cmcResultParsed)) models
-  printSVG svgsize (drawCMGuideForest c (processCMs (map fromJust sortedModels)))
+  checkSortedModels (lefts sortedModels)
+  rightSortedModels = (rights sortedModels)
+  printSVG svgsize (drawCMGuideForest c (processCMs (rightSortedModels)))
 
   
