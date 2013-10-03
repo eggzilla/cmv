@@ -22,9 +22,10 @@ import Text.Printf
 import Data.Maybe
 import Data.List
 import Data.Either
-import qualified Data.ByteString as BS
+import qualified Data.ByteString.Char8 as BS
 import Language.Haskell.TH.Ppr
 import Text.Parsec.Error
+import qualified Data.String.Utils as DSU
  
 data Options = Options            
   { cmcompareResultFile :: CmcompareResultFile,
@@ -52,11 +53,13 @@ getNodeInfo :: (CM.NodeID, (CM.NodeType, [CM.StateID])) -> (String,String)
 getNodeInfo (nodeid, (nodetype, _ )) = (show (CM.unNodeID nodeid) , (show nodetype))
 
 sortModelsByComparisonResults :: [String] -> [CM.CM] -> [Either String CM.CM]
-sortModelsByComparisonResults cmComparisonNames models = (map (\x -> findModelError x (findModel x models)) cmComparisonNames) ++ (map (\x -> findModelError x (findMissing x models)) cmComparisonNames)
+sortModelsByComparisonResults cmComparisonNames models = map (\x -> findModelError x (findModel x models)) cmComparisonNames
+-- todo: also add models at end of the sorted list that are not in comparisons
+-- ++ (map (\x -> findModelError x (findMissing x models)) cmComparisonNames)
 
 findModelError :: String -> Maybe CM.CM -> Either String CM.CM
 findModelError name (Just model) = Right model
-findModelError name Nothing = Left ("Model" ++ name ++ "that is present in comparison file is not present in model file")
+findModelError name Nothing = Left ("Model " ++ name ++ "that is present in comparison file is not present in model file")
 
 findModel :: String -> [CM.CM] -> Maybe CM.CM
 findModel check models = find (\x -> getCMName x == check) models
@@ -68,7 +71,8 @@ findMissing :: String -> [CM.CM] -> Maybe CM.CM
 findMissing check models = find (\x -> getCMName x /= check) models
 
 getCMName :: CM.CM -> String
-getCMName x = bytesToString (BS.unpack (unIDD (CM._name x)))
+getCMName x = DSU.strip  (BS.unpack (unIDD (CM._name x)))
+--getCMName x = (unIDD (CM._name x))
 
 checkCMCResultsParsed x 
   | null x = print "Parsing comparisons - done\n"
@@ -105,9 +109,19 @@ main = do
   cmcResultParsed <- getCmcompareResults b              
   checkCMCResultsParsed (lefts cmcResultParsed)
   let rightcmcResultsParsed = rights cmcResultParsed
-  let sortedModels = sortModelsByComparisonResults (getModelsNames rightcmcResultsParsed) models
-  checkSortedModels (lefts sortedModels)
-  let rightSortedModels = (rights sortedModels)
-  printSVG svgsize (drawCMGuideForest c (processCMs (rightSortedModels)) (getComparisonsHighlightParameters rightSortedModels rightcmcResultsParsed))
+  let comparisonModelNames = getModelsNames rightcmcResultsParsed
+  print comparisonModelNames
+  let findbtest = findModel "d" models
+  --print findbtest
+  --print models 
+--  let sortedModels = sortModelsByComparisonResults comparisonModelNames models
+--  print "Begin sorted Models:\n"
+--  checkSortedModels (lefts sortedModels)
+--let rightSortedModels = (rights sortedModels)
+--  print sortedModels
+--printSVG svgsize (drawCMGuideForest c (processCMs (rightSortedModels)) (getComparisonsHighlightParameters rightSortedModels rightcmcResultsParsed))
+  printSVG svgsize (drawCMGuideForest c (processCMs (models)) (getComparisonsHighlightParameters models rightcmcResultsParsed))
+
+
 
   

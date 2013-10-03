@@ -23,7 +23,8 @@ import Graphics.SVGFonts.ReadFont
 drawCMGuideForest modelDetail cms comparisonshighlightparameter 
   | modelDetail == "simple" = alignTL (vcat' with { sep = 8 } (drawCMGuideTrees cms)) <> (cat (r2 (0,0)) (highlightComparisonTrails comparisonshighlightparameter))
 --  | modelDetail == "detailed" = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees cms)) <> highlightComparisonTrail 1 5 2 10 1 50 2 80 
-  | modelDetail == "detailed" = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees cms)) <> (cat (r2 (0,0)) (highlightComparisonTrails comparisonshighlightparameter))
+--  | modelDetail == "detailed" = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees cms)) <> (cat (r2 (0,0)) (highlightComparisonTrails comparisonshighlightparameter))
+    | modelDetail == "detailed" = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees cms)) <> (cat (r2 (0.1,0.1))  (highlightComparisonTrails comparisonshighlightparameter))
   | otherwise = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees cms)) <> (cat (r2 (0,0)) (highlightComparisonTrails comparisonshighlightparameter))
 
 -- | Highlight comparison by connecting the delimiting nodes of the aligned nodes of both models
