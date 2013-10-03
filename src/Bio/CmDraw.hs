@@ -21,11 +21,11 @@ import Graphics.SVGFonts.ReadFont
 -- | Draw one or more CM guide trees and concatenate them vertically
 -- drawCMGuideForest :: (Renderable a b) => [[(String,String)]] -> QDiagram b0 R2 Any
 drawCMGuideForest modelDetail cms comparisonshighlightparameter 
-  | modelDetail == "simple" = alignTL (vcat' with { sep = 8 } (drawCMGuideTrees cms)) <> (cat (r2 (0,0)) (highlightComparisonTrails comparisonshighlightparameter))
+  | modelDetail == "simple" = alignTL (vcat' with { sep = 8 } (drawCMGuideTrees modelDetail  cms)) <> (cat (r2 (0,0)) (highlightComparisonTrails comparisonshighlightparameter))
 --  | modelDetail == "detailed" = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees cms)) <> highlightComparisonTrail 1 5 2 10 1 50 2 80 
 --  | modelDetail == "detailed" = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees cms)) <> (cat (r2 (0,0)) (highlightComparisonTrails comparisonshighlightparameter))
-    | modelDetail == "detailed" = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees cms)) <> (cat (r2 (0.1,0.1))  (highlightComparisonTrails comparisonshighlightparameter))
-  | otherwise = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees cms)) <> (cat (r2 (0,0)) (highlightComparisonTrails comparisonshighlightparameter))
+    | modelDetail == "detailed" = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (cat (r2 (0.1,0.1))  (highlightComparisonTrails comparisonshighlightparameter))
+  | otherwise = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (cat (r2 (0,0)) (highlightComparisonTrails comparisonshighlightparameter))
 
 -- | Highlight comparison by connecting the delimiting nodes of the aligned nodes of both models
 -- takes the model identifier of both models and the starting and ending nodes of both models as arguments.
@@ -56,7 +56,6 @@ getYCoordinate modelindex ycoordinate
     | even modelindex = getYCoordinate (modelindex - 1) (ycoordinate + 40) 
     | odd modelindex = getYCoordinate (modelindex - 1) (ycoordinate + 10) 
 
-
 -- connectionLine :: Int-> Int -> Int -> Int -> 
 connectionLine a b = fromVertices [a,b] # lw 0.5 # lc green
 
@@ -69,23 +68,25 @@ paralellogram a b c d = pathFromTrailAt (closeTrail (trailFromVertices [a,b,d,c,
 
 -- | Draw the Guide Trees of multiple CMs, utilizes drawCMGuideNode
 -- drawCMGuideTree  ->
-drawCMGuideTrees cms  = map drawCMGuideTree cms
+drawCMGuideTrees detail cms  = map (drawCMGuideTree detail) cms
 
 -- | Draw the guide Tree of a single CM, utilizes drawCMGuideNode
 -- drawCMGuideTree  ->
-drawCMGuideTree nodes = hcat (drawCMGuideNodes nodes)
+drawCMGuideTree modelDetail nodes 
+   | modelDetail == "simple" = hcat (drawCMGuideNodesSimple nodes)
+   | modelDetail == "detailed" = hcat (drawCMGuideNodesVerbose nodes)
 
 -- | Draw the guide Tree of a single CM, utilizes drawCMGuideNode
--- drawCMGuideNodes :: [(String,String)] ->  [Diagram b0 R2]             
-drawCMGuideNodes nodes = map drawCMGuideNodeVerbose nodes
-                                       
+-- drawCMGuideNodes :: [(String,String)] ->  [Diagram b0 R2]           
+drawCMGuideNodesVerbose nodes = map drawCMGuideNodeVerbose nodes
+drawCMGuideNodesSimple nodes = map drawCMGuideNodeSimple nodes                                       
 -- | Draws the guide tree nodes of a CM, verbose with label and index
 -- drawCMGuideNode :: (String,String) ->  Diagram b0 R2
 drawCMGuideNodeVerbose (number,label) =  text' label # translate (r2 (0,2)) <> text' number # translate (r2 (0,-2)) <> rect 10 10 # lw 0.5 # fc (labelToColor label)
 
 -- | Draws the guide tree nodes of a CM, simplified
 -- drawCMGuideNode :: (String,String) ->  Diagram b0 R2
-drawCMGuideNodeSimple (_,label) =  rect 2 2 # lw 0.5 # fc (labelToColor label)
+drawCMGuideNodeSimple (_,label) =  rect 2 2 # lw 0.1 # fc (labelToColor label)
 
 -- | Render text as SVG
 text' t = stroke (textSVG t 4) # fc black # fillRule EvenOdd
