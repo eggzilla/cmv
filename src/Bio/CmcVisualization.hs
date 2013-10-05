@@ -93,9 +93,9 @@ getComparisonsHighlightParameters sortedmodels comp = map (getComparisonHighligh
 
 getComparisonHighlightParameters :: [CM.CM] -> CmcompareResult -> (Int,Int,Int,Int,Int,Int,Int,Int)
 getComparisonHighlightParameters sortedmodels comp = (a,b,c,d,a,f,c,e)
-  where a = fromJust (findModelIndex (model1Name comp) sortedmodels)
+  where a = (fromJust (findModelIndex (model1Name comp) sortedmodels) +1)
         b = head (model1matchednodes comp)
-        c = fromJust (findModelIndex (model2Name comp) sortedmodels)
+        c = (fromJust (findModelIndex (model2Name comp) sortedmodels) + 1)
         d = head (model2matchednodes comp)
         e = last (model2matchednodes comp)
         f = last (model1matchednodes comp)
@@ -112,6 +112,7 @@ main = do
   let comparisonModelNames = getModelsNames rightcmcResultsParsed
   print comparisonModelNames
   let findbtest = findModel "d" models
+  
   --print findbtest
   --print models 
 --  let sortedModels = sortModelsByComparisonResults comparisonModelNames models
@@ -120,7 +121,9 @@ main = do
 --let rightSortedModels = (rights sortedModels)
 --  print sortedModels
 --printSVG svgsize (drawCMGuideForest c (processCMs (rightSortedModels)) (getComparisonsHighlightParameters rightSortedModels rightcmcResultsParsed))
-  printSVG svgsize (drawCMGuideForest c (processCMs (models)) (getComparisonsHighlightParameters models rightcmcResultsParsed))
+  let comparisonsHighlightParameters = getComparisonsHighlightParameters models rightcmcResultsParsed
+  print comparisonsHighlightParameters
+  printSVG svgsize (drawCMGuideForest c (processCMs (models)) (comparisonsHighlightParameters))
 
 
 

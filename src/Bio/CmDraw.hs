@@ -21,11 +21,11 @@ import Graphics.SVGFonts.ReadFont
 -- | Draw one or more CM guide trees and concatenate them vertically
 -- drawCMGuideForest :: (Renderable a b) => [[(String,String)]] -> QDiagram b0 R2 Any
 drawCMGuideForest modelDetail cms comparisonshighlightparameter 
-  | modelDetail == "simple" = alignTL (vcat' with { sep = 8 } (drawCMGuideTrees modelDetail  cms)) <> (cat (r2 (0,0)) (highlightComparisonTrails comparisonshighlightparameter))
+  | modelDetail == "simple" = alignTL (vcat' with { sep = 8 } (drawCMGuideTrees modelDetail  cms)) <> (mconcat (highlightComparisonTrails comparisonshighlightparameter))
 --  | modelDetail == "detailed" = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees cms)) <> highlightComparisonTrail 1 5 2 10 1 50 2 80 
 --  | modelDetail == "detailed" = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees cms)) <> (cat (r2 (0,0)) (highlightComparisonTrails comparisonshighlightparameter))
-    | modelDetail == "detailed" = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (cat (r2 (0.1,0.1))  (highlightComparisonTrails comparisonshighlightparameter))
-  | otherwise = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (cat (r2 (0,0)) (highlightComparisonTrails comparisonshighlightparameter))
+    | modelDetail == "detailed" = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (mconcat (highlightComparisonTrails comparisonshighlightparameter))
+  | otherwise = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (mconcat (highlightComparisonTrails comparisonshighlightparameter))
 
 -- | Highlight comparison by connecting the delimiting nodes of the aligned nodes of both models
 -- takes the model identifier of both models and the starting and ending nodes of both models as arguments.
