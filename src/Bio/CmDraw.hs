@@ -21,40 +21,50 @@ import Graphics.SVGFonts.ReadFont
 -- | Draw one or more CM guide trees and concatenate them vertically
 -- drawCMGuideForest :: (Renderable a b) => [[(String,String)]] -> QDiagram b0 R2 Any
 drawCMGuideForest modelDetail cms comparisonshighlightparameter 
-  | modelDetail == "simple" = alignTL (vcat' with { sep = 8 } (drawCMGuideTrees modelDetail  cms)) <> (mconcat (highlightComparisonTrails comparisonshighlightparameter))
---  | modelDetail == "detailed" = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees cms)) <> highlightComparisonTrail 1 5 2 10 1 50 2 80 
---  | modelDetail == "detailed" = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees cms)) <> (cat (r2 (0,0)) (highlightComparisonTrails comparisonshighlightparameter))
-    | modelDetail == "detailed" = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (mconcat (highlightComparisonTrails comparisonshighlightparameter))
-  | otherwise = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (mconcat (highlightComparisonTrails comparisonshighlightparameter))
+  | modelDetail == "simple" = alignTL (vcat' with { sep = 8 } (drawCMGuideTrees modelDetail  cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
+    | modelDetail == "detailed" = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
+  | otherwise = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
 
 -- | Highlight comparison by connecting the delimiting nodes of the aligned nodes of both models
 -- takes the model identifier of both models and the starting and ending nodes of both models as arguments.
 -- highlightComparisonLines ::
-highlightComparisonLines a b c d e f g h = highlightComparisonIntervalBoundry a b c d <> highlightComparisonIntervalBoundry e f g h
+--highlightComparisonLines a b c d e f g h = highlightComparisonIntervalBoundry a b c d <> highlightComparisonIntervalBoundry e f g h
 
 -- highlightComparisonIntervalBoundry ::
-highlightComparisonIntervalBoundry model1index node1index model2index node2index = connectionLine (getNodeCoordinates model1index node1index) (getNodeCoordinates model2index node2index)
+highlightComparisonIntervalBoundry model1index node1index model2index node2index = connectionLine (getNodeCoordinates "detailed" model1index node1index) (getNodeCoordinates "detailed" model2index node2index)
 
 
-highlightComparisonTrails trails  = map highlightComparisonTrail trails
+highlightComparisonTrails modelDetail trails  = map (highlightComparisonTrail modelDetail) trails
 
 -- | Highlight comparison by connecting the all of the aligned nodes of both models
 -- highlightComparisonTrail ::
-highlightComparisonTrail (a,b,c,d,e,f,g,h) = connectionTrail (getNodeCoordinates a b) (getNodeCoordinates c d) (getNodeCoordinates e f) (getNodeCoordinates g h)
+highlightComparisonTrail modelDetail (a,b,c,d,e,f,g,h) = connectionTrail (getNodeCoordinates modelDetail a b) (getNodeCoordinates modelDetail c d) (getNodeCoordinates  modelDetail e f) (getNodeCoordinates modelDetail g h)
 
 -- | Returns the center coordinates for an Covariance model guide tree node
-getNodeCoordinates :: Int -> Int -> P2
-getNodeCoordinates modelindex nodeindex = p2 (fromIntegral x, fromIntegral y)
-   where y = (getYCoordinate modelindex 0) * (-1)
-         x = (5 + (10 * (nodeindex - 1 )))
+getNodeCoordinates :: String -> Int -> Int -> P2
+getNodeCoordinates modelDetail modelindex nodeindex 
+   | modelDetail == "detailed" = p2 (fromIntegral x, fromIntegral y)
+   | modelDetail == "simple" = p2 (fromIntegral a, fromIntegral b)
+   | otherwise = p2 (fromIntegral x, fromIntegral y)
+      where y = (getYCoordinateDetailed modelindex 0) * (-1)
+            x = (5 + (10 * (nodeindex - 1 )))
+            a = (1 + (2 * (nodeindex - 1 )))
+            b = (getYCoordinateSimple modelindex 0) * (-1)
+
 
 -- |  Computes the y coodinate for comparison highlighting, so that the
 -- line or area starts at the lower edge of the cm representation and ends right above it
-getYCoordinate :: Int -> Int -> Int 
-getYCoordinate modelindex ycoordinate
+getYCoordinateDetailed :: Int -> Int -> Int 
+getYCoordinateDetailed modelindex ycoordinate
     | modelindex == 0 = ycoordinate 
-    | even modelindex = getYCoordinate (modelindex - 1) (ycoordinate + 40) 
-    | odd modelindex = getYCoordinate (modelindex - 1) (ycoordinate + 10) 
+    | even modelindex = getYCoordinateDetailed (modelindex - 1) (ycoordinate + 40) 
+    | odd modelindex = getYCoordinateDetailed (modelindex - 1) (ycoordinate + 10) 
+
+getYCoordinateSimple :: Int -> Int -> Int 
+getYCoordinateSimple modelindex ycoordinate
+    | modelindex == 0 = ycoordinate 
+    | even modelindex = getYCoordinateSimple (modelindex - 1) (ycoordinate + 8) 
+    | odd modelindex = getYCoordinateSimple (modelindex - 1) (ycoordinate + 2) 
 
 -- connectionLine :: Int-> Int -> Int -> Int -> 
 connectionLine a b = fromVertices [a,b] # lw 0.5 # lc green
