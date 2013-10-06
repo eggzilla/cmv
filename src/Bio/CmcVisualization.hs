@@ -30,17 +30,23 @@ import qualified Data.String.Utils as DSU
 data Options = Options            
   { cmcompareResultFile :: CmcompareResultFile,
     modelsFile :: ModelsFile,
-    modelDetail :: ModelDetail
+    modelDetail :: ModelDetail,
+    modelLayout :: ModelLayout,
+    comparisonAlignment :: ComparisonAlignment
   } deriving (Show,Data,Typeable)
 
 type CmcompareResultFile = String
 type ModelsFile = String
 type ModelDetail = String
+type ModelLayout = String
+type ComparisonAlignment = String
 
 options = Options
   { cmcompareResultFile = def &= name "r" &= help "Path to CMCompare result file",
     modelsFile = def &= name "m" &= help "Path to covariance model file",
-    modelDetail = "detailed" &= name "d" &= help "Set verbosity of drawn models: simple, detailed, tree"
+    modelDetail = "detailed" &= name "d" &= help "Set verbosity of drawn models: simple, detailed",
+    modelLayout = "flat" &= name "l" &= help "Set layout of drawn models: flat, tree",
+    comparisonAlignment = "model" &= name "a" &= help "Set layout of drawn models: model, comparison"
   } &= summary "CMCV devel version" &= help "Florian Eggenhofer - 2013" &= verbosity
 
 processCMs :: [CM.CM] -> [[(String,String)]]
@@ -72,7 +78,6 @@ findMissing check models = find (\x -> getCMName x /= check) models
 
 getCMName :: CM.CM -> String
 getCMName x = DSU.strip  (BS.unpack (unIDD (CM._name x)))
---getCMName x = (unIDD (CM._name x))
 
 checkCMCResultsParsed x 
   | null x = print "Parsing comparisons - done\n"
@@ -111,7 +116,7 @@ main = do
   let rightcmcResultsParsed = rights cmcResultParsed
   let comparisonModelNames = getModelsNames rightcmcResultsParsed
   print comparisonModelNames
-  let findbtest = findModel "d" models
+  --let findbtest = findModel "d" models
   
   --print findbtest
   --print models 

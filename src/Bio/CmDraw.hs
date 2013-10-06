@@ -22,7 +22,7 @@ import Graphics.SVGFonts.ReadFont
 -- drawCMGuideForest :: (Renderable a b) => [[(String,String)]] -> QDiagram b0 R2 Any
 drawCMGuideForest modelDetail cms comparisonshighlightparameter 
   | modelDetail == "simple" = alignTL (vcat' with { sep = 8 } (drawCMGuideTrees modelDetail  cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
-    | modelDetail == "detailed" = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
+  | modelDetail == "detailed" = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
   | otherwise = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
 
 -- | Highlight comparison by connecting the delimiting nodes of the aligned nodes of both models
