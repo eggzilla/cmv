@@ -25,8 +25,9 @@ import Data.Either
 import qualified Data.ByteString.Char8 as BS
 import Language.Haskell.TH.Ppr
 import Text.Parsec.Error
-import qualified Data.String.Utils as DSU
- 
+import qualified Data.Text as T
+import qualified Data.Vector as V
+
 data Options = Options            
   { cmcompareResultFile :: CmcompareResultFile,
     modelsFile :: ModelsFile,
@@ -53,10 +54,14 @@ processCMs :: [CM.CM] -> [[(String,String)]]
 processCMs cms = map processCMGuideTree cms
 
 processCMGuideTree :: CM.CM -> [(String,String)]
-processCMGuideTree cm = map getNodeInfo (Map.assocs (CM._nodes cm))
+--processCMGuideTree cm = map getNodeInfo (Map.assocs (CM._nodes cm))
+processCMGuideTree cm = map getNodeInfo (V.toList (CM._nodes cm))
 
-getNodeInfo :: (CM.NodeID, (CM.NodeType, [CM.StateID])) -> (String,String)
-getNodeInfo (nodeid, (nodetype, _ )) = (show (CM.unNodeID nodeid) , (show nodetype))
+--getNodeInfo :: (CM.Node, (CM.NodeType, [CM.State])) -> (String,String)
+--getNodeInfo (nodeid, (nodetype, _ )) = (show (CM._nId nodeid) , (show nodetype))
+
+getNodeInfo :: CM.Node -> (String,String)
+getNodeInfo node = (show (CM._nid node) , show (CM._ntype node))
 
 sortModelsByComparisonResults :: [String] -> [CM.CM] -> [Either String CM.CM]
 sortModelsByComparisonResults cmComparisonNames models = map (\x -> findModelError x (findModel x models)) cmComparisonNames
@@ -77,7 +82,7 @@ findMissing :: String -> [CM.CM] -> Maybe CM.CM
 findMissing check models = find (\x -> getCMName x /= check) models
 
 getCMName :: CM.CM -> String
-getCMName x = DSU.strip  (BS.unpack (unIDD (CM._name x)))
+getCMName x = filter (\c -> c /= ' ')  (T.unpack (CM._name x))
 
 checkCMCResultsParsed x 
   | null x = print "Parsing comparisons - done\n"

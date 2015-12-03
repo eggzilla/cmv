@@ -1,5 +1,9 @@
 -- | Drawing of covariance model (http://www.tbi.univie.ac.at/software/cmcompare/) guide trees and highlighting comparison results
 -- Drawing is done with the diagrams package
+{-# LANGUAGE NoMonomorphismRestriction #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeFamilies     #-}
+
 
 module CmDraw
     (
@@ -16,14 +20,15 @@ import Diagrams.TwoD
 import Diagrams.Path
 import Diagrams.Backend.SVG
 import Data.Colour.SRGB
+import Graphics.SVGFonts
 import Graphics.SVGFonts.ReadFont
   
 -- | Draw one or more CM guide trees and concatenate them vertically
 -- drawCMGuideForest :: (Renderable a b) => [[(String,String)]] -> QDiagram b0 R2 Any
 drawCMGuideForest modelDetail cms comparisonshighlightparameter 
-  | modelDetail == "simple" = alignTL (vcat' with { sep = 8 } (drawCMGuideTrees modelDetail  cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
-  | modelDetail == "detailed" = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
-  | otherwise = alignTL (vcat' with { sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
+  | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (drawCMGuideTrees modelDetail  cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
+  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
+  | otherwise = alignTL (vcat' with { _sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
 
 -- | Highlight comparison by connecting the delimiting nodes of the aligned nodes of both models
 -- takes the model identifier of both models and the starting and ending nodes of both models as arguments.
@@ -41,7 +46,7 @@ highlightComparisonTrails modelDetail trails  = map (highlightComparisonTrail mo
 highlightComparisonTrail modelDetail (a,b,c,d,e,f,g,h) = connectionTrail (getNodeCoordinates modelDetail a b) (getNodeCoordinates modelDetail c d) (getNodeCoordinates  modelDetail e f) (getNodeCoordinates modelDetail g h)
 
 -- | Returns the center coordinates for an Covariance model guide tree node
-getNodeCoordinates :: String -> Int -> Int -> P2
+getNodeCoordinates :: String -> Int -> Int -> P2 Double
 getNodeCoordinates modelDetail modelindex nodeindex 
    | modelDetail == "detailed" = p2 (fromIntegral x, fromIntegral y)
    | modelDetail == "simple" = p2 (fromIntegral a, fromIntegral b)
@@ -73,7 +78,7 @@ connectionLine a b = fromVertices [a,b] # lw 0.5 # lc green
 connectionTrail a b c d = stroke (paralellogram a b c d ) # fc aqua # fillRule EvenOdd # lc black # lw 0.1
 mkPath a b c d = position [a,b,c,d,a]
               
-paralellogram :: P2 -> P2 -> P2 -> P2 -> Path R2
+--paralellogram :: P2 Double -> P2  Double -> P2  Double -> P2  Double -> Path P2 Double 
 paralellogram a b c d = pathFromTrailAt (closeTrail (trailFromVertices [a,b,d,c,a])) a
 
 -- | Draw the Guide Trees of multiple CMs, utilizes drawCMGuideNode
@@ -117,7 +122,9 @@ labelToColor _ = sRGB24 245 245 245
 --scaling
 -- | Specifies the size of the diagram. Absolute adapts to overall size according to subdiagrams
 --svgsize processedCMs = mkSizeSpec (svgwidth processedCMs) (svglength processedCMs)
-svgsize = Absolute
+--svgsize = Absolute
+svgsize :: SizeSpec V2 Double
+svgsize = mkSizeSpec2D Nothing Nothing
 diagramName = "./testdiagram.svg"
 
 -- | Print drawn diagram as svg, already curried with diagram name, svgsize and the drawing have to specified
