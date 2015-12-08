@@ -103,13 +103,16 @@ getComparisonsHighlightParameters sortedmodels comp = map (getComparisonHighligh
 
 getComparisonHighlightParameters :: [CM.CM] -> CmcompareResult -> (Int,Int,Int,Int,Int,Int,Int,Int)
 getComparisonHighlightParameters sortedmodels comp = (a,b,c,d,a,f,c,e)
-  where a = (fromJust (findModelIndex (model1Name comp) sortedmodels) +1)
+  where --a = (fromJust (findModelIndex (model1Name comp) sortedmodels) + 1)
+        a = 1
         b = head (model1matchednodes comp)
-        c = (fromJust (findModelIndex (model2Name comp) sortedmodels) + 1)
+        --c = (fromJust (findModelIndex (model2Name comp) sortedmodels) + 1)
+        c = 2
         d = head (model2matchednodes comp)
         e = last (model2matchednodes comp)
         f = last (model1matchednodes comp)
- 
+
+main :: IO ()
 main = do
   Options{..} <- cmdArgs options
   let a = modelsFile
@@ -120,6 +123,9 @@ main = do
   checkCMCResultsParsed (lefts cmcResultParsed)
   let rightcmcResultsParsed = rights cmcResultParsed
   let comparisonModelNames = getModelsNames rightcmcResultsParsed
+  --print (T.unpack (CM._name (models !!0)))
+  --print (T.unpack (CM._name (models !!1)))
+  --print rightcmcResultsParsed
   print comparisonModelNames
   --let findbtest = findModel "d" models
   
