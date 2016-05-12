@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RankNTypes #-}
 
 -- | Visualize detailed comparsions of Infernal Covariance Models
 --   Datastructures and parsing of covariance models is provided by Biobase
@@ -11,23 +12,16 @@ module Main where
 
 import CmcompareResult
 import CmDraw
-import Control.Monad    
-import Biobase.Primary
 import qualified Biobase.SElab.CM as CM
-import Biobase.SElab.Types
-import qualified Data.Map as Map
 import Biobase.SElab.CM.Import     
 import System.Console.CmdArgs
-import Text.Printf
-import Data.Maybe
 import Data.List
 import Data.Either
-import qualified Data.ByteString.Char8 as BS
-import Language.Haskell.TH.Ppr
 import Text.Parsec.Error
 import qualified Data.Text as T
 import qualified Data.Vector as V
 
+options :: Options
 data Options = Options            
   { cmcompareResultFile :: CmcompareResultFile,
     modelsFile :: ModelsFile,
@@ -61,7 +55,7 @@ processCMGuideTree cm = map getNodeInfo (V.toList (CM._nodes cm))
 --getNodeInfo (nodeid, (nodetype, _ )) = (show (CM._nId nodeid) , (show nodetype))
 
 getNodeInfo :: CM.Node -> (String,String)
-getNodeInfo node = (show (CM._nid node) , show (CM._ntype node))
+getNodeInfo _node = (show (CM._nid _node) , show (CM._ntype _node))
 
 sortModelsByComparisonResults :: [String] -> [CM.CM] -> [Either String CM.CM]
 sortModelsByComparisonResults cmComparisonNames models = map (\x -> findModelError x (findModel x models)) cmComparisonNames
@@ -69,8 +63,8 @@ sortModelsByComparisonResults cmComparisonNames models = map (\x -> findModelErr
 -- ++ (map (\x -> findModelError x (findMissing x models)) cmComparisonNames)
 
 findModelError :: String -> Maybe CM.CM -> Either String CM.CM
-findModelError name (Just model) = Right model
-findModelError name Nothing = Left ("Model " ++ name ++ "that is present in comparison file is not present in model file")
+findModelError _name (Just model) = Right model
+findModelError _name Nothing = Left ("Model " ++ _name ++ "that is present in comparison file is not present in model file")
 
 findModel :: String -> [CM.CM] -> Maybe CM.CM
 findModel check models = find (\x -> getCMName x == check) models
@@ -84,16 +78,19 @@ findMissing check models = find (\x -> getCMName x /= check) models
 getCMName :: CM.CM -> String
 getCMName x = filter (\c -> c /= ' ')  (T.unpack (CM._name x))
 
+checkCMCResultsParsed :: [ParseError] -> IO ()
 checkCMCResultsParsed x 
   | null x = print "Parsing comparisons - done\n"
-  | otherwise = error ("Following errors occured:" ++ (concat (map checkCmcResultParsed x)))
+  | otherwise = error ("Following errors occured:" ++ (concat (map checkCMCResultParsed x)))
 
-checkCmcResultParsed x = (concat (map messageString (errorMessages x)))
+checkCMCResultParsed :: ParseError -> String
+checkCMCResultParsed x = (concat (map messageString (errorMessages x)))
 --  | (errorIsUnknown x) = print "Parsing comparisons - done\n" 
 --  | x == [] = print "Parsing comparisons - done\n"
 --  | otherwise = (concat (map messageString (errorMessages x)))
 --  | otherwise = error ("Following errors occured :" ++ (concat (map (\y -> (concat (map messageString (errorMessages y)))) x)))
 
+checkSortedModels :: forall a. (Eq a, Show a) => [[a]] -> IO ()
 checkSortedModels x
   | x == [] = print "Sorting input models to comparison list - done\n" 
   | otherwise = error ("Following errors occured :" ++ show (concat x))
@@ -115,11 +112,8 @@ getComparisonHighlightParameters sortedmodels comp = (a,b,c,d,a,f,c,e)
 main :: IO ()
 main = do
   Options{..} <- cmdArgs options
-  let a = modelsFile
-  let b = cmcompareResultFile
-  let c = modelDetail 
-  models <- fromFile a
-  cmcResultParsed <- getCmcompareResults b              
+  models <- fromFile modelsFile
+  cmcResultParsed <- getCmcompareResults cmcompareResultFile
   checkCMCResultsParsed (lefts cmcResultParsed)
   let rightcmcResultsParsed = rights cmcResultParsed
   let comparisonModelNames = getModelsNames rightcmcResultsParsed
@@ -139,7 +133,7 @@ main = do
 --printSVG svgsize (drawCMGuideForest c (processCMs (rightSortedModels)) (getComparisonsHighlightParameters rightSortedModels rightcmcResultsParsed))
   let comparisonsHighlightParameters = getComparisonsHighlightParameters models rightcmcResultsParsed
   print comparisonsHighlightParameters
-  printSVG svgsize (drawCMGuideForest c (processCMs (models)) (comparisonsHighlightParameters))
+  printSVG svgsize (drawCMGuideForest modelDetail (processCMs (models)) (comparisonsHighlightParameters))
 
 
 
