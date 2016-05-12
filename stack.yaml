@@ -1,0 +1,5 @@
+flags: {}
+packages:
+- '.'
+compiler-check: newer-minor
+resolver: lts-5.3
