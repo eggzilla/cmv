@@ -1,5 +1,43 @@
-flags: {}
+# For more information, see: https://github.com/commercialhaskell/stack/blob/master/doc/yaml_configuration.md
+
+# Specifies the GHC version and set of packages available (e.g., lts-3.5, nightly-2015-09-21, ghc-7.10.2)
+resolver: lts-3.16
+# Local packages, usually specified by relative directory name
 packages:
-- '.'
-compiler-check: newer-minor
-resolver: lts-5.3
+- '../Lib-BiobaseInfernal'
+
+# Packages to be pulled from upstream that are not in the resolver (e.g., acme-missiles-0.3)
+extra-deps:
+- ADPfusion-0.5.0.0
+- bimaps-0.0.0.4
+- BiobaseTypes-0.1.1.1
+- BiobaseXNA-0.9.2.1
+- cereal-text-0.1.0.1
+- OrderedBits-0.0.1.0
+- PrimitiveArray-0.7.0.0
+- storable-record-0.0.3
+- storable-tuple-0.0.2
+- utility-ht-0.0.11
+- vector-0.11.0.0
+- aeson-0.9.0.1
+- attoparsec-0.13.0.2
+
+# TODO fix deps so that this works for the hackage version
+
+# Override default flag values for local packages and extra-deps
+flags: {}
+
+# Control whether we use the GHC we find on the path
+# system-ghc: true
+
+# Require a specific version of stack, using version ranges
+# require-stack-version: -any # Default
+# require-stack-version: >= 0.1.4.0
+
+# Override the architecture used by stack, especially useful on Windows
+# arch: i386
+# arch: x86_64
+
+# Extra directories used by stack for building
+# extra-include-dirs: [/path/to/dir]
+# extra-lib-dirs: [/path/to/dir]
