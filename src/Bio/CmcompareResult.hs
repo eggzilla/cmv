@@ -52,26 +52,26 @@ parseFloat = do sign <- option 1 (do s <- oneOf "+-"
 parseCmcompareResult :: GenParser Char st CmcompareResult
 parseCmcompareResult = do
     name1 <-  many1 (noneOf " ")
-    many1 space
+    _ <- many1 space
     name2 <-  many1 (noneOf " ")
-    many1 space
+    _ <- many1 space
     score1 <- many1 (noneOf " ")
-    many1 space
+    _ <- many1 space
     score2 <- many1 (noneOf " ")
-    many1 space
+    _ <- many1 space
     linkseq <- many1 (oneOf "AGTCUagtcu")
-    many1 space
+    _ <- many1 space
     structure1 <- many1 (oneOf "(,.)")
-    many1 space
+    _ <- many1 space
     structure2 <- many1 (oneOf "(,.)")
-    many1 space
-    char '['
+    _ <- many1 space
+    _ <- char '['
     nodes1 <- many1 parseMatchedNodes
     char ']'
-    many1 space
-    char '['
+    _ <- many1 space
+    _ <- char '['
     nodes2 <- many1 parseMatchedNodes
-    char ']'
+    _ <- char ']'
     return $ CmcompareResult name1 name2 (readDouble score1) (readDouble score2) linkseq structure1 structure2 nodes1 nodes2
 
 -- | Parse indices of matched nodes between models as integers
