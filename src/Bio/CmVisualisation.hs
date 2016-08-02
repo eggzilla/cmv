@@ -3,7 +3,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RankNTypes #-}
 
--- | Visualize detailed comparsions of Infernal Covariance Models
+-- | Visualize Infernal Covariance Models
 --   Datastructures and parsing of covariance models is provided by Biobase
 --   Visualization is accomplished with diagrams-svg
 --   For more information on Infernal consult <http://eddylab.org/infernal/>
@@ -20,29 +20,21 @@ import Data.Either
 import Text.Parsec.Error
 import qualified Data.Text as T
 import qualified Data.Vector as V
+import System.Directory
 
 options :: Options
 data Options = Options            
-  { cmcompareResultFile :: CmcompareResultFile,
-    modelsFile :: ModelsFile,
-    modelDetail :: ModelDetail,
-    modelLayout :: ModelLayout,
-    comparisonAlignment :: ComparisonAlignment
+  { modelFile :: String,
+    modelDetail :: String,
+    modelLayout :: String
   } deriving (Show,Data,Typeable)
 
-type CmcompareResultFile = String
-type ModelsFile = String
-type ModelDetail = String
-type ModelLayout = String
-type ComparisonAlignment = String
 
 options = Options
-  { cmcompareResultFile = def &= name "r" &= help "Path to CMCompare result file",
-    modelsFile = def &= name "m" &= help "Path to covariance model file",
+  { modelsFile = def &= name "m" &= help "Path to covariance model file",
     modelDetail = "detailed" &= name "d" &= help "Set verbosity of drawn models: simple, detailed",
     modelLayout = "flat" &= name "l" &= help "Set layout of drawn models: flat, tree",
-    comparisonAlignment = "model" &= name "a" &= help "Set layout of drawn models: model, comparison"
-  } &= summary "CMCV devel version" &= help "Florian Eggenhofer - 2013-2016" &= verbosity
+  } &= summary "CMV devel version" &= help "Florian Eggenhofer - 2013-2016" &= verbosity
 
 processCMs :: [CM.CM] -> [[(String,String)]]
 processCMs cms = map processCMGuideTree cms
@@ -112,35 +104,9 @@ getComparisonHighlightParameters sortedmodels comp = (a,b,c,d,a,f,c,e)
 main :: IO ()
 main = do
   Options{..} <- cmdArgs options
-  --Validate input
-  modelFileExists <- doesFileExist modelsFile
-  cmcFileExists <- doesFileExist cmcompareResultFile
-  if modelFileExists && cmcFileExists
+  if doesFileExist modelsFile
      then do
-       models <- fromFile modelsFile
-       cmcResultParsed <- getCmcompareResults cmcompareResultFile
-       checkCMCResultsParsed (lefts cmcResultParsed)
-       let rightcmcResultsParsed = rights cmcResultParsed
-       let comparisonModelNames = getModelsNames rightcmcResultsParsed
-       --print (T.unpack (CM._name (models !!0)))
-       --print (T.unpack (CM._name (models !!1)))
-       --print rightcmcResultsParsed
-       print comparisonModelNames
-       --let findbtest = findModel "d" models
-       --print findbtest
-       --print models 
-       --let sortedModels = sortModelsByComparisonResults comparisonModelNames models
-       --print "Begin sorted Models:\n"
-       --checkSortedModels (lefts sortedModels)
-       --let rightSortedModels = (rights sortedModels)
-       --print sortedModels
-       --printSVG svgsize (drawCMGuideForest c (processCMs (rightSortedModels)) (getComparisonsHighlightParameters rightSortedModels rightcmcResultsParsed))
-       let comparisonsHighlightParameters = getComparisonsHighlightParameters models rightcmcResultsParsed
-       print comparisonsHighlightParameters
-       printSVG svgsize (drawCMGuideForest modelDetail (processCMs (models)) (comparisonsHighlightParameters)) 
+       model <- fromFile modelFile
+       printSVG svgsize (drawCMGuideTree modelDetail (processCMs (model)))
      else do
-       if modelFileExists then return () else putStrLn "Model file not found"
-       if cmcFileExists then return () else putStrLn "Comparison file not found"
-
-
-  
+       putStrLn "Input model file not found"
