@@ -2,7 +2,7 @@
 -- see http://haskell.org/cabal/users-guide/
 
 name:                cmcv
-version:             0.0.1
+version:             1.0.0
 synopsis:            Detailed visualization of covariance model relationships
 -- description:         
 license:             GPL-3
@@ -16,14 +16,14 @@ cabal-version:       >=1.8
 
 executable cmcv
   Hs-Source-Dirs:      ./src/Bio/
-  main-is:	       CmcVisualization.hs
+  main-is:	       CmcVisualisation.hs
   ghc-options:         -Wall -O2
-  build-depends:       base >=4.5, cmdargs, BiobaseInfernal==0.8.0.0, BiobaseXNA, diagrams-svg, diagrams-lib, parsec, SVGFonts, colour, containers, bytestring, template-haskell, text, vector
+  build-depends:       base >=4.5, cmdargs, BiobaseInfernal==0.8.0.0, BiobaseXNA, diagrams-svg, diagrams-lib, parsec, SVGFonts, colour, containers, bytestring, template-haskell, text, vector, directory
   other-modules:       CmDraw, CmcompareResult
 
 executable cmv
   Hs-Source-Dirs:      ./src/Bio/
-  main-is:	       CmVisualization.hs
+  main-is:	       CmVisualisation.hs
   ghc-options:         -Wall -O2
-  build-depends:       base >=4.5, cmdargs, BiobaseInfernal==0.8.0.0, BiobaseXNA, diagrams-svg, diagrams-lib, parsec, SVGFonts, colour, containers, bytestring, template-haskell, text, vector
+  build-depends:       base >=4.5, cmdargs, BiobaseInfernal==0.8.0.0, BiobaseXNA, diagrams-svg, diagrams-lib, parsec, SVGFonts, colour, containers, bytestring, template-haskell, text, vector, directory
   other-modules:       CmDraw, CmcompareResult

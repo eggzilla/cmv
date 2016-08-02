@@ -7,6 +7,11 @@ module CmcompareResult
      CmcompareResult,
      model1Name,
      model2Name,
+     linkscore1, 
+     linkscore2,
+     linksequence,
+     model1structure,
+     model2structure,
      model1matchednodes,
      model2matchednodes,
      getCmcompareResults,
@@ -67,7 +72,7 @@ parseCmcompareResult = do
     _ <- many1 space
     _ <- char '['
     nodes1 <- many1 parseMatchedNodes
-    char ']'
+    _ <- char ']'
     _ <- many1 space
     _ <- char '['
     nodes2 <- many1 parseMatchedNodes
@@ -82,6 +87,7 @@ parseMatchedNodes = do
     return $ (readInt nodeNumber)
 
 -- | Parser for CMCompare result strings
+getCmcompareResults :: FilePath -> IO [Either ParseError CmcompareResult]    
 getCmcompareResults filePath = let
         fp = filePath
         doParseLine' = parse parseCmcompareResult "parseCMCompareResults"
