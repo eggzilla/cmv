@@ -7,7 +7,8 @@
 
 module Main where
 
-import Bio.HMMParser
+import HMMData
+import HMMParser
 import System.Console.CmdArgs
 import Data.Either
 import System.Directory

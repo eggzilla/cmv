@@ -14,23 +14,51 @@ category:            Bioinformatics
 build-type:          Simple
 cabal-version:       >=1.8
 
+extra-source-files:
+  README.md changelog
+
+source-repository head
+  type:     git
+  location: https://github.com/eggzilla/cmcv
+
+source-repository this
+  type:     git
+  location: https://github.com/eggzilla/cmcv/tree/1.0.0
+  tag:      1.0.0
+
+library
+  -- Modules exported by the library.
+  exposed-modules:   Bio.HMMData
+                     Bio.HMMParser
+                     Bio.CMDraw
+                     Bio.CMCompareResult
+
+  -- compiler-options:
+  ghc-options:         -Wall -O2 -fno-warn-unused-do-bind
+
+  -- Other library packages from which modules are imported.
+  build-depends:       base >=4.5 && <5, parsec>=3.1.9, diagrams-lib, diagrams-svg, SVGFonts, BiobaseInfernal, text, vector
+  
+  -- Directories containing source files.
+  hs-source-dirs:      src
+
 executable cmcv
   Hs-Source-Dirs:      ./src/Bio/
   main-is:	       CmcVisualisation.hs
   ghc-options:         -Wall -O2
   build-depends:       base >=4.5, cmdargs, BiobaseInfernal==0.8.0.0, BiobaseXNA, diagrams-svg, diagrams-lib, parsec, SVGFonts, colour, containers, bytestring, template-haskell, text, vector, directory
-  other-modules:       CmDraw, CmcompareResult
+  other-modules:       Bio.CMDraw, Bio.CMCompareResult
 
 executable cmv
   Hs-Source-Dirs:      ./src/Bio/
   main-is:	       CmVisualisation.hs
   ghc-options:         -Wall -O2
   build-depends:       base >=4.5, cmdargs, BiobaseInfernal==0.8.0.0, BiobaseXNA, diagrams-svg, diagrams-lib, parsec, SVGFonts, colour, containers, bytestring, template-haskell, text, vector, directory
-  other-modules:       CmDraw, CmcompareResult
+  other-modules:       Bio.CMDraw, Bio.CMCompareResult
 
 executable hmmv
   Hs-Source-Dirs:      ./src/Bio/
   main-is:	       HMMVisualisation.hs
   ghc-options:         -Wall -O2
   build-depends:       base >=4.5, cmdargs, diagrams-svg, diagrams-lib, parsec, SVGFonts, colour, containers, bytestring, text, vector, directory
-  other-modules:       HMMParser
+  other-modules:       Bio.HMMParser, Bio.HMMData

@@ -10,8 +10,8 @@
 
 module Main where
 
-import CmcompareResult
-import CmDraw
+import Bio.CMCompareResult
+import Bio.CMDraw
 import qualified Biobase.SElab.CM as CM
 import Biobase.SElab.CM.Import     
 import System.Console.CmdArgs

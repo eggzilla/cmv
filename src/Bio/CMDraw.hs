@@ -5,7 +5,7 @@
 {-# LANGUAGE TypeFamilies     #-}
 {-# LANGUAGE RankNTypes #-}
 
-module CmDraw
+module Bio.CMDraw
     (
      drawCMGuideForestComparison, 
      drawCMGuideForest,
@@ -37,7 +37,7 @@ import Diagrams.Prelude
 import Diagrams.Backend.SVG
 import Graphics.SVGFonts
 import Data.Typeable.Internal
-import CmcompareResult
+import Bio.CMCompareResult
 import qualified Biobase.SElab.CM as CM
 import Data.List
 import Text.Parsec.Error

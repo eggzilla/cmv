@@ -1,9 +1,9 @@
 -- | Datastructures for nHMMER hidden Markov models, representing RNA families
 --   For more information on nHMMER consult <http://eddylab.org/infernal/>
 
-module Bio.HmmData where
+module Bio.HMMData where
 
-import qualified Data.Vectors as V
+import qualified Data.Vector as V
 
 -- | Data structure for HMMER
 data HMMER3 = HMMER3

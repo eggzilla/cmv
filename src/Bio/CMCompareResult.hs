@@ -2,7 +2,7 @@
 --   parsing is done with parsec
 --   For more information on CMCompare consult: <http://www.tbi.univie.ac.at/software/cmcompare/>
 
-module CmcompareResult
+module Bio.CMCompareResult
     (
      CmcompareResult,
      model1Name,
