@@ -24,7 +24,44 @@ readHMMER3 filePath = do
 -- | Parse the input as HMMER3 datatype
 genParseHMMER3 :: GenParser Char st HMMER3
 genParseHMMER3 = do
-  _version <- many1 (noneOf " ")      
+  _version <- many1 (noneOf " ")
+  _name <-
+  _acc  <-
+  _desc <-
+  _leng <-
+  _maxl <-
+  _alpha <-
+  _rf <-
+  _mm <-
+  _cons <-
+  _cs <-
+  _map <-
+  _date <-
+  _com <-
+  _nseq <-
+  _effn <-
+  _cksum <-
+  _ga <-
+  _tc <-
+  _nc <-
+  _localmsv <-
+  _localviterbi <-
+  _localforward <-
+  _hmm <-
+  _compo <-
+  _nodes <-
   return $ HMMER3 _version 
 
-         
+-- | Parse HMMER3 node
+parseHMMER3Node :: GenParser Char st HMMER3node
+parseHMMER3Node = do
+  _nodeNumber <-
+  _matchEmissions <-
+  _nma <-
+  _ncs <-
+  _nra <-
+  _nmv <-
+  _ncs <-
+  _insertEmissions <-
+  _transitions <-
+  return $ HMMER3 _nodeNumber _matchEmissions _nma _ncs _nra _nmv _ncs _insertEmissions _transitions
