@@ -5,42 +5,42 @@ module Bio.HmmData where
 
 import qualified Data.Vectors as V
 
--- | Data structure for nHMMER
-data Nhmmer3 = Nhmmer3
+-- | Data structure for HMMER
+data HMMer3 = HMMer3
   {
-    -- file format version; mandatory
+    -- File format version; mandatory
     version :: String,
-    -- model name; mandatory
+    -- Model name; mandatory
     name :: String,
-    -- accession number; optional
+    -- Accession number; optional
     acc :: Maybe String,
-    -- description; optional
+    -- Description; optional
     desc :: Maybe String,
-    -- model length; mandatory
+    -- Model length; mandatory
     leng :: Int,
-    -- maximum instance length; optional
+    -- Maximum instance length; optional
     maxl :: Maybe Int,
-    -- symbol alphabet type either amino, RNA or DNA; mandatory
+    -- Symbol alphabet type either amino, RNA or DNA; mandatory
     alpha :: String,
-    -- reference annotation; optional
+    -- Reference annotation; optional
     rf :: Bool,
-    -- model masked; optional
+    -- Model masked; optional
     mm :: Bool,
-    -- consensus residue annotation flag; Mandatory
+    -- Consensus residue annotation flag; Mandatory
     cons :: Bool,
-    -- consensus structure; optional
+    -- Consensus structure; optional
     cs :: Maybe Bool,
-    -- map annotation; optional
+    -- Map annotation; optional
     map :: Bool,
-    -- date; optional
+    -- Date; optional
     date :: String,
-    -- command line log; optional
+    -- Command line log; optional
     com :: Maybe String,
-    -- sequence number; optional
+    -- Sequence number; optional
     nseq :: Int,
-    -- effective sequence number; optional
+    -- Effective sequence number; optional
     effn :: Double,
-    -- training alignment checksum; optional
+    -- Training alignment checksum; optional
     cksum :: Int,
     -- Pfam gathering treshold; optional
     ga :: Maybe (Double, Double),
@@ -48,18 +48,41 @@ data Nhmmer3 = Nhmmer3
     tc :: Maybe (Double, Double),
     -- Pfam noise cutoff; optional
     nc :: Maybe (Double, Double),
-    --stats
+    -- stats for E-value calculation describing location and slope of distribution; optional
+    -- MSV - Gumpel distribution; optional
     localmsv :: (Double,Double),
+    -- Viterbi - Gumpel distribution; optional
     localviterbi :: (Double,Double),
+    -- Forward - exponential tail fitting; optional
     localforward :: (Double,Double),
-    states :: V.Vector Nhmmerstate
+    -- Symbol characters for this alphabet; mandatory
+    hmm :: V.Vector Char
+    -- Models overall (composite) match state emission probabilities, optional
+    compo :: V.Vector Double,
+    -- HMMER3 nodes
+    nodes :: V.Vector NhmmerNode
   }
   deriving (Show, Eq)
-
-data Nhmmerstate = Nhmmerstate
-  { 
-    matchEmissions :: [Double],
-    insertEmissions :: [Double],
-    transitions :: [Double]
+  
+-- | Data structure for the HMMER3 
+data HMMer3Node = HMMmer3Node
+  {
+    nodeNumber :: Int,
+    -- Match emission score, one per symbol in the alphabet
+    matchEmissions :: V.Vector Double,
+    -- map annotation - number of the alignment column
+    nma :: Maybe Int,
+    -- consensus residue 
+    ncs :: Maybe Char,
+    -- reference annotation
+    nra :: Maybe Char,
+    -- mask value - indicating if this position was masked during model construction
+    nmv :: Bool,
+    -- consensus structure
+    ncs :: Maybe Char,
+    -- insert emission score, one per symbol in the alphabet
+    insertEmissions :: V.Vector Double,
+    --  Transistion scores, m->m m->i m->d i->m i->i d->m d->d
+    transitions :: V.Vector Double
   }
   deriving (Show, Eq)
