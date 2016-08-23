@@ -27,3 +27,10 @@ executable cmv
   ghc-options:         -Wall -O2
   build-depends:       base >=4.5, cmdargs, BiobaseInfernal==0.8.0.0, BiobaseXNA, diagrams-svg, diagrams-lib, parsec, SVGFonts, colour, containers, bytestring, template-haskell, text, vector, directory
   other-modules:       CmDraw, CmcompareResult
+
+executable hmmv
+  Hs-Source-Dirs:      ./src/Bio/
+  main-is:	       HMMVisualisation.hs
+  ghc-options:         -Wall -O2
+  build-depends:       base >=4.5, cmdargs, diagrams-svg, diagrams-lib, parsec, SVGFonts, colour, containers, bytestring, text, vector, directory
+  other-modules:       HMMParser

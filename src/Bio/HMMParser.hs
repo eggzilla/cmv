@@ -55,13 +55,13 @@ genParseHMMER3 = do
 -- | Parse HMMER3 node
 parseHMMER3Node :: GenParser Char st HMMER3node
 parseHMMER3Node = do
-  _nodeNumber <-
-  _matchEmissions <-
-  _nma <-
-  _ncs <-
-  _nra <-
-  _nmv <-
-  _ncs <-
+  _nodeNumber <- 
+  _matchEmissions <- 
+  _nma <- 
+  _ncs <- 
+  _nra <- 
+  _nmv <- 
+  _ncs <- 
   _insertEmissions <-
   _transitions <-
   return $ HMMER3 _nodeNumber _matchEmissions _nma _ncs _nra _nmv _ncs _insertEmissions _transitions

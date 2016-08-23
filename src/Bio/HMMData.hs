@@ -6,7 +6,7 @@ module Bio.HmmData where
 import qualified Data.Vectors as V
 
 -- | Data structure for HMMER
-data HMMer3 = HMMer3
+data HMMER3 = HMMER3
   {
     -- File format version; mandatory
     version :: String,
@@ -64,8 +64,8 @@ data HMMer3 = HMMer3
   }
   deriving (Show, Eq)
   
--- | Data structure for the HMMER3 
-data HMMer3Node = HMMmer3Node
+-- | Data structure for the HMMER3 node
+data HMMER3Node = HMMER3Node
   {
     nodeNumber :: Int,
     -- Match emission score, one per symbol in the alphabet
