@@ -9,6 +9,7 @@ module Bio.HMMParser (
 
 import Bio.HMMData
 import Text.ParserCombinators.Parsec
+import Text.Parsec.Numbers
 import qualified Control.Exception.Base as CE
 
 -- | parse HMMER3 model from input string
@@ -28,37 +29,37 @@ genParseHMMER3 = do
   _version <- many1 (noneOf "\n")
   newline
   string "NAME  "
-  _name <- many1 (noneOf "\n")
+  _name <- many1 alphaNum
   newline
   string "ACC   "
-  _acc  <- many1 (noneOf "\n")
+  _acc  <- many1 alphaNum
   newline
   string "DESC  "
   _desc <- many1 (noneOf "\n")
   newline
   string "LENG  "
-  _leng <- many1 (noneOf "\n")
+  _leng <- parseIntegral
   newline
   string "MAXL  "
-  _maxl <- many1 (noneOf "\n")
+  _maxl <- parseIntegral
   newline
   string "ALPH  "
-  _alpha <- many1 (noneOf "\n")
+  _alpha <- many1 letter
   newline
   string "RF    "
-  _rf <- many1 (noneOf "\n")
+  _rf <- parseSwitch
   newline
   string "MM    "
-  _mm <- many1 (noneOf "\n")
+  _mm <- parseSwitch
   newline
   string "CONS  "
-  _cons <- many1 (noneOf "\n")
+  _cons <- parseSwitch
   newline
   string "CS    "
-  _cs <- many1 (noneOf "\n")
+  _cs <- parseSwitch
   newline
   string "MAP   "
-  _map <- many1 (noneOf "\n")
+  _map <- parseSwitch
   newline
   string "DATE  "
   _date <- many1 (noneOf "\n")
@@ -67,30 +68,30 @@ genParseHMMER3 = do
   _com <- many1 (noneOf "\n")
   newline
   string "NSEQ  "
-  _nseq <- many1 (noneOf "\n")
+  _nseq <- parseIntegral
   newline
   string "EFFN  "
-  _effn <- many1 (noneOf "\n")
+  _effn <- parseFloat
   newline
   string "CKSUM "
-  _cksum <- many1 (noneOf "\n")
+  _cksum <- parseIntegral
   newline
   string "GA    "
-  _ga <- many1 (noneOf "\n")
+  _ga <- parseFloat
   newline
   string "TC    "
-  _tc <- many1 (noneOf "\n")
+  _tc <- parseFloat
   newline
   string "NC    "
-  _nc <- many1 (noneOf "\n")
+  _nc <- parseFloat
   newline
   string "STATS LOCAL MSV       "
-  _localmsv <- many1 (noneOf "\n")
+  _localmsv <- parseStat
   newline
   string "STATS LOCAL VITERBI   "
-  _localviterbi <-
+  _localviterbi <- parseStat
   string "STATS LOCAL FORWARD   "
-  _localforward <-
+  _localforward <- parseStat
   string "HMM"
   _hmm <- many1 parseAlphabetSymbol
   newline
@@ -98,11 +99,17 @@ genParseHMMER3 = do
   _nodes <- many1 parseNodes
   string "//"
   eof
-  return $ HMMER3 _version 
+  return $ HMMER3 _version _name _acc _desc _leng _maxl _alpha _rf _mm _cons _cs _map _date _com _nseq _effn _cksum _ga _tc _nc _localmsv _localviterbi _localforward _hmm _compo _nodes
 
-parseAlphabetSymbol
-
+parseSwitch :: GenParser Char st Bool
+parseSwitch
+parseStat :: GenParser Char st (Double,Double)
+parseStat
+parseAlphabetSymbol :: GenParser Char st Char
+parseAlphabetSymbol 
+parseCOMPOsite  :: GenParser Char st HMMER3node
 parseCOMPOsite
+
 
 -- | Parse HMMER3 node
 parseHMMER3Node :: GenParser Char st HMMER3node
