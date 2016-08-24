@@ -24,33 +24,85 @@ readHMMER3 filePath = do
 -- | Parse the input as HMMER3 datatype
 genParseHMMER3 :: GenParser Char st HMMER3
 genParseHMMER3 = do
-  _version <- many1 (noneOf " ")
-  _name <-
-  _acc  <-
-  _desc <-
-  _leng <-
-  _maxl <-
-  _alpha <-
-  _rf <-
-  _mm <-
-  _cons <-
-  _cs <-
-  _map <-
-  _date <-
-  _com <-
-  _nseq <-
-  _effn <-
-  _cksum <-
-  _ga <-
-  _tc <-
-  _nc <-
-  _localmsv <-
+  string "HMMER3/"
+  _version <- many1 (noneOf "\n")
+  newline
+  string "NAME  "
+  _name <- many1 (noneOf "\n")
+  newline
+  string "ACC   "
+  _acc  <- many1 (noneOf "\n")
+  newline
+  string "DESC  "
+  _desc <- many1 (noneOf "\n")
+  newline
+  string "LENG  "
+  _leng <- many1 (noneOf "\n")
+  newline
+  string "MAXL  "
+  _maxl <- many1 (noneOf "\n")
+  newline
+  string "ALPH  "
+  _alpha <- many1 (noneOf "\n")
+  newline
+  string "RF    "
+  _rf <- many1 (noneOf "\n")
+  newline
+  string "MM    "
+  _mm <- many1 (noneOf "\n")
+  newline
+  string "CONS  "
+  _cons <- many1 (noneOf "\n")
+  newline
+  string "CS    "
+  _cs <- many1 (noneOf "\n")
+  newline
+  string "MAP   "
+  _map <- many1 (noneOf "\n")
+  newline
+  string "DATE  "
+  _date <- many1 (noneOf "\n")
+  newline
+  string "COM   "
+  _com <- many1 (noneOf "\n")
+  newline
+  string "NSEQ  "
+  _nseq <- many1 (noneOf "\n")
+  newline
+  string "EFFN  "
+  _effn <- many1 (noneOf "\n")
+  newline
+  string "CKSUM "
+  _cksum <- many1 (noneOf "\n")
+  newline
+  string "GA    "
+  _ga <- many1 (noneOf "\n")
+  newline
+  string "TC    "
+  _tc <- many1 (noneOf "\n")
+  newline
+  string "NC    "
+  _nc <- many1 (noneOf "\n")
+  newline
+  string "STATS LOCAL MSV       "
+  _localmsv <- many1 (noneOf "\n")
+  newline
+  string "STATS LOCAL VITERBI   "
   _localviterbi <-
+  string "STATS LOCAL FORWARD   "
   _localforward <-
-  _hmm <-
-  _compo <-
-  _nodes <-
+  string "HMM"
+  _hmm <- many1 parseAlphabetSymbol
+  newline
+  _compo <- parseCOMPOsite
+  _nodes <- many1 parseNodes
+  string "//"
+  eof
   return $ HMMER3 _version 
+
+parseAlphabetSymbol
+
+parseCOMPOsite
 
 -- | Parse HMMER3 node
 parseHMMER3Node :: GenParser Char st HMMER3node
