@@ -22,6 +22,7 @@ extra-deps:
 - vector-0.11.0.0
 - aeson-0.9.0.1
 - attoparsec-0.13.0.2
+- ParsecTools-0.0.2.0
 
 # TODO fix deps so that this works for the hackage version
 
