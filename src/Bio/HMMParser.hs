@@ -102,25 +102,40 @@ genParseHMMER3 = do
   return $ HMMER3 _version _name _acc _desc _leng _maxl _alpha _rf _mm _cons _cs _map _date _com _nseq _effn _cksum _ga _tc _nc _localmsv _localviterbi _localforward _hmm _compo _nodes
 
 parseSwitch :: GenParser Char st Bool
-parseSwitch
+parseSwitch = do
+  many1 (oneOf " ")
+  _switch <- string "Yes" <|> string "No"
+  return switch
+
+switchToBool :: String -> Bool
+switchToBool switch
+  | switch == "yes" = True
+  | otherwise = False
+
 parseStat :: GenParser Char st (Double,Double)
-parseStat
+parseStat = do
+  many1 (oneOf " ")
+  _stat1 <- parseFloat
+  many1 (oneOf " ")
+  _stat2 <- parseFloat
+  return (stat1,stat2)
+  
 parseAlphabetSymbol :: GenParser Char st Char
-parseAlphabetSymbol 
-parseCOMPOsite  :: GenParser Char st HMMER3node
-parseCOMPOsite
-
-
+parseAlphabetSymbol = do
+  many1 (oneOf " ")
+  _symbol <- uppercase
+  return symbol
+  
 -- | Parse HMMER3 node
 parseHMMER3Node :: GenParser Char st HMMER3node
 parseHMMER3Node = do
-  _nodeNumber <- 
-  _matchEmissions <- 
-  _nma <- 
-  _ncs <- 
-  _nra <- 
-  _nmv <- 
-  _ncs <- 
-  _insertEmissions <-
-  _transitions <-
-  return $ HMMER3 _nodeNumber _matchEmissions _nma _ncs _nra _nmv _ncs _insertEmissions _transitions
+  _nodeId <- many1 (noneOf "\n")
+  _matchEmissions <- many1 (noneOf "\n")
+  _nma <- many1 (noneOf "\n")
+  _ncs <- many1 (noneOf "\n")
+  _nra <- many1 (noneOf "\n")
+  _nmv <- many1 (noneOf "\n")
+  _ncs <- many1 (noneOf "\n")
+  _insertEmissions <- many1 (noneOf "\n")
+  _transitions <- many1 (noneOf "\n")
+  return $ HMMER3 _nodeId _matchEmissions _nma _ncs _nra _nmv _ncs _insertEmissions _transitions

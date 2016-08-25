@@ -56,24 +56,24 @@ data HMMER3 = HMMER3
     -- Forward - exponential tail fitting; optional
     localforward :: (Double,Double),
     -- Symbol characters for this alphabet; mandatory
-    hmm :: V.Vector Char
+    hmm :: V.Vector Char,
     -- Models overall (composite) match state emission probabilities, optional
-    compo :: V.Vector Double,
+    compo :: HMMER3Node,
     -- HMMER3 nodes
-    nodes :: V.Vector NhmmerNode
+    nodes :: V.Vector HMMER3Node
   }
   deriving (Show, Eq)
   
 -- | Data structure for the HMMER3 node
 data HMMER3Node = HMMER3Node
   {
-    nodeNumber :: Int,
+    nodeId :: String,
     -- Match emission score, one per symbol in the alphabet
     matchEmissions :: V.Vector Double,
     -- map annotation - number of the alignment column
     nma :: Maybe Int,
     -- consensus residue 
-    ncs :: Maybe Char,
+    ncr :: Maybe Char,
     -- reference annotation
     nra :: Maybe Char,
     -- mask value - indicating if this position was masked during model construction
