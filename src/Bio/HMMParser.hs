@@ -41,17 +41,17 @@ genParseHMMER3 = do
   --_alpha <- many1 letter
   --newline
   _rf <- parseSwitchAttribute "RF"
-  _nc <- parseSwitchAttribute "MM"
-  _nc <- parseSwitchAttribute "CONS"
-  _nc <- parseSwitchAttribute "CS"
-  _nc <- parseSwitchAttribute "MAP"
-  _nc <- parseStringAttribute "DATE"
-  _nc <- parseStringAttribute "COM"
-  _nc <- parseIntAttribute "NSEQ"
-  _nc <- parseFloatAttribute "EFFN"
-  _nc <- parseIntAttribute "CKSUM "
-  _nc <- parseFloatAttribute "GA"
-  _nc <- parseFloatAttribute "TC"
+  _mm <- parseSwitchAttribute "MM"
+  _cons <- parseSwitchAttribute "CONS"
+  _cs <- parseSwitchAttribute "CS"
+  _map <- parseSwitchAttribute "MAP"
+  _date <- parseStringAttribute "DATE"
+  _com <- parseStringAttribute "COM"
+  _nseq <- parseIntAttribute "NSEQ"
+  _effn <- parseFloatAttribute "EFFN"
+  _cksum <- parseIntAttribute "CKSUM "
+  _ga <- parseFloatAttribute "GA"
+  _tc <- parseFloatAttribute "TC"
   _nc <- parseFloatAttribute "NC"
   _localmsv <- parseStatAttribute "STATS LOCAL MSV"
   _localviterbi <- parseStatAttribute "STATS LOCAL VITERBI"
@@ -59,8 +59,10 @@ genParseHMMER3 = do
   string "HMM"
   _hmm <- many1 parseAlphabetSymbol
   newline
+  many1 (noneOf "\n")
+  newline
   _compo <- parseHMMER3Node
-  _nodes <- many1 parseHMMER3Node
+  _nodes <- many1 (parseHMMER3Node _alph)
   string "//"
   eof
   return $ HMMER3 _version _name _acc _desc _leng _maxl _alpha _rf _mm _cons _cs _map _date _com _nseq _effn _cksum _ga _tc _nc _localmsv _localviterbi _localforward (V.fromList _hmm) _compo _nodes
@@ -89,7 +91,7 @@ parseFloatAttribute :: String ->  GenParser Char st Double
 parseFloatAttribute fieldName = do
   string fieldName
   many1 (oneOf " ")
-  _double <- many1 (noneOf "\n")
+  _double <- parseFloat
   newline
   return double
 
@@ -119,7 +121,9 @@ parseAlphabetSymbol = do
 -- | Parse HMMER3 node
 parseHMMER3Node :: GenParser Char st HMMER3Node
 parseHMMER3Node = do
-  _nodeId <- many1 (noneOf "\n")
+  many1 (oneOf " ")
+  _nodeId <- many1 (noneOf " ")
+  many1 (oneOf " ")
   _matchEmissions <- many1 (noneOf "\n")
   _nma <- many1 (noneOf "\n")
   _ncs <- many1 (noneOf "\n")
@@ -129,3 +133,9 @@ parseHMMER3Node = do
   _insertEmissions <- many1 (noneOf "\n")
   _transitions <- many1 (noneOf "\n")
   return $ HMMER3 _nodeId _matchEmissions _nma _ncs _nra _nmv _ncs _insertEmissions _transitions
+
+parseDoubleParameter :: GenParser Char st Double
+parseDoubleParameter = do
+  many1 (oneOf " ")
+  _float <- parseFloat
+  return _float
