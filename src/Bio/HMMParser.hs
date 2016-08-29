@@ -28,19 +28,11 @@ genParseHMMER3 :: GenParser Char st HMMER3
 genParseHMMER3 = do
   _version <- parseStringAttribute "HMMER3/"
   _name <- parseStringAttribute "NAME"
-  _desc <- parseStringAttribute "DESC"
+  _acc <- optionMaybe (try (parseStringAttribute "ACC"))
+  _desc <- optionMaybe (try (parseStringAttribute "DESC"))
   _leng <- parseIntAttribute "LENG"
-  --string "LENG  "
-  --_leng <- parseIntegral
-  --newline
-  _maxl <- parseIntAttribute "MAXL"
-  --string "MAXL  "
-  --_maxl <- parseIntegral
-  --newline
+  _maxl <- optionMaybe (try (parseIntAttribute "MAXL"))
   _alph <- parseStringAttribute "ALPH"
-  --string "ALPH  "
-  --_alpha <- many1 letter
-  --newline
   _rf <- parseSwitchAttribute "RF"
   _mm <- parseSwitchAttribute "MM"
   _cons <- parseSwitchAttribute "CONS"
@@ -62,11 +54,11 @@ genParseHMMER3 = do
   newline
   many1 (noneOf "\n")
   newline
-  _compo <- parseHMMER3Node
+  _compo <- parseHMMER3Node _alph
   _nodes <- many1 (parseHMMER3Node _alph)
   string "//"
   eof
-  return $ HMMER3 _version _name _acc _desc _leng _maxl _alpha _rf _mm _cons _cs _map _date _com _nseq _effn _cksum _ga _tc _nc _localmsv _localviterbi _localforward (V.fromList _hmm) _compo _nodes
+  return $ HMMER3 _version _name _acc _desc _leng _maxl _alph _rf _mm _cons _cs _map _date _com _nseq _effn _cksum _ga _tc _nc _localmsv _localviterbi _localforward (V.fromList _hmm) _compo _nodes
 
 parseSwitchAttribute :: String -> GenParser Char st Bool
 parseSwitchAttribute fieldName = do
@@ -132,10 +124,10 @@ parseHMMER3Node alphabet = do
   _nmv <- many1 (noneOf "\n")
   _ncs <- many1 (noneOf "\n")
   newline
-  _insertEmissions <- many1 (noneOf "\n")
+  _insertEmissions <- many1 parseDoubleParameter
   newline
-  _transitions <- many1 (noneOf "\n")
-  return $ HMMER3 _nodeId _matchEmissions _nma _ncs _nra _nmv _ncs _insertEmissions _transitions
+  _transitions <- many1 parseDoubleParameter
+  return $ HMMER3 _nodeId _matchEmissions _nma _ncs _nra _nmv _ncs (V.fromList _insertEmissions) (V.fromList _transitions)
 
 setEmissionNumber :: String -> Int
 setEmissionNumber alphabet
