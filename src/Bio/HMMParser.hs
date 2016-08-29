@@ -11,6 +11,7 @@ import Bio.HMMData
 import Text.ParserCombinators.Parsec
 import Text.Parsec.Numbers
 import qualified Control.Exception.Base as CE
+import qualified Data.Vector as V
 
 -- | parse HMMER3 model from input string
 parseHMMER3 :: [Char] -> Either ParseError HMMER3
@@ -85,7 +86,7 @@ parseStringAttribute fieldName = do
   many1 (oneOf " ")
   _string <- many1 (noneOf "\n")
   newline
-  return string
+  return _string
 
 parseFloatAttribute :: String ->  GenParser Char st Double
 parseFloatAttribute fieldName = do
@@ -93,7 +94,7 @@ parseFloatAttribute fieldName = do
   many1 (oneOf " ")
   _double <- parseFloat
   newline
-  return double
+  return _double
 
 parseIntAttribute :: String ->  GenParser Char st Int
 parseIntAttribute fieldName = do
@@ -101,7 +102,7 @@ parseIntAttribute fieldName = do
   many1 (oneOf " ")
   _int <- parseIntegral
   newline
-  return int
+  return _int
 
 parseStatAttribute :: String -> GenParser Char st (Double,Double)
 parseStatAttribute fieldName = do
@@ -119,20 +120,29 @@ parseAlphabetSymbol = do
   return _symbol
   
 -- | Parse HMMER3 node
-parseHMMER3Node :: GenParser Char st HMMER3Node
-parseHMMER3Node = do
+parseHMMER3Node :: String -> GenParser Char st HMMER3Node
+parseHMMER3Node alphabet = do
   many1 (oneOf " ")
   _nodeId <- many1 (noneOf " ")
   many1 (oneOf " ")
-  _matchEmissions <- many1 (noneOf "\n")
+  _matchEmissions <- count (setEmissionNumber alphabet) (noneOf "\n")
   _nma <- many1 (noneOf "\n")
   _ncs <- many1 (noneOf "\n")
   _nra <- many1 (noneOf "\n")
   _nmv <- many1 (noneOf "\n")
   _ncs <- many1 (noneOf "\n")
+  newline
   _insertEmissions <- many1 (noneOf "\n")
+  newline
   _transitions <- many1 (noneOf "\n")
   return $ HMMER3 _nodeId _matchEmissions _nma _ncs _nra _nmv _ncs _insertEmissions _transitions
+
+setEmissionNumber :: String -> Int
+setEmissionNumber alphabet
+  | alphabet == "DNA" = 4
+  | alphabet == "RNA" = 4 
+  | alphabet == "amino" = 20
+  | otherwise = 20
 
 parseDoubleParameter :: GenParser Char st Double
 parseDoubleParameter = do
