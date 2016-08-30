@@ -26,11 +26,13 @@ readHMMER3 filePath = do
 -- | Parse the input as HMMER3 datatype
 genParseHMMER3 :: GenParser Char st HMMER3
 genParseHMMER3 = do
-  _version <- parseStringAttribute "HMMER3/"
+  string "HMMER3/"
+  _version <- many1 (noneOf "\n")
+  newline
   _name <- parseStringAttribute "NAME"
   _acc <-  try (parseStringAttribute "ACC")
-  _desc <- try (parseStringAttribute "DESC")
   _leng <- parseIntAttribute "LENG"
+  _desc <- optionMaybe (try (parseStringAttribute "DESC"))
   _maxl <- optionMaybe (try (parseIntAttribute "MAXL"))
   _alph <- parseStringAttribute "ALPH"
   _rf <- parseSwitchAttribute "RF"
@@ -42,7 +44,7 @@ genParseHMMER3 = do
   _com <- parseStringAttribute "COM"
   _nseq <- parseIntAttribute "NSEQ"
   _effn <- parseFloatAttribute "EFFN"
-  _cksum <- parseIntAttribute "CKSUM "
+  _cksum <- parseIntAttribute "CKSUM"
   _ga <- optionMaybe (try (parseStatAttribute "GA"))
   _tc <- optionMaybe (try (parseStatAttribute "TC"))
   _nc <- optionMaybe (try (parseStatAttribute "NC"))
@@ -50,7 +52,8 @@ genParseHMMER3 = do
   _localviterbi <- parseStatAttribute "STATS LOCAL VITERBI"
   _localforward <- parseStatAttribute "STATS LOCAL FORWARD"
   string "HMM"
-  _hmm <- many1 parseAlphabetSymbol
+  _hmm <- many1 (try parseAlphabetSymbol)
+  many1 (oneOf " ")
   newline
   many1 (noneOf "\n")
   newline
@@ -64,7 +67,8 @@ parseSwitchAttribute :: String -> GenParser Char st Bool
 parseSwitchAttribute fieldName = do
   string fieldName
   many1 (oneOf " ")
-  _switch <- try (string "Yes") <|> try (string "No")
+  _switch <- try (string "yes") <|> try (string "no")
+  newline
   return (switchToBool _switch)
 
 switchToBool :: String -> Bool
@@ -103,6 +107,7 @@ parseStatAttribute fieldName = do
   _stat1 <- parseFloat
   many1 (oneOf " ")
   _stat2 <- parseFloat
+  newline
   return (_stat1,_stat2)
   
 -- | Parse HMMER3 composite
@@ -110,21 +115,22 @@ parseHMMER3Composite :: String -> GenParser Char st HMMER3Composite
 parseHMMER3Composite alphabet = do
   many1 (oneOf " ")
   _nodeId <- many1 (noneOf " ")
-  many1 (oneOf " ")
-  _matchEmissions <- count (setEmissionNumber alphabet) parseDoubleParameter
+  _matchEmissions <- count (setEmissionNumber alphabet) (try parseDoubleParameter)  
   newline
   _insertEmissions <- many1 parseDoubleParameter
   newline
-  _transitions <- many1 parseDoubleParameter
+  _transitions <- many1 (try parseDoubleParameter)
+  many1 (oneOf " ")
+  string  "*"
+  newline
   return $ HMMER3Composite (V.fromList _matchEmissions) (V.fromList _insertEmissions) (V.fromList _transitions)
 
 -- | Parse HMMER3 node
 parseHMMER3Node :: String -> GenParser Char st HMMER3Node
 parseHMMER3Node alphabet = do
   many1 (oneOf " ")
-  _nodeId <- many1 (noneOf " ")
-  many1 (oneOf " ")
-  _matchEmissions <- count (setEmissionNumber alphabet) parseDoubleParameter
+  _nodeId <- many1 digit
+  _matchEmissions <- count (setEmissionNumber alphabet) (try parseDoubleParameter)
   _nma <- parseOptionalIntParameter
   _ncs <- parseOptionalCharParameter
   _nrf <- parseOptionalCharParameter
@@ -134,6 +140,7 @@ parseHMMER3Node alphabet = do
   _insertEmissions <- many1 parseDoubleParameter
   newline
   _transitions <- many1 parseDoubleParameter
+  newline
   return $ HMMER3Node _nodeId (V.fromList _matchEmissions) _nma _ncs _nrf _nmm _ncs (V.fromList _insertEmissions) (V.fromList _transitions)
 
 setEmissionNumber :: String -> Int
@@ -151,8 +158,8 @@ parseDoubleParameter = do
   
 parseAlphabetSymbol :: GenParser Char st Char
 parseAlphabetSymbol = do
-  many1 (oneOf " ")
-  _symbol <- upper
+  many1 (try (oneOf " "))
+  _symbol <- try (oneOf ("ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
   return _symbol
 
 parseCharParameter :: GenParser Char st Char
@@ -170,19 +177,19 @@ parseIntParameter = do
 parseStructureParameter :: GenParser Char st Char
 parseStructureParameter = do
   many1 (oneOf " ")
-  _stru <- oneOf "<>().:[]{}~"
+  _stru <- oneOf "<>().:[]{}~,_"
   return _stru
 
 parseOptionalCharParameter :: GenParser Char st (Maybe Char)
 parseOptionalCharParameter = do
   many1 (oneOf " ")
-  _symbol <- alphaNum
+  _symbol <- alphaNum <|> char '-' 
   return (optionalCharToMaybe _symbol)
 
 parseOptionalIntParameter :: GenParser Char st (Maybe Int)
 parseOptionalIntParameter = do
   many1 (oneOf " ")
-  _int <- digit
+  _int <- many1 digit
   return (optionalIntToMaybe _int)
 
 parseMaskParameter :: GenParser Char st Bool
@@ -201,10 +208,10 @@ optionalCharToMaybe c
   | c == '-' = Nothing
   | otherwise = Just c
 
-optionalIntToMaybe ::  Char -> Maybe Int
+optionalIntToMaybe :: String -> Maybe Int
 optionalIntToMaybe c
-  | c == '-' = Nothing
-  | otherwise = Just (read [c] :: Int)
+  | c == "-" = Nothing
+  | otherwise = Just (read c :: Int)
 
 optionalStructureToMaybe :: Char -> Maybe Char
 optionalStructureToMaybe c
@@ -214,5 +221,5 @@ optionalStructureToMaybe c
 parseOptionalStructureParameter :: GenParser Char st (Maybe Char)
 parseOptionalStructureParameter = do
   many1 (oneOf " ")
-  _stru <- oneOf "<>().:[]{}~"
+  _stru <- oneOf "<>().:[]{}~,_"
   return (optionalStructureToMaybe _stru)
