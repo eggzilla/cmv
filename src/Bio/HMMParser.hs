@@ -54,7 +54,7 @@ genParseHMMER3 = do
   newline
   many1 (noneOf "\n")
   newline
-  _compo <- parseHMMER3Node _alph
+  _compo <- parseHMMER3Composite _alph
   _nodes <- many1 (parseHMMER3Node _alph)
   string "//"
   eof
@@ -105,6 +105,50 @@ parseStatAttribute fieldName = do
   _stat2 <- parseFloat
   return (_stat1,_stat2)
   
+-- | Parse HMMER3 composite
+parseHMMER3Composite :: String -> GenParser Char st HMMER3Composite
+parseHMMER3Composite alphabet = do
+  many1 (oneOf " ")
+  _nodeId <- many1 (noneOf " ")
+  many1 (oneOf " ")
+  _matchEmissions <- count (setEmissionNumber alphabet) parseDoubleParameter
+  newline
+  _insertEmissions <- many1 parseDoubleParameter
+  newline
+  _transitions <- many1 parseDoubleParameter
+  return $ HMMER3Composite (V.fromList _matchEmissions) (V.fromList _insertEmissions) (V.fromList _transitions)
+
+-- | Parse HMMER3 node
+parseHMMER3Node :: String -> GenParser Char st HMMER3Node
+parseHMMER3Node alphabet = do
+  many1 (oneOf " ")
+  _nodeId <- many1 (noneOf " ")
+  many1 (oneOf " ")
+  _matchEmissions <- count (setEmissionNumber alphabet) parseDoubleParameter
+  _nma <- parseOptionalIntParameter
+  _ncs <- parseOptionalCharParameter
+  _nrf <- parseOptionalCharParameter
+  _nmm <- parseMaskParameter
+  _ncs <- parseOptionalStructureParameter
+  newline
+  _insertEmissions <- many1 parseDoubleParameter
+  newline
+  _transitions <- many1 parseDoubleParameter
+  return $ HMMER3Node _nodeId (V.fromList _matchEmissions) _nma _ncs _nrf _nmm _ncs (V.fromList _insertEmissions) (V.fromList _transitions)
+
+setEmissionNumber :: String -> Int
+setEmissionNumber alphabet
+  | alphabet == "DNA" = 4
+  | alphabet == "RNA" = 4 
+  | alphabet == "amino" = 20
+  | otherwise = 20
+
+parseDoubleParameter :: GenParser Char st Double
+parseDoubleParameter = do
+  many1 (oneOf " ")
+  _float <- parseFloat
+  return _float
+  
 parseAlphabetSymbol :: GenParser Char st Char
 parseAlphabetSymbol = do
   many1 (oneOf " ")
@@ -120,7 +164,7 @@ parseCharParameter = do
 parseIntParameter :: GenParser Char st Int
 parseIntParameter = do
   many1 (oneOf " ")
-  _int <- parseInt
+  _int <- parseIntegral
   return _int
 
 parseStructureParameter :: GenParser Char st Char
@@ -129,33 +173,46 @@ parseStructureParameter = do
   _stru <- oneOf "<>().:[]{}~"
   return _stru
 
--- | Parse HMMER3 node
-parseHMMER3Node :: String -> GenParser Char st HMMER3Node
-parseHMMER3Node alphabet = do
+parseOptionalCharParameter :: GenParser Char st (Maybe Char)
+parseOptionalCharParameter = do
   many1 (oneOf " ")
-  _nodeId <- many1 (noneOf " ")
-  many1 (oneOf " ")
-  _matchEmissions <- count (setEmissionNumber alphabet) (noneOf "\n")
-  _nma <- parseIntParameter
-  _ncs <- parseCharParameter
-  _nra <- parseCharParameter
-  _nmv <- parseCharParameter
-  _ncs <- parseCharParameter
-  newline
-  _insertEmissions <- many1 parseDoubleParameter
-  newline
-  _transitions <- many1 parseDoubleParameter
-  return $ HMMER3 _nodeId _matchEmissions _nma _ncs _nra _nmv _ncs (V.fromList _insertEmissions) (V.fromList _transitions)
+  _symbol <- alphaNum
+  return (optionalCharToMaybe _symbol)
 
-setEmissionNumber :: String -> Int
-setEmissionNumber alphabet
-  | alphabet == "DNA" = 4
-  | alphabet == "RNA" = 4 
-  | alphabet == "amino" = 20
-  | otherwise = 20
-
-parseDoubleParameter :: GenParser Char st Double
-parseDoubleParameter = do
+parseOptionalIntParameter :: GenParser Char st (Maybe Int)
+parseOptionalIntParameter = do
   many1 (oneOf " ")
-  _float <- parseFloat
-  return _float
+  _int <- digit
+  return (optionalIntToMaybe _int)
+
+parseMaskParameter :: GenParser Char st Bool
+parseMaskParameter = do
+  many1 (oneOf " ")
+  _mask <- oneOf "m-"
+  return (maskToBool _mask)
+
+maskToBool :: Char -> Bool
+maskToBool mask
+  | mask == 'm' = True 
+  | otherwise = False
+
+optionalCharToMaybe :: Char -> Maybe Char
+optionalCharToMaybe c
+  | c == '-' = Nothing
+  | otherwise = Just c
+
+optionalIntToMaybe ::  Char -> Maybe Int
+optionalIntToMaybe c
+  | c == '-' = Nothing
+  | otherwise = Just (read [c] :: Int)
+
+optionalStructureToMaybe :: Char -> Maybe Char
+optionalStructureToMaybe c
+  | c == '-' = Nothing
+  | otherwise = Just c 
+
+parseOptionalStructureParameter :: GenParser Char st (Maybe Char)
+parseOptionalStructureParameter = do
+  many1 (oneOf " ")
+  _stru <- oneOf "<>().:[]{}~"
+  return (optionalStructureToMaybe _stru)

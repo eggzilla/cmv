@@ -58,7 +58,7 @@ data HMMER3 = HMMER3
     -- Symbol characters for this alphabet; mandatory
     hmm :: V.Vector Char,
     -- Models overall (composite) match state emission probabilities, optional
-    compo :: HMMER3Node,
+    compo ::  HMMER3Composite,
     -- HMMER3 nodes
     nodes :: V.Vector HMMER3Node
   }
@@ -88,14 +88,13 @@ data HMMER3Node = HMMER3Node
   deriving (Show, Eq)
 
 -- | Data structure for the HMMER3 overall probabilities
-data HMMER3Consensus = HMMER3Consensus
+data HMMER3Composite = HMMER3Composite
   {
-    nodeId :: String,
     -- Match emission score, one per symbol in the alphabet
-    matchEmissions :: V.Vector Double,
+    compositeMatchEmissions :: V.Vector Double,
     -- insert emission score, one per symbol in the alphabet
-    insertEmissions :: V.Vector Double,
+    compositeInsertEmissions :: V.Vector Double,
     --  Transistion scores, m->m m->i m->d i->m i->i d->m d->d
-    transitions :: V.Vector Double
+    compositeTransitions :: V.Vector Double
   }
   deriving (Show, Eq)

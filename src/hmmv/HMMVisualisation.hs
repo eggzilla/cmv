@@ -7,8 +7,7 @@
 
 module Main where
 
-import HMMData
-import HMMParser
+import qualified Bio.HMMParser as HM
 import System.Console.CmdArgs
 import Data.Either
 import System.Directory
@@ -33,7 +32,7 @@ main = do
   modelFileExists <- doesFileExist modelFile
   if modelFileExists
      then do
-       model <- readHMMER3 modelFile
+       model <- HM.readHMMER3 modelFile
        print model
        --printSVG svgsize (drawHMMER3 modelDetail (processHMMER3 (model)))
      else do

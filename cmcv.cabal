@@ -43,22 +43,22 @@ library
   hs-source-dirs:      src
 
 executable cmcv
-  Hs-Source-Dirs:      ./src/Bio/
-  main-is:	       CmcVisualisation.hs
+  Hs-Source-Dirs:      ./src/cmcv/
+  main-is:	       CMCVisualisation.hs
   ghc-options:         -Wall -O2
-  build-depends:       base >=4.5, cmdargs, BiobaseInfernal==0.8.0.0, BiobaseXNA, diagrams-svg, diagrams-lib, parsec, SVGFonts, colour, containers, bytestring, template-haskell, text, vector, directory
-  other-modules:       Bio.CMDraw, Bio.CMCompareResult
+  build-depends:       base >=4.5, cmdargs, BiobaseInfernal==0.8.0.0, BiobaseXNA, diagrams-svg, diagrams-lib, parsec, SVGFonts, colour, containers, bytestring, template-haskell, text, vector, directory, cmcv
+  --other-modules:       Bio.CMDraw, Bio.CMCompareResult
 
 executable cmv
-  Hs-Source-Dirs:      ./src/Bio/
-  main-is:	       CmVisualisation.hs
+  Hs-Source-Dirs:      ./src/cmv/
+  main-is:	       CMVisualisation.hs
   ghc-options:         -Wall -O2
-  build-depends:       base >=4.5, cmdargs, BiobaseInfernal==0.8.0.0, BiobaseXNA, diagrams-svg, diagrams-lib, parsec, SVGFonts, colour, containers, bytestring, template-haskell, text, vector, directory
-  other-modules:       Bio.CMDraw, Bio.CMCompareResult
+  build-depends:       base >=4.5, cmdargs, BiobaseInfernal==0.8.0.0, BiobaseXNA, diagrams-svg, diagrams-lib, parsec, SVGFonts, colour, containers, bytestring, template-haskell, text, vector, directory, cmcv
+  --other-modules:       Bio.CMDraw, Bio.CMCompareResult
 
 executable hmmv
-  Hs-Source-Dirs:      ./src/Bio/
+  Hs-Source-Dirs:      ./src/hmmv/
   main-is:	       HMMVisualisation.hs
   ghc-options:         -Wall -O2
-  build-depends:       base >=4.5, cmdargs, diagrams-svg, diagrams-lib, parsec, SVGFonts, colour, containers, bytestring, text, vector, directory
-  other-modules:       Bio.HMMParser, Bio.HMMData
+  build-depends:       base >=4.5, cmdargs, diagrams-svg, diagrams-lib, parsec, SVGFonts, colour, containers, bytestring, text, vector, directory, cmcv
+  --other-modules:       Bio.HMMParser, Bio.HMMData
