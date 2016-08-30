@@ -13,9 +13,9 @@ data HMMER3 = HMMER3
     -- Model name; mandatory
     name :: String,
     -- Accession number; optional
-    acc :: Maybe String,
+    acc :: String,
     -- Description; optional
-    desc :: Maybe String,
+    desc :: String,
     -- Model length; mandatory
     leng :: Int,
     -- Maximum instance length; optional
@@ -29,13 +29,13 @@ data HMMER3 = HMMER3
     -- Consensus residue annotation flag; Mandatory
     cons :: Bool,
     -- Consensus structure; optional
-    cs :: Maybe Bool,
+    cs :: Bool,
     -- Map annotation; optional
     map :: Bool,
     -- Date; optional
     date :: String,
     -- Command line log; optional
-    com :: Maybe String,
+    com :: String,
     -- Sequence number; optional
     nseq :: Int,
     -- Effective sequence number; optional
@@ -80,6 +80,19 @@ data HMMER3Node = HMMER3Node
     nmv :: Bool,
     -- consensus structure
     ncs :: Maybe Char,
+    -- insert emission score, one per symbol in the alphabet
+    insertEmissions :: V.Vector Double,
+    --  Transistion scores, m->m m->i m->d i->m i->i d->m d->d
+    transitions :: V.Vector Double
+  }
+  deriving (Show, Eq)
+
+-- | Data structure for the HMMER3 overall probabilities
+data HMMER3Consensus = HMMER3Consensus
+  {
+    nodeId :: String,
+    -- Match emission score, one per symbol in the alphabet
+    matchEmissions :: V.Vector Double,
     -- insert emission score, one per symbol in the alphabet
     insertEmissions :: V.Vector Double,
     --  Transistion scores, m->m m->i m->d i->m i->i d->m d->d

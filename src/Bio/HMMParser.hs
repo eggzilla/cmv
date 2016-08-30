@@ -28,8 +28,8 @@ genParseHMMER3 :: GenParser Char st HMMER3
 genParseHMMER3 = do
   _version <- parseStringAttribute "HMMER3/"
   _name <- parseStringAttribute "NAME"
-  _acc <- optionMaybe (try (parseStringAttribute "ACC"))
-  _desc <- optionMaybe (try (parseStringAttribute "DESC"))
+  _acc <-  try (parseStringAttribute "ACC")
+  _desc <- try (parseStringAttribute "DESC")
   _leng <- parseIntAttribute "LENG"
   _maxl <- optionMaybe (try (parseIntAttribute "MAXL"))
   _alph <- parseStringAttribute "ALPH"
@@ -43,9 +43,9 @@ genParseHMMER3 = do
   _nseq <- parseIntAttribute "NSEQ"
   _effn <- parseFloatAttribute "EFFN"
   _cksum <- parseIntAttribute "CKSUM "
-  _ga <- parseFloatAttribute "GA"
-  _tc <- parseFloatAttribute "TC"
-  _nc <- parseFloatAttribute "NC"
+  _ga <- optionMaybe (try (parseStatAttribute "GA"))
+  _tc <- optionMaybe (try (parseStatAttribute "TC"))
+  _nc <- optionMaybe (try (parseStatAttribute "NC"))
   _localmsv <- parseStatAttribute "STATS LOCAL MSV"
   _localviterbi <- parseStatAttribute "STATS LOCAL VITERBI"
   _localforward <- parseStatAttribute "STATS LOCAL FORWARD"
@@ -58,14 +58,14 @@ genParseHMMER3 = do
   _nodes <- many1 (parseHMMER3Node _alph)
   string "//"
   eof
-  return $ HMMER3 _version _name _acc _desc _leng _maxl _alph _rf _mm _cons _cs _map _date _com _nseq _effn _cksum _ga _tc _nc _localmsv _localviterbi _localforward (V.fromList _hmm) _compo _nodes
+  return $ HMMER3 _version _name _acc _desc _leng _maxl _alph _rf _mm _cons _cs _map _date _com _nseq _effn _cksum _ga _tc _nc _localmsv _localviterbi _localforward (V.fromList _hmm) _compo (V.fromList _nodes)
 
 parseSwitchAttribute :: String -> GenParser Char st Bool
 parseSwitchAttribute fieldName = do
   string fieldName
   many1 (oneOf " ")
   _switch <- try (string "Yes") <|> try (string "No")
-  return switchToBool _switch
+  return (switchToBool _switch)
 
 switchToBool :: String -> Bool
 switchToBool switch
@@ -110,7 +110,25 @@ parseAlphabetSymbol = do
   many1 (oneOf " ")
   _symbol <- upper
   return _symbol
-  
+
+parseCharParameter :: GenParser Char st Char
+parseCharParameter = do
+  many1 (oneOf " ")
+  _symbol <- upper
+  return _symbol
+
+parseIntParameter :: GenParser Char st Int
+parseIntParameter = do
+  many1 (oneOf " ")
+  _int <- parseInt
+  return _int
+
+parseStructureParameter :: GenParser Char st Char
+parseStructureParameter = do
+  many1 (oneOf " ")
+  _stru <- oneOf "<>().:[]{}~"
+  return _stru
+
 -- | Parse HMMER3 node
 parseHMMER3Node :: String -> GenParser Char st HMMER3Node
 parseHMMER3Node alphabet = do
@@ -118,11 +136,11 @@ parseHMMER3Node alphabet = do
   _nodeId <- many1 (noneOf " ")
   many1 (oneOf " ")
   _matchEmissions <- count (setEmissionNumber alphabet) (noneOf "\n")
-  _nma <- many1 (noneOf "\n")
-  _ncs <- many1 (noneOf "\n")
-  _nra <- many1 (noneOf "\n")
-  _nmv <- many1 (noneOf "\n")
-  _ncs <- many1 (noneOf "\n")
+  _nma <- parseIntParameter
+  _ncs <- parseCharParameter
+  _nra <- parseCharParameter
+  _nmv <- parseCharParameter
+  _ncs <- parseCharParameter
   newline
   _insertEmissions <- many1 parseDoubleParameter
   newline
