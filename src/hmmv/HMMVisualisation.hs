@@ -8,8 +8,9 @@
 module Main where
 
 import qualified Bio.HMMParser as HM
+import Bio.HMMDraw
 import System.Console.CmdArgs
-import Data.Either
+import Data.Either.Unwrap
 import System.Directory
 
 options :: Options
@@ -33,7 +34,7 @@ main = do
   if modelFileExists
      then do
        model <- HM.readHMMER3 modelFile
-       print model
-       --printSVG svgsize (drawHMMER3 modelDetail (processHMMER3 (model)))
+       --print model
+       printSVG svgsize (drawHMMER3 modelDetail (fromRight model))
      else do
        putStrLn "Input model file not found"

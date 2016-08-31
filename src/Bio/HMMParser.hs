@@ -11,7 +11,7 @@ import Bio.HMMData
 import Text.ParserCombinators.Parsec
 import Text.Parsec.Numbers
 import qualified Control.Exception.Base as CE
-import qualified Data.Vector as V
+--import qualified Data.Vector as V
 
 -- | parse HMMER3 model from input string
 parseHMMER3 :: [Char] -> Either ParseError HMMER3
@@ -62,7 +62,7 @@ genParseHMMER3 = do
   string "//"
   newline
   eof
-  return $ HMMER3 _version _name _acc _desc _leng _maxl _alph _rf _mm _cons _cs _map _date _com _nseq _effn _cksum _ga _tc _nc _localmsv _localviterbi _localforward (V.fromList _hmm) _compo (V.fromList _nodes)
+  return $ HMMER3 _version _name _acc _desc _leng _maxl _alph _rf _mm _cons _cs _map _date _com _nseq _effn _cksum _ga _tc _nc _localmsv _localviterbi _localforward _hmm _compo _nodes
 
 parseSwitchAttribute :: String -> GenParser Char st Bool
 parseSwitchAttribute fieldName = do
@@ -128,7 +128,7 @@ parseHMMER3Composite alphabet = do
   _cd2m <- parseOptionalFloatParameter
   _cd2d <- parseOptionalFloatParameter
   newline
-  return $ HMMER3Composite (V.fromList _matchEmissions) (V.fromList _insertEmissions) _cm2m _cm2i _cm2d _ci2m _ci2i _cd2m _cd2d --- (V.fromList _transitions)
+  return $ HMMER3Composite _matchEmissions _insertEmissions _cm2m _cm2i _cm2d _ci2m _ci2i _cd2m _cd2d
 
 -- | Parse HMMER3 node
 parseHMMER3Node :: String -> GenParser Char st HMMER3Node
@@ -152,7 +152,7 @@ parseHMMER3Node alphabet = do
   _d2m <- parseOptionalFloatParameter
   _d2d <- parseOptionalFloatParameter
   newline
-  return $ HMMER3Node _nodeId (V.fromList _matchEmissions) _nma _ncs _nrf _nmm _ncs (V.fromList _insertEmissions) _m2m _m2i _m2d _i2m _i2i _d2m _d2d 
+  return $ HMMER3Node _nodeId _matchEmissions _nma _ncs _nrf _nmm _ncs _insertEmissions _m2m _m2i _m2d _i2m _i2i _d2m _d2d 
 
 setEmissionNumber :: String -> Int
 setEmissionNumber alphabet

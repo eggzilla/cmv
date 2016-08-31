@@ -6,9 +6,11 @@
 
 module Bio.HMMDraw
     (
-      drawHMMs,
-      drawHMM
-  
+      drawHMMMER3s,
+      drawHMMER3,
+      svgsize,
+      diagramName,
+      printSVG
     ) where
   
 import Diagrams.Prelude
@@ -16,30 +18,28 @@ import Diagrams.Backend.SVG
 import Graphics.SVGFonts
 import Data.Typeable.Internal
 import qualified Bio.HMMData as HM
-import Data.List
-import Text.Parsec.Error
-import qualified Data.Text as T
-import qualified Data.Vector as V
+--import Bio.HMMData
+
 
 -- | 
-drawHMMs :: forall b. Renderable (Path V2 Double) b => [Char] -> [HM.HMMER3] -> QDiagram b V2 Double Any
-drawHMMs modelDetail cms
-  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawHMM modelDetail) hmms))
-  | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (map (drawHMM modelDetail) hmms))
-  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawHMM modelDetail) hmms))
-  | otherwise = alignTL (vcat' with { _sep = 40 } drawHMM modelDetail hmms))
+drawHMMMER3s :: forall b. Renderable (Path V2 Double) b => String -> [HM.HMMER3] -> QDiagram b V2 Double Any
+drawHMMMER3s modelDetail hmms
+  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawHMMER3 modelDetail) hmms))
+  | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (map (drawHMMER3 modelDetail) hmms))
+  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawHMMER3 modelDetail) hmms))
+  | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawHMMER3 modelDetail) hmms))
 
 -- |
-drawHMM :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => [Char] -> [HM.HMMER3] -> QDiagram b V2 n Any
-drawHMM modelDetail model
-   | modelDetail == "flat" = hcat (map drawHMMNodesFlat (HM.nodes model))
-   | modelDetail == "simple" = hcat (map drawHMMNodesSimple (HM.nodes model))
-   | modelDetail == "detailed" = hcat (map drawHMMNodesVerbose (HM.nodes model))
-   | otherwise = hcat (map drawHMMNodesSimple nodes)
+drawHMMER3 :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => String -> HM.HMMER3 -> QDiagram b V2 n Any
+drawHMMER3 modelDetail model
+   | modelDetail == "flat" = hcat (map drawHMMNodeFlat (HM.nodes model))
+   | modelDetail == "simple" = hcat (map drawHMMNodeSimple (HM.nodes model))
+   | modelDetail == "detailed" = hcat (map drawHMMNodeVerbose (HM.nodes model))
+   | otherwise = hcat (map drawHMMNodeSimple (HM.nodes model))
 
 -- | 
-draHMMNodeFlat :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => HM.HMMER3Node -> b
-drawHMMFlat node =  rect 2 2 # lw 0.1 
+drawHMMNodeFlat :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => HM.HMMER3Node -> b
+drawHMMNodeFlat node =  rect 2 2 # lw 0.1 
 
 -- | 
 drawHMMNodeSimple :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => HM.HMMER3Node -> b

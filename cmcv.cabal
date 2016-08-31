@@ -30,6 +30,7 @@ library
   -- Modules exported by the library.
   exposed-modules:   Bio.HMMData
                      Bio.HMMParser
+                     Bio.HMMDraw
                      Bio.CMDraw
                      Bio.CMCompareResult
 
@@ -60,5 +61,5 @@ executable hmmv
   Hs-Source-Dirs:      ./src/hmmv/
   main-is:	       HMMVisualisation.hs
   ghc-options:         -Wall -O2
-  build-depends:       base >=4.5, cmdargs, diagrams-svg, diagrams-lib, parsec, SVGFonts, colour, containers, bytestring, text, vector, directory, cmcv
+  build-depends:       base >=4.5, cmdargs, diagrams-svg, diagrams-lib, parsec, SVGFonts, colour, containers, bytestring, text, vector, directory, cmcv, either-unwrap
   --other-modules:       Bio.HMMParser, Bio.HMMData
