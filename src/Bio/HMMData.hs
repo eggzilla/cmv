@@ -15,7 +15,7 @@ data HMMER3 = HMMER3
     -- Accession number; optional
     acc :: String,
     -- Description; optional
-    desc :: String,
+    desc :: Maybe String,
     -- Model length; mandatory
     leng :: Int,
     -- Maximum instance length; optional
@@ -82,8 +82,15 @@ data HMMER3Node = HMMER3Node
     ncs :: Maybe Char,
     -- insert emission score, one per symbol in the alphabet
     insertEmissions :: V.Vector Double,
-    --  Transistion scores, m->m m->i m->d i->m i->i d->m d->d
-    transitions :: V.Vector Double
+    -- Transistion scores, m->m m->i m->d i->m i->i d->m d->d
+    m2m :: Maybe Double, 
+    m2i :: Maybe Double,
+    m2d :: Maybe Double,
+    i2m :: Maybe Double,
+    i2i :: Maybe Double,
+    d2m :: Maybe Double,
+    d2d :: Maybe Double
+    --transitions :: V.Vector Double
   }
   deriving (Show, Eq)
 
@@ -95,6 +102,12 @@ data HMMER3Composite = HMMER3Composite
     -- insert emission score, one per symbol in the alphabet
     compositeInsertEmissions :: V.Vector Double,
     --  Transistion scores, m->m m->i m->d i->m i->i d->m d->d
-    compositeTransitions :: V.Vector Double
+    cm2m :: Maybe Double, 
+    cm2i :: Maybe Double,
+    cm2d :: Maybe Double,
+    ci2m :: Maybe Double,
+    ci2i :: Maybe Double,
+    cd2m :: Maybe Double,
+    cd2d :: Maybe Double
   }
   deriving (Show, Eq)

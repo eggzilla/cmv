@@ -60,6 +60,7 @@ genParseHMMER3 = do
   _compo <- parseHMMER3Composite _alph
   _nodes <- many1 (parseHMMER3Node _alph)
   string "//"
+  newline
   eof
   return $ HMMER3 _version _name _acc _desc _leng _maxl _alph _rf _mm _cons _cs _map _date _com _nseq _effn _cksum _ga _tc _nc _localmsv _localviterbi _localforward (V.fromList _hmm) _compo (V.fromList _nodes)
 
@@ -119,11 +120,15 @@ parseHMMER3Composite alphabet = do
   newline
   _insertEmissions <- many1 parseDoubleParameter
   newline
-  _transitions <- many1 (try parseDoubleParameter)
-  many1 (oneOf " ")
-  string  "*"
+  _cm2m <- parseOptionalFloatParameter
+  _cm2i <- parseOptionalFloatParameter
+  _cm2d <- parseOptionalFloatParameter
+  _ci2m <- parseOptionalFloatParameter
+  _ci2i <- parseOptionalFloatParameter
+  _cd2m <- parseOptionalFloatParameter
+  _cd2d <- parseOptionalFloatParameter
   newline
-  return $ HMMER3Composite (V.fromList _matchEmissions) (V.fromList _insertEmissions) (V.fromList _transitions)
+  return $ HMMER3Composite (V.fromList _matchEmissions) (V.fromList _insertEmissions) _cm2m _cm2i _cm2d _ci2m _ci2i _cd2m _cd2d --- (V.fromList _transitions)
 
 -- | Parse HMMER3 node
 parseHMMER3Node :: String -> GenParser Char st HMMER3Node
@@ -139,9 +144,15 @@ parseHMMER3Node alphabet = do
   newline
   _insertEmissions <- many1 parseDoubleParameter
   newline
-  _transitions <- many1 parseDoubleParameter
+  _m2m <- parseOptionalFloatParameter
+  _m2i <- parseOptionalFloatParameter
+  _m2d <- parseOptionalFloatParameter
+  _i2m <- parseOptionalFloatParameter
+  _i2i <- parseOptionalFloatParameter
+  _d2m <- parseOptionalFloatParameter
+  _d2d <- parseOptionalFloatParameter
   newline
-  return $ HMMER3Node _nodeId (V.fromList _matchEmissions) _nma _ncs _nrf _nmm _ncs (V.fromList _insertEmissions) (V.fromList _transitions)
+  return $ HMMER3Node _nodeId (V.fromList _matchEmissions) _nma _ncs _nrf _nmm _ncs (V.fromList _insertEmissions) _m2m _m2i _m2d _i2m _i2i _d2m _d2d 
 
 setEmissionNumber :: String -> Int
 setEmissionNumber alphabet
@@ -192,6 +203,12 @@ parseOptionalIntParameter = do
   _int <- many1 digit
   return (optionalIntToMaybe _int)
 
+parseOptionalFloatParameter :: GenParser Char st (Maybe Double)
+parseOptionalFloatParameter = do
+  many1 (oneOf " ")
+  _float <- many1 (oneOf "1234567890.e-*")
+  return (optionalFloatToMaybe _float)
+
 parseMaskParameter :: GenParser Char st Bool
 parseMaskParameter = do
   many1 (oneOf " ")
@@ -217,6 +234,11 @@ optionalStructureToMaybe :: Char -> Maybe Char
 optionalStructureToMaybe c
   | c == '-' = Nothing
   | otherwise = Just c 
+
+optionalFloatToMaybe :: String -> Maybe Double
+optionalFloatToMaybe c
+  | c == "*" = Nothing
+  | otherwise = Just (read c :: Double)
 
 parseOptionalStructureParameter :: GenParser Char st (Maybe Char)
 parseOptionalStructureParameter = do
