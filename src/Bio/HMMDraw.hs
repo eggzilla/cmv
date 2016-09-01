@@ -17,7 +17,7 @@ import Diagrams.Prelude
 import Diagrams.Backend.SVG
 import Graphics.SVGFonts
 import Data.Typeable.Internal
-import qualified Bio.HMMData as HM
+import qualified Bio.HMMParser as HM
 --import Bio.HMMData
 
 
@@ -34,12 +34,12 @@ drawHMMER3 :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable 
 drawHMMER3 modelDetail model
    | modelDetail == "flat" = hcat (map drawHMMNodeFlat (HM.nodes model))
    | modelDetail == "simple" = hcat (map drawHMMNodeSimple (HM.nodes model))
-   | modelDetail == "detailed" = hcat (map drawHMMNodeVerbose (HM.nodes model))
+   | modelDetail == "detailed" = hcat (map (drawHMMNodeVerbose (HM.alpha model)) (HM.nodes model))
    | otherwise = hcat (map drawHMMNodeSimple (HM.nodes model))
 
 -- | 
 drawHMMNodeFlat :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => HM.HMMER3Node -> b
-drawHMMNodeFlat node =  rect 2 2 # lw 0.1  
+drawHMMNodeFlat node = rect 2 2 # lw 0.1  
 
 -- | 
 drawHMMNodeSimple :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => HM.HMMER3Node -> b
@@ -47,7 +47,20 @@ drawHMMNodeSimple node =  rect 2 2 # lw 0.1
 
 -- | 
 --drawHMMNodeVerbose :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => HM.HMMER3Node -> b
-drawHMMNodeVerbose node =  (circle 1 # lw 0.1) === strutY 1 === (rect 2 2 # lw 0.1 # rotateBy (1/8)) === strutY 1 === (rect 2 2 # lw 0.1) ||| strutX 1
+drawHMMNodeVerbose alphabet node = deletions === strutY 1 === insertions === strutY 1 === (matches alphabet node) ||| strutX 1
+deletions = circle 1 # lw 0.1
+insertions = rect 2 2 # lw 0.1 # rotateBy (1/8)
+--matches = rect 2 2 # lw 0.1
+matches alphabet node = outerbox <> entries
+  where outerbox = rect 4 boxlength # lw 0.1
+        entries = vcat (map emissionEntry (zip (map wrap alphabetSymbols) (HM.matchEmissions node)))
+        boxlength = 2 * (fromIntegral (length alphabet))
+        alphabetSymbols = HM.alphabetToSymbols alphabet
+
+wrap x = [x]
+
+--emissionEntry ::         
+emissionEntry (symbol,emission) = text' (symbol ++ show emission)
 
 -- | 
 --drawHMMNodeVerbose :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => HM.HMMER3Node -> QDiagram b V2 n Any
@@ -56,9 +69,7 @@ drawHMMNodeVerbose node =  (circle 1 # lw 0.1) === strutY 1 === (rect 2 2 # lw 0
 
 -- | Render text as SVG
 text' :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => String -> QDiagram b V2 n Any
-text' t = stroke (textSVG t 4) # fc black # fillRule EvenOdd
-
-
+text' t = stroke (textSVG t 1) # fc black # fillRule EvenOdd # lw 0.1
           
 --scaling
 -- | Specifies the size of the diagram. Absolute adapts to overall size according to subdiagrams

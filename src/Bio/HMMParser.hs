@@ -3,7 +3,8 @@
 --   For more information on HMMER consult: <http://hmmer.org>
 module Bio.HMMParser (
                        parseHMMER3,
-                       readHMMER3,                                   
+                       readHMMER3,
+                       alphabetToSymbols,
                        module Bio.HMMData
                       ) where
 
@@ -157,9 +158,30 @@ parseHMMER3Node alphabet = do
 setEmissionNumber :: String -> Int
 setEmissionNumber alphabet
   | alphabet == "DNA" = 4
-  | alphabet == "RNA" = 4 
+  | alphabet == "dna" = 4 
+  | alphabet == "RNA" = 4
+  | alphabet == "rna" = 4
+  | alphabet == "AMINO" = 20
   | alphabet == "amino" = 20
-  | otherwise = 20
+  | alphabet == "COINS" = 2
+  | alphabet == "coins" = 2                        
+  | alphabet == "DICE" = 6
+  | alphabet == "dice" = 6                       
+  | otherwise = 0
+
+alphabetToSymbols :: String -> String
+alphabetToSymbols  alphabet
+  | alphabet == "DNA" = "ACGT"
+  | alphabet == "dna" = "ACGT"
+  | alphabet == "RNA" = "ACGU"
+  | alphabet == "rna" = "ACGU"
+  | alphabet == "AMINO" = "ACDEFGHIKLMNPQRSTVWY"
+  | alphabet == "amino" = "ACDEFGHIKLMNPQRSTVWY"
+  | alphabet == "COINS" = "HT"
+  | alphabet == "coins" = "HT"
+  | alphabet == "DICE" = "123456"          
+  | alphabet == "dice" = "123456" 
+  | otherwise = ""
 
 parseDoubleParameter :: GenParser Char st Double
 parseDoubleParameter = do

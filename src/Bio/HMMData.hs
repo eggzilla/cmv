@@ -56,7 +56,7 @@ data HMMER3 = HMMER3
     -- Forward - exponential tail fitting; optional
     localforward :: (Double,Double),
     -- Symbol characters for this alphabet; mandatory
-    hmm :: [Char],
+    hmm :: String,
     -- Models overall (composite) match state emission probabilities, optional
     compo ::  HMMER3Composite,
     -- HMMER3 nodes
@@ -100,7 +100,7 @@ data HMMER3Composite = HMMER3Composite
     -- Match emission score, one per symbol in the alphabet
     compositeMatchEmissions :: [Double],
     -- insert emission score, one per symbol in the alphabet
-    compositeInsertEmissions ::[Double],
+    compositeInsertEmissions :: [Double],
     --  Transistion scores, m->m m->i m->d i->m i->i d->m d->d
     cm2m :: Maybe Double, 
     cm2i :: Maybe Double,
