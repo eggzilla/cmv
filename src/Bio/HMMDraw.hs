@@ -51,16 +51,20 @@ drawHMMNodeVerbose alphabet node = deletions === strutY 1 === insertions === str
 deletions = circle 1 # lw 0.1
 insertions = rect 2 2 # lw 0.1 # rotateBy (1/8)
 --matches = rect 2 2 # lw 0.1
-matches alphabet node = outerbox <> entries
+matches alphabet node = alignL (outerbox <> entries)
   where outerbox = rect 4 boxlength # lw 0.1
-        entries = vcat (map emissionEntry (zip (map wrap alphabetSymbols) (HM.matchEmissions node)))
+        entries = vcat (map emissionEntry (zip (map wrap alphabetSymbols) entrytype))
+        entrytype = propentries   
+        scoreentries = (HM.matchEmissions node)          
+        propentries = map (exp . negate) (HM.matchEmissions node)
+        barentries = map (exp . negate) (HM.matchEmissions node)
         boxlength = 2 * (fromIntegral (length alphabet))
         alphabetSymbols = HM.alphabetToSymbols alphabet
 
 wrap x = [x]
 
 --emissionEntry ::         
-emissionEntry (symbol,emission) = text' (symbol ++ show emission)
+emissionEntry (symbol,emission) = text' (symbol ++ " " ++ show emission)
 
 -- | 
 --drawHMMNodeVerbose :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => HM.HMMER3Node -> QDiagram b V2 n Any
@@ -74,7 +78,7 @@ text' t = stroke (textSVG t 1) # fc black # fillRule EvenOdd # lw 0.1
 --scaling
 -- | Specifies the size of the diagram. Absolute adapts to overall size according to subdiagrams
 --svgsize processedCMs = mkSizeSpec (svgwidth processedCMs) (svglength processedCMs)
---svgsize = Absolute
+ --svgsize = Absolute
 svgsize :: SizeSpec V2 Double
 svgsize = mkSizeSpec2D Nothing Nothing
 
