@@ -39,15 +39,15 @@ drawHMMER3 modelDetail model
 
 -- | 
 drawHMMNodeFlat :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => HM.HMMER3Node -> b
-drawHMMNodeFlat node =  rect 2 2 # lw 0.1 
+drawHMMNodeFlat node =  rect 2 2 # lw 0.1  
 
 -- | 
 drawHMMNodeSimple :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => HM.HMMER3Node -> b
 drawHMMNodeSimple node =  rect 2 2 # lw 0.1
 
 -- | 
-drawHMMNodeVerbose :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => HM.HMMER3Node -> b
-drawHMMNodeVerbose node =  rect 2 2 # lw 0.1 
+--drawHMMNodeVerbose :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => HM.HMMER3Node -> b
+drawHMMNodeVerbose node =  (circle 1 # lw 0.1) === strutY 1 === (rect 2 2 # lw 0.1 # rotateBy (1/8)) === strutY 1 === (rect 2 2 # lw 0.1) ||| strutX 1
 
 -- | 
 --drawHMMNodeVerbose :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => HM.HMMER3Node -> QDiagram b V2 n Any
