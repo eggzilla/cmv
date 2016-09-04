@@ -55,15 +55,15 @@ deletions = circle 1 # lw 0.1
 insertions = rect 2 2 # lw 0.1 # rotateBy (1/8)
 
 
-matches alphabet emissiontype node = (outerbox <> entries)
-  where outerbox = rect 4 boxlength # lw 0.1
+matches alphabet emissiontype node = (entries # translate (r2 ((negate 2), 0.0)) <> outerbox)
+  where outerbox = rect 4 boxlength # lw 0.1 # fc white
         entries = vcat (map (emissionEntry emissiontype) symbolsAndEmissions)
         symbolsAndEmissions = zip (map wrap alphabetSymbols) emissionEntries
         emissionEntries = setEmissions emissiontype (HM.matchEmissions node)
         boxlength = 2 * (fromIntegral (length alphabet))
         alphabetSymbols = HM.alphabetToSymbols alphabet
 
---setEmissions :: String -> [Double] -> [Double]
+setEmissions :: String -> [Double] -> [Double]
 setEmissions emissiontype emissions
   | emissiontype == "probability" = scoreentries
   | emissiontype == "score" = propentries
@@ -74,6 +74,7 @@ setEmissions emissiontype emissions
 
 wrap x = [x]
 
+         
 --emissionEntry :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => String -> (String,Double) -> QDiagram b V2 n Any
 emissionEntry emissiontype (symbol,emission) 
   | emissiontype == "probability" = textentry
@@ -81,10 +82,10 @@ emissionEntry emissiontype (symbol,emission)
   | emissiontype == "bar" = barentry
     where textentry = text' (symbol ++ " " ++ printf "%.3f" emission)
           --barentry =  stroke (textSVG symbol 2) ||| bar emission
-          barentry =  text' symbol ||| bar emission
+          barentry = (alignedText 0 0.5  symbol <> (rect 2 1 # lw 0 ) )||| bar emission
 
 --bar :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => Double -> QDiagram b V2 n Any
-bar emission = rect (roundPos 3 emission) 1 # lw 0.1
+bar emission = alignL ((rect 1 1 # lw 0.1 ) <> (rect emission 1 # lw 0.1 # fc black # translate (r2 ((negate emission), 0.0))) )
 
 
 -- | 
