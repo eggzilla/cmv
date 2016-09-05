@@ -35,11 +35,14 @@ drawHMMMER3s modelDetail hmms
 -- |
 --drawHMMER3 :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => String -> HM.HMMER3 -> QDiagram b V2 n Any
 drawHMMER3 modelDetail model
-   | modelDetail == "flat" = hcat (map drawHMMNodeFlat (HM.nodes model))
-   | modelDetail == "simple" = hcat (map drawHMMNodeSimple (HM.nodes model))
-   | modelDetail == "detailed" = hcat (map (drawHMMNodeVerbose (HM.alpha model) "bar") (HM.nodes model))
-   | otherwise = hcat (map drawHMMNodeSimple (HM.nodes model))
-
+   | modelDetail == "flat" = hcat (map drawHMMNodeFlat currentnodes)
+   | modelDetail == "simple" = hcat (map drawHMMNodeSimple currentnodes)
+   | modelDetail == "detailed" = hcat (map (drawHMMNodeVerbose alphabet "bar") currentnodes) <> rect (5 * nodenumber) (boxlength + 8)  # fc white # lw 0 # translate (r2 (((5 * nodenumber)/2 ), (negate (boxlength + 7)/2)))
+   | otherwise = hcat (map drawHMMNodeSimple currentnodes)
+     where nodenumber = fromIntegral $ length currentnodes
+           currentnodes = HM.nodes model
+           alphabet = (HM.alpha model)
+           boxlength = 2 * (fromIntegral (length alphabet))
 -- | 
 --drawHMMNodeFlat :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => HM.HMMER3Node -> b
 drawHMMNodeFlat node = rect 2 2 # lw 0.1  
@@ -51,11 +54,11 @@ drawHMMNodeSimple node =  rect 2 2 # lw 0.1
 -- | 
 --drawHMMNodeVerbose :: String -> String -> HM.HMMER3Node -> QDiagram b V2 n Any
 drawHMMNodeVerbose alphabet emissiontype node = deletions === strutY 1 === insertions === strutY 1 === matches alphabet emissiontype node ||| strutX 1
-deletions = circle 1 # lw 0.1
-insertions = rect 2 2 # lw 0.1 # rotateBy (1/8)
+deletions =  alignedText (negate 0.5) (negate 0.5) "D" <> circle 1 # lw 0.1 # fc white
+insertions = alignedText (negate 0.5) (negate 0.5) "I" <> rect 2 2 # lw 0.1 # rotateBy (1/8) # fc white 
 
 
-matches alphabet emissiontype node = (entries # translate (r2 ((negate 2), 0.0)) <> outerbox)
+matches alphabet emissiontype node = entries # translate (r2 (negate 1, boxlength/2)) <> outerbox
   where outerbox = rect 4 boxlength # lw 0.1 # fc white
         entries = vcat (map (emissionEntry emissiontype) symbolsAndEmissions)
         symbolsAndEmissions = zip (map wrap alphabetSymbols) emissionEntries
@@ -80,12 +83,12 @@ emissionEntry emissiontype (symbol,emission)
   | emissiontype == "probability" = textentry
   | emissiontype == "score" = textentry
   | emissiontype == "bar" = barentry
-    where textentry = text' (symbol ++ " " ++ printf "%.3f" emission)
+    where textentry = alignedText 0 0.1 (symbol ++ " " ++ printf "%.3f" emission)
           --barentry =  stroke (textSVG symbol 2) ||| bar emission
-          barentry = (alignedText 0 0.5  symbol <> (rect 2 1 # lw 0 ) )||| bar emission
+          barentry = (alignedText 0 0.1  symbol <> (rect 2 1 # lw 0 ) )||| bar emission
 
 --bar :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => Double -> QDiagram b V2 n Any
-bar emission = alignL ((rect 1 1 # lw 0.1 ) <> (rect emission 1 # lw 0.1 # fc black # translate (r2 ((negate emission), 0.0))) )
+bar emission = rect 1 1 # lw 0.1  ||| rect emission 1 # lw 0 # fc black # translate (r2 (negate 1, 0.0))
 
 
 -- | 
@@ -95,7 +98,7 @@ bar emission = alignL ((rect 1 1 # lw 0.1 ) <> (rect emission 1 # lw 0.1 # fc bl
 
 -- | Render text as SVG
 --text' :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => String -> QDiagram b V2 n Any
-text' t = stroke (textSVG t 1) # fc black # fillRule EvenOdd # lw 0.1
+--text' t = stroke (textSVG t 1) # fc black # fillRule EvenOdd # lw 0.1
           
 --scaling
 -- | Specifies the size of the diagram. Absolute adapts to overall size according to subdiagrams
