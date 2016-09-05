@@ -35,7 +35,7 @@ data HMMER3 = HMMER3
     -- Date; optional
     date :: String,
     -- Command line log; optional
-    com :: String,
+    com :: Maybe String,
     -- Sequence number; optional
     nseq :: Int,
     -- Effective sequence number; optional
@@ -48,6 +48,10 @@ data HMMER3 = HMMER3
     tc :: Maybe (Double, Double),
     -- Pfam noise cutoff; optional
     nc :: Maybe (Double, Double),
+    -- Pfam model construction; optional
+    bm :: Maybe String,
+    -- Pfam full alignment search parameters; optional
+    sm :: Maybe String,
     -- stats for E-value calculation describing location and slope of distribution; optional
     -- MSV - Gumpel distribution; optional
     localmsv :: (Double,Double),

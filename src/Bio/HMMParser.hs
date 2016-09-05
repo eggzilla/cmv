@@ -32,8 +32,8 @@ genParseHMMER3 = do
   newline
   _name <- parseStringAttribute "NAME"
   _acc <-  try (parseStringAttribute "ACC")
+  _desc <- optionMaybe (try (parseStringAttribute "DESC"))         
   _leng <- parseIntAttribute "LENG"
-  _desc <- optionMaybe (try (parseStringAttribute "DESC"))
   _maxl <- optionMaybe (try (parseIntAttribute "MAXL"))
   _alph <- parseStringAttribute "ALPH"
   _rf <- parseSwitchAttribute "RF"
@@ -42,13 +42,15 @@ genParseHMMER3 = do
   _cs <- parseSwitchAttribute "CS"
   _map <- parseSwitchAttribute "MAP"
   _date <- parseStringAttribute "DATE"
-  _com <- parseStringAttribute "COM"
+  _com <- optionMaybe (try (parseStringAttribute "COM"))
   _nseq <- parseIntAttribute "NSEQ"
   _effn <- parseFloatAttribute "EFFN"
   _cksum <- parseIntAttribute "CKSUM"
-  _ga <- optionMaybe (try (parseStatAttribute "GA"))
+  _ga <- optionMaybe (try (parseStatAttribute "GA")) 
   _tc <- optionMaybe (try (parseStatAttribute "TC"))
   _nc <- optionMaybe (try (parseStatAttribute "NC"))
+  _bm <- optionMaybe (try (parseStringAttribute "BM"))
+  _sm <- optionMaybe (try (parseStringAttribute "SM"))
   _localmsv <- parseStatAttribute "STATS LOCAL MSV"
   _localviterbi <- parseStatAttribute "STATS LOCAL VITERBI"
   _localforward <- parseStatAttribute "STATS LOCAL FORWARD"
@@ -63,7 +65,7 @@ genParseHMMER3 = do
   string "//"
   newline
   eof
-  return $ HMMER3 _version _name _acc _desc _leng _maxl _alph _rf _mm _cons _cs _map _date _com _nseq _effn _cksum _ga _tc _nc _localmsv _localviterbi _localforward _hmm _compo _nodes
+  return $ HMMER3 _version _name _acc _desc _leng _maxl _alph _rf _mm _cons _cs _map _date _com _nseq _effn _cksum _ga _tc _nc _bm _sm _localmsv _localviterbi _localforward _hmm _compo _nodes
 
 parseSwitchAttribute :: String -> GenParser Char st Bool
 parseSwitchAttribute fieldName = do
@@ -107,8 +109,9 @@ parseStatAttribute fieldName = do
   string fieldName
   many1 (oneOf " ")
   _stat1 <- parseFloat
-  many1 (oneOf " ")
+  --many1 (oneOf " ")
   _stat2 <- parseFloat
+  optional (string ";")
   newline
   return (_stat1,_stat2)
   
@@ -210,7 +213,7 @@ parseIntParameter = do
 parseStructureParameter :: GenParser Char st Char
 parseStructureParameter = do
   many1 (oneOf " ")
-  _stru <- oneOf "<>().:[]{}~,_"
+  _stru <- oneOf "<>().:[]{}~,_ABCDEFGHIJKLMNOPQRST"
   return _stru
 
 parseOptionalCharParameter :: GenParser Char st (Maybe Char)
@@ -265,5 +268,5 @@ optionalFloatToMaybe c
 parseOptionalStructureParameter :: GenParser Char st (Maybe Char)
 parseOptionalStructureParameter = do
   many1 (oneOf " ")
-  _stru <- oneOf "<>().:[]{}~,_"
+  _stru <- oneOf "<>().:[]{}~,_ABCDEFGHIJKLMNOPQRST-"
   return (optionalStructureToMaybe _stru)
