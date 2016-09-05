@@ -35,6 +35,6 @@ main = do
      then do
        model <- HM.readHMMER3 modelFile
        --print model
-       printSVG svgsize (drawHMMER3 modelDetail (fromRight model))
+       if (isRight model) then printSVG svgsize (drawHMMER3 modelDetail (fromRight model)) else print (fromLeft model)
      else do
        putStrLn "Input model file not found"
