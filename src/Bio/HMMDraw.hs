@@ -36,14 +36,15 @@ drawHMMMER3s modelDetail hmms
 drawHMMER3 modelDetail model
    | modelDetail == "flat" = hcat (map drawHMMNodeFlat currentnodes)
    | modelDetail == "simple" = hcat (map drawHMMNodeSimple currentnodes)
-   | modelDetail == "detailed" = hcat (map (drawHMMNodeVerbose alphabetSymbols "box" boxlength) currentnodes) # bg white 
+   | modelDetail == "detailed" = verboseNodes # bg white # connectOutside' arrowStyle1 "1m" "2m"
    | otherwise = hcat (map drawHMMNodeSimple currentnodes)
      where nodenumber = fromIntegral $ length currentnodes
            currentnodes = HM.nodes model
            alphabet = (HM.alpha model)
            alphabetSymbols = HM.alphabetToSymbols alphabet           
            boxlength = (fromIntegral (length alphabetSymbols)) + 1
-                       
+           verboseNodes =  hcat (map (drawHMMNodeVerbose alphabetSymbols "box" boxlength) currentnodes)
+           arrowStyle1 = with  & arrowHead  .~ spike & headLength .~ (local 1)
 -- | 
 --drawHMMNodeFlat :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => HM.HMMER3Node -> b
 drawHMMNodeFlat node = rect 2 2 # lw 0.1  
@@ -54,15 +55,22 @@ drawHMMNodeSimple node =  rect 2 2 # lw 0.1
 
 -- | 
 --drawHMMNodeVerbose :: String -> String -> HM.HMMER3Node -> QDiagram b V2 n Any
-drawHMMNodeVerbose alphabetSymbols emissiontype boxlength node = deletions === strutY 1 === insertions === strutY 1 === matches alphabetSymbols emissiontype boxlength node ||| strutX 1
-deletions =  alignedText 0 0 "D" # translate (r2 (negate 0.25,0.5)) <> circle 3 # lw 0.1 # fc white
-insertions = alignedText 0 0 "I" # translate (r2 (0,0.5)) <> rect 4.2426 4.2426 # lw 0.1 # rotateBy (1/8) # fc white 
+drawHMMNodeVerbose alphabetSymbols emissiontype boxlength node = deletions nid === strutY 1 === insertions nid  === strutY 1 === matches alphabetSymbols emissiontype boxlength node ||| transitions boxlength node
+  where nid = HM.nodeId node
 
-matches alphabetSymbols emissiontype boxlength node = entries # translate (r2 (negate 2.5,boxlength/2 -1)) <> outerbox
+deletions nid =  alignedText 0 0 "D" # translate (r2 (negate 0.25,0.5)) <> circle 3 # lw 0.1 # fc white # named (nid ++ "d")
+
+insertions nid = alignedText 0 0 "I" # translate (r2 (0,0.5)) <> rect 4.2426 4.2426 # lw 0.1 # rotateBy (1/8) # fc white # named (nid ++ "i")
+
+matches alphabetSymbols emissiontype boxlength node = entries # translate (r2 (negate 2.5,boxlength/2 -1)) <> outerbox # named (nid ++ "m")
   where outerbox = rect 6 boxlength # lw 0.1 # fc white
         entries = vcat (map (emissionEntry emissiontype) symbolsAndEmissions)
         symbolsAndEmissions = zip (map wrap alphabetSymbols) emissionEntries
         emissionEntries = setEmissions emissiontype (HM.matchEmissions node)
+        nid = HM.nodeId node
+
+transitions boxlength node = rect 6 height # lw 0 # translate (r2(0,negate (height/2)))
+  where height = (boxlength + 1 + 1 + 6 + 6)
 
 setEmissions :: String -> [Double] -> [Double]
 setEmissions emissiontype emissions
