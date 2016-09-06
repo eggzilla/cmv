@@ -20,7 +20,7 @@ import Data.Typeable.Internal
 import qualified Bio.HMMParser as HM
 import Text.Printf
 import Prelude
-import  GHC.Float
+import GHC.Float
 
 
 -- | 
@@ -55,11 +55,11 @@ drawHMMNodeSimple node =  rect 2 2 # lw 0.1
 -- | 
 --drawHMMNodeVerbose :: String -> String -> HM.HMMER3Node -> QDiagram b V2 n Any
 drawHMMNodeVerbose alphabetSymbols emissiontype boxlength node = deletions === strutY 1 === insertions === strutY 1 === matches alphabetSymbols emissiontype boxlength node ||| strutX 1
-deletions =  alignedText 0 0 "D" # translate (r2 (negate 0.25,negate 0.25)) <> circle 1 # lw 0.1 # fc white
-insertions = alignedText 0 0 "I" # translate (r2 (negate 0.25,negate 0.25)) <> rect 2 2 # lw 0.1 # rotateBy (1/8) # fc white 
+deletions =  alignedText 0 0 "D" # translate (r2 (0.25,0.25)) <> circle 2 # lw 0.1 # fc white
+insertions = alignedText 0 0 "I" # translate (r2 (0.25,0.25)) <> rect 4 4 # lw 0.1 # rotateBy (1/8) # fc white 
 
-matches alphabetSymbols emissiontype boxlength node = entries # translate (r2 (negate 1.2,boxlength/2 -1)) <> outerbox
-  where outerbox = rect 4 boxlength # lw 0.1 # fc white
+matches alphabetSymbols emissiontype boxlength node = entries # translate (r2 (negate 2.5,boxlength/2 -1)) <> outerbox
+  where outerbox = rect 6 boxlength # lw 0.1 # fc white
         entries = vcat (map (emissionEntry emissiontype) symbolsAndEmissions)
         symbolsAndEmissions = zip (map wrap alphabetSymbols) emissionEntries
         emissionEntries = setEmissions emissiontype (HM.matchEmissions node)
@@ -85,10 +85,10 @@ emissionEntry emissiontype (symbol,emission)
   | otherwise = barentry
     where textentry = alignedText 0 0.1 (symbol ++ " " ++ printf "%.3f" emission) # translate (r2 (negate 0.5,0)) <> (rect 2 1 # lw 0 ) 
           --barentry =  stroke (textSVG symbol 2) ||| bar emission
-          barentry = (alignedText 0 0.01  symbol <> (rect 2 1 # lw 0 )) ||| bar emission
+          barentry = (alignedText 0 0.01 symbol  # translate (r2 (negate 0.25,0.5)) <> (rect 2 1 # lw 0 )) ||| bar emission
 
 --bar :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => Double -> QDiagram b V2 n Any
-bar emission = (rect emission 1 # lw 0 # fc black # translate (r2 (negate (0.5 - (emission/2)),0)) <> rect 1 1 # lw 0.01 )
+bar emission = (rect (4 * emission) 1 # lw 0 # fc black # translate (r2 (negate (2 - (4 * emission/2)),0)) <> rect 4 1 # lw 0.03 )
 
 
 -- | 
