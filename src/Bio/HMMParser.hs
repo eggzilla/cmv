@@ -137,8 +137,7 @@ parseHMMER3Composite alphabet = do
 -- | Parse HMMER3 node
 parseHMMER3Node :: String -> GenParser Char st HMMER3Node
 parseHMMER3Node alphabet = do
-  many1 (oneOf " ")
-  _nodeId <- many1 digit
+  _nodeId <- parseIntParameter
   _matchEmissions <- count (setEmissionNumber alphabet) (try parseDoubleParameter)
   _nma <- parseOptionalIntParameter
   _ncs <- parseOptionalCharParameter

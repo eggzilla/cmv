@@ -36,7 +36,7 @@ drawHMMMER3s modelDetail hmms
 drawHMMER3 modelDetail model
    | modelDetail == "flat" = hcat (map drawHMMNodeFlat currentnodes)
    | modelDetail == "simple" = hcat (map drawHMMNodeSimple currentnodes)
-   | modelDetail == "detailed" = verboseNodes # bg white # connectOutside' arrowStyle1 "1m" "2m"
+   | modelDetail == "detailed" = applyAll ([bg white] ++ arrowList) verboseNodes
    | otherwise = hcat (map drawHMMNodeSimple currentnodes)
      where nodenumber = fromIntegral $ length currentnodes
            currentnodes = HM.nodes model
@@ -44,19 +44,35 @@ drawHMMER3 modelDetail model
            alphabetSymbols = HM.alphabetToSymbols alphabet           
            boxlength = (fromIntegral (length alphabetSymbols)) + 1
            verboseNodes =  hcat (map (drawHMMNodeVerbose alphabetSymbols "box" boxlength) currentnodes)
-           arrowStyle1 = with  & arrowHead  .~ spike & headLength .~ (local 1)
+           arrowList = makeArrows currentnodes
+           --arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw 0.01 & headLength .~ normalized 0.001
+           
+makeArrows currentnodes = map makeArrow mmA
+  where mmA = map makemmA currentnodes 
+      --  miA = currentnodes
+     --   mdA = currentnodes
+     --   imA = currentnodes
+     --   iiA = currentnodes
+     --   dmA = currentnodes
+     --   ddA = currentnodes
+makemmA currentNode = (show ((HM.nodeId) currentNode) ++"m", show ((HM.nodeId currentNode) + 1) ++"m") 
+
+              
+makeArrow (lab1,lab2) = connectOutside' arrowStyle1 lab1 lab2
+  where arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw 0.01 & headLength .~ normalized 0.001
+            
 -- | 
 --drawHMMNodeFlat :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => HM.HMMER3Node -> b
 drawHMMNodeFlat node = rect 2 2 # lw 0.1  
 
 -- | 
 --drawHMMNodeSimple :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => HM.HMMER3Node -> b
-drawHMMNodeSimple node =  rect 2 2 # lw 0.1
+drawHMMNodeSimple node = rect 2 2 # lw 0.1
 
 -- | 
 --drawHMMNodeVerbose :: String -> String -> HM.HMMER3Node -> QDiagram b V2 n Any
-drawHMMNodeVerbose alphabetSymbols emissiontype boxlength node = deletions nid === strutY 1 === insertions nid  === strutY 1 === matches alphabetSymbols emissiontype boxlength node ||| transitions boxlength node
-  where nid = HM.nodeId node
+drawHMMNodeVerbose alphabetSymbols emissiontype boxlength node = deletions nid === strutY 1 === insertions nid  === strutY 1 === matches alphabetSymbols emissiontype boxlength node ||| strutX 4--- transitions boxlength node
+  where nid = show $ HM.nodeId node
 
 deletions nid =  alignedText 0 0 "D" # translate (r2 (negate 0.25,0.5)) <> circle 3 # lw 0.1 # fc white # named (nid ++ "d")
 
@@ -67,7 +83,7 @@ matches alphabetSymbols emissiontype boxlength node = entries # translate (r2 (n
         entries = vcat (map (emissionEntry emissiontype) symbolsAndEmissions)
         symbolsAndEmissions = zip (map wrap alphabetSymbols) emissionEntries
         emissionEntries = setEmissions emissiontype (HM.matchEmissions node)
-        nid = HM.nodeId node
+        nid = show $ HM.nodeId node
 
 transitions boxlength node = rect 6 height # lw 0 # translate (r2(0,negate (height/2)))
   where height = (boxlength + 1 + 1 + 6 + 6)
@@ -124,3 +140,4 @@ printSVG = renderSVG diagramName
 
 roundPos :: (RealFrac a) => Int -> a -> a
 roundPos positions number  = (fromInteger $ round $ number * (10^positions)) / (10.0^^positions)
+ 

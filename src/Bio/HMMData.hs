@@ -71,7 +71,7 @@ data HMMER3 = HMMER3
 -- | Data structure for the HMMER3 node
 data HMMER3Node = HMMER3Node
   {
-    nodeId :: String,
+    nodeId :: Int,
     -- Match emission score, one per symbol in the alphabet
     matchEmissions :: [Double],
     -- map annotation - number of the alignment column
