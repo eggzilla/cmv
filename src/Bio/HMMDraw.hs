@@ -55,8 +55,8 @@ drawHMMNodeSimple node =  rect 2 2 # lw 0.1
 -- | 
 --drawHMMNodeVerbose :: String -> String -> HM.HMMER3Node -> QDiagram b V2 n Any
 drawHMMNodeVerbose alphabetSymbols emissiontype boxlength node = deletions === strutY 1 === insertions === strutY 1 === matches alphabetSymbols emissiontype boxlength node ||| strutX 1
-deletions =  alignedText 0 0 "D" # translate (r2 (0.25,0.25)) <> circle 3 # lw 0.1 # fc white
-insertions = alignedText 0 0 "I" # translate (r2 (0.25,0.25)) <> rect 4.2426 4.2426 # lw 0.1 # rotateBy (1/8) # fc white 
+deletions =  alignedText 0 0 "D" # translate (r2 (negate 0.25,0.5)) <> circle 3 # lw 0.1 # fc white
+insertions = alignedText 0 0 "I" # translate (r2 (0,0.5)) <> rect 4.2426 4.2426 # lw 0.1 # rotateBy (1/8) # fc white 
 
 matches alphabetSymbols emissiontype boxlength node = entries # translate (r2 (negate 2.5,boxlength/2 -1)) <> outerbox
   where outerbox = rect 6 boxlength # lw 0.1 # fc white
