@@ -47,20 +47,28 @@ drawHMMER3 modelDetail model
            arrowList = makeArrows currentnodes
            --arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw 0.01 & headLength .~ normalized 0.001
            
-makeArrows currentnodes = map makeArrow mmA
-  where mmA = map makemmA currentnodes 
-      --  miA = currentnodes
-     --   mdA = currentnodes
-     --   imA = currentnodes
-     --   iiA = currentnodes
-     --   dmA = currentnodes
-     --   ddA = currentnodes
-makemmA currentNode = (show ((HM.nodeId) currentNode) ++"m", show ((HM.nodeId currentNode) + 1) ++"m") 
-
+makeArrows currentnodes = (map makeArrow (mm1A ++ md1A ++ im1A ++ dm1A ++ dd1A)) -- ++ (map makeArrow iiA)
+  where mm1A = map makemm1A currentnodes 
+        miA = map makemiA currentnodes
+        md1A = map makemd1A currentnodes
+        im1A = map makeim1A currentnodes
+        iiA = map makeiiA currentnodes
+        dm1A = map makedm1A currentnodes
+        dd1A = map makedd1A currentnodes
+makemm1A currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((HM.nodeId currentNode) + 1) ++ "m") 
+makemiA currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((HM.nodeId currentNode)) ++ "i")
+makemd1A currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((HM.nodeId currentNode) + 1) ++ "d")
+makeim1A currentNode = (show ((HM.nodeId) currentNode) ++ "i", show ((HM.nodeId currentNode) + 1) ++ "m")
+makeiiA currentNode = (show ((HM.nodeId) currentNode) ++ "i", show ((HM.nodeId currentNode)) ++ "i")
+makedm1A currentNode = (show ((HM.nodeId) currentNode) ++ "d", show ((HM.nodeId currentNode) + 1) ++ "m")
+makedd1A currentNode = (show ((HM.nodeId) currentNode) ++ "d", show ((HM.nodeId currentNode) + 1) ++ "d")
               
 makeArrow (lab1,lab2) = connectOutside' arrowStyle1 lab1 lab2
   where arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw 0.01 & headLength .~ normalized 0.001
-            
+--makeSelfArrow (lab1,lab2) = connectPerim' arrowStyle1 "2" "2" (4/12 @@ turn) (2/12 @@ turn) lab1 lab2
+--  where arrowStyle2 = with  & arrowHead .~ spike  & arrowTail .~ lineTail & tailTexture .~ solid black & lengths .~ normal
+--        arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw 0.01 & headLength .~ normalized 0.001
+
 -- | 
 --drawHMMNodeFlat :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => HM.HMMER3Node -> b
 drawHMMNodeFlat node = rect 2 2 # lw 0.1  
