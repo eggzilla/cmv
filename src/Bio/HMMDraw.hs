@@ -47,7 +47,7 @@ drawHMMER3 modelDetail model
            arrowList = makeArrows currentnodes
            --arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw 0.01 & headLength .~ normalized 0.001
            
-makeArrows currentnodes = (map makeArrow (mm1A ++ md1A ++ im1A ++ dm1A ++ dd1A)) -- ++ (map makeArrow iiA)
+makeArrows currentnodes = (map makeArrow (mm1A ++ md1A ++ im1A ++ dm1A ++ dd1A)) ++ (map makeSelfArrow iiA)
   where mm1A = map makemm1A currentnodes 
         miA = map makemiA currentnodes
         md1A = map makemd1A currentnodes
@@ -65,9 +65,12 @@ makedd1A currentNode = (show ((HM.nodeId) currentNode) ++ "d", show ((HM.nodeId 
               
 makeArrow (lab1,lab2) = connectOutside' arrowStyle1 lab1 lab2
   where arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw 0.01 & headLength .~ normalized 0.001
---makeSelfArrow (lab1,lab2) = connectPerim' arrowStyle1 "2" "2" (4/12 @@ turn) (2/12 @@ turn) lab1 lab2
---  where arrowStyle2 = with  & arrowHead .~ spike  & arrowTail .~ lineTail & tailTexture .~ solid black & lengths .~ normal
---        arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw 0.01 & headLength .~ normalized 0.001
+makeSelfArrow (lab1,lab2) = connectPerim' arrowStyle lab1 lab1 (4/12 @@ turn) (2/12 @@ turn)
+  where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw 0.01 & headLength .~ normalized 0.001  & tailLength .~ 1
+        shaft' = arc xDir (-2.7/5 @@ turn)
+
+    --arrowStyle = with  & arrowHead  .~ spike  & arrowShaft .~ line & shaftStyle %~ lw 0.01 & headLength .~ normalized 0.001
+    --    line = trailFromOffsets [unitX]
 
 -- | 
 --drawHMMNodeFlat :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => HM.HMMER3Node -> b
@@ -79,7 +82,7 @@ drawHMMNodeSimple node = rect 2 2 # lw 0.1
 
 -- | 
 --drawHMMNodeVerbose :: String -> String -> HM.HMMER3Node -> QDiagram b V2 n Any
-drawHMMNodeVerbose alphabetSymbols emissiontype boxlength node = deletions nid === strutY 1 === insertions nid  === strutY 1 === matches alphabetSymbols emissiontype boxlength node ||| strutX 4--- transitions boxlength node
+drawHMMNodeVerbose alphabetSymbols emissiontype boxlength node = deletions nid === strutY 1.5 === insertions nid  === strutY 1.5 === matches alphabetSymbols emissiontype boxlength node ||| strutX 4--- transitions boxlength node
   where nid = show $ HM.nodeId node
 
 deletions nid =  alignedText 0 0 "D" # translate (r2 (negate 0.25,0.5)) <> circle 3 # lw 0.1 # fc white # named (nid ++ "d")
@@ -107,7 +110,6 @@ setEmissions emissiontype emissions
           barentries = map (exp . negate) emissions
 
 wrap x = [x]
-
          
 --emissionEntry :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => String -> (String,Double) -> QDiagram b V2 n Any
 emissionEntry emissiontype (symbol,emission) 
@@ -117,7 +119,7 @@ emissionEntry emissiontype (symbol,emission)
   | otherwise = barentry
     where textentry = alignedText 0 0.1 (symbol ++ " " ++ printf "%.3f" emission) # translate (r2 (negate 0.5,0)) <> (rect 2 1 # lw 0 ) 
           --barentry =  stroke (textSVG symbol 2) ||| bar emission
-          barentry = (alignedText 0 0.01 symbol  # translate (r2 (negate 0.25,0.5)) <> (rect 2 1 # lw 0 )) ||| bar emission
+          barentry = (alignedText 0 0.01 symbol  # translate (r2 (negate 0.25,negate 0.3)) <> (rect 2 1 # lw 0 )) ||| bar emission
 
 --bar :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => Double -> QDiagram b V2 n Any
 bar emission = (rect (4 * emission) 1 # lw 0 # fc black # translate (r2 (negate (2 - (4 * emission/2)),0)) <> rect 4 1 # lw 0.03 )
