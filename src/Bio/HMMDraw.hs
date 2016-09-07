@@ -55,18 +55,18 @@ makeArrows currentnodes = (map makeArrow (mm1A ++ md1A ++ im1A ++ dm1A ++ dd1A))
         iiA = map makeiiA currentnodes
         dm1A = map makedm1A currentnodes
         dd1A = map makedd1A currentnodes
-makemm1A currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((HM.nodeId currentNode) + 1) ++ "m") 
-makemiA currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((HM.nodeId currentNode)) ++ "i")
-makemd1A currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((HM.nodeId currentNode) + 1) ++ "d")
-makeim1A currentNode = (show ((HM.nodeId) currentNode) ++ "i", show ((HM.nodeId currentNode) + 1) ++ "m")
-makeiiA currentNode = (show ((HM.nodeId) currentNode) ++ "i", show ((HM.nodeId currentNode)) ++ "i")
-makedm1A currentNode = (show ((HM.nodeId) currentNode) ++ "d", show ((HM.nodeId currentNode) + 1) ++ "m")
-makedd1A currentNode = (show ((HM.nodeId) currentNode) ++ "d", show ((HM.nodeId currentNode) + 1) ++ "d")
+makemm1A currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((HM.nodeId currentNode) + 1) ++ "m", maybe 0 (*0.01) (HM.m2m currentNode)) 
+makemiA currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((HM.nodeId currentNode)) ++ "i", (HM.m2i currentNode))
+makemd1A currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((HM.nodeId currentNode) + 1) ++ "d", maybe 0 (*0.01) (HM.m2d currentNode))
+makeim1A currentNode = (show ((HM.nodeId) currentNode) ++ "i", show ((HM.nodeId currentNode) + 1) ++ "m", maybe 0 (*0.01) (HM.i2m currentNode))
+makeiiA currentNode = (show ((HM.nodeId) currentNode) ++ "i", show ((HM.nodeId currentNode)) ++ "i", maybe 0 (*0.01) (HM.i2i currentNode))
+makedm1A currentNode = (show ((HM.nodeId) currentNode) ++ "d", show ((HM.nodeId currentNode) + 1) ++ "m", maybe 0 (*0.01) (HM.d2m currentNode))
+makedd1A currentNode = (show ((HM.nodeId) currentNode) ++ "d", show ((HM.nodeId currentNode) + 1) ++ "d", maybe 0 (*0.01) (HM.d2d currentNode))
               
-makeArrow (lab1,lab2) = connectOutside' arrowStyle1 lab1 lab2
-  where arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw 0.01 & headLength .~ normalized 0.001
-makeSelfArrow (lab1,lab2) = connectPerim' arrowStyle lab1 lab1 (4/12 @@ turn) (2/12 @@ turn)
-  where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw 0.01 & headLength .~ normalized 0.001  & tailLength .~ 1
+makeArrow (lab1,lab2,weight) = connectOutside' arrowStyle1 lab1 lab2
+  where arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw (local weight) & headLength .~ local 0.001
+makeSelfArrow (lab1,lab2,weight) = connectPerim' arrowStyle lab1 lab1 (4/12 @@ turn) (2/12 @@ turn)
+  where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw (local weight) & headLength .~ local 0.001  & tailLength .~ 1
         shaft' = arc xDir (-2.7/5 @@ turn)
 
     --arrowStyle = with  & arrowHead  .~ spike  & arrowShaft .~ line & shaftStyle %~ lw 0.01 & headLength .~ normalized 0.001
@@ -85,9 +85,9 @@ drawHMMNodeSimple node = rect 2 2 # lw 0.1
 drawHMMNodeVerbose alphabetSymbols emissiontype boxlength node = deletions nid === strutY 1.5 === insertions nid  === strutY 1.5 === matches alphabetSymbols emissiontype boxlength node ||| strutX 4--- transitions boxlength node
   where nid = show $ HM.nodeId node
 
-deletions nid =  alignedText 0 0 "D" # translate (r2 (negate 0.25,0.5)) <> circle 3 # lw 0.1 # fc white # named (nid ++ "d")
+deletions nid =  alignedText 0 0 "D" # translate (r2 (negate 0.25,0.25)) <> circle 3 # lw 0.1 # fc white # named (nid ++ "d")
 
-insertions nid = alignedText 0 0 "I" # translate (r2 (0,0.5)) <> rect 4.2426 4.2426 # lw 0.1 # rotateBy (1/8) # fc white # named (nid ++ "i")
+insertions nid = alignedText 0 0 "I" # translate (r2 (0,0.25)) <> rect 4.2426 4.2426 # lw 0.1 # rotateBy (1/8) # fc white # named (nid ++ "i")
 
 matches alphabetSymbols emissiontype boxlength node = entries # translate (r2 (negate 2.5,boxlength/2 -1)) <> outerbox # named (nid ++ "m")
   where outerbox = rect 6 boxlength # lw 0.1 # fc white
