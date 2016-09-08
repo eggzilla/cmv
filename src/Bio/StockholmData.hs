@@ -4,11 +4,11 @@ module Bio.StockholmData where
 
 import qualified Data.Text as T
 
--- | Data structure for Stockholm
-data Stockholm = Stockholm
+-- | Data structure for a Stockholm format alignment
+data StockholmAlignment = StockholmAlignment
   {
-    -- File format version; mandatory
     version :: T.Text,
+    --annotations with the same tag are merged
     fileAnnotation :: [AnnotationEntry],
     columnAnnotation :: [AnnotationEntry],
     sequenceEntry :: SequenceEntry
@@ -20,7 +20,8 @@ SequenceEntry = SequenceEntry
   {
     sequenceId ::T.Text ,
     sequence :: T.Text,
-    sequenceAnnotation :: T.Text,
+    --annotations with the same tag are merged
+    sequenceAnnotation :: [AnnotationEntry],
     residueAnnotation :: [AnnotationEntry]
   }
   deriving (Show, Eq)
@@ -31,3 +32,6 @@ AnnotationEntry = AnnotationEntry
     annotation :: T.Text
   }
   deriving (Show, Eq)
+
+StockholmToken = StockSeq | FileA | ColA | SeqA | Seq | ResA
+
