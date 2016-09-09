@@ -1,11 +1,11 @@
 -- | Parse Stockholm alignments
-module Bio.HMMParser (
+module Bio.StockholmParser (
                        parseStockholm,
-                       readStockholm
+                       readStockholm,
                        module Bio.Stockholm
                       ) where
 
-import Bio.HMMData
+import Bio.StockholmData
 import Text.ParserCombinators.Parsec
 import Text.Parsec.Numbers
 import qualified Control.Exception.Base as CE

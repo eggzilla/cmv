@@ -9,17 +9,17 @@ data StockholmAlignment = StockholmAlignment
   {
     version :: T.Text,
     --annotations with the same tag are merged
-    fileAnnotation :: [AnnotationEntry],
-    columnAnnotation :: [AnnotationEntry],
-    sequenceEntry :: SequenceEntry
+    fileAnnotations :: [AnnotationEntry],
+    columnAnnotations :: [AnnotationEntry],
+    sequenceEntries :: [SequenceEntry]
     
   }
   deriving (Show, Eq)
   
 SequenceEntry = SequenceEntry
   {
-    sequenceId ::T.Text ,
-    sequence :: T.Text,
+    sequenceId :: T.Text,
+    entrySequence :: T.Text,
     --annotations with the same tag are merged
     sequenceAnnotation :: [AnnotationEntry],
     residueAnnotation :: [AnnotationEntry]
@@ -35,41 +35,41 @@ AnnotationEntry = AnnotationEntry
 
 --StockholmToken = StockSeq | FileA | ColA | SeqA | Seq | ResA
 
-StockholmToken =  TokFileA | TokColA | TokResA | TokSeq 
+StockholmToken =  TokFileA | TokColA | TokResA | TokSeqA | TokSeq 
 
 
 TokFileA = TokFileA
   {
-  ftag :: T.Text,
-  finfo :: T.Text
+  fTag :: T.Text,
+  fInfo :: T.Text
   }
   deriving (Show, Eq)
 
 TokColA = TokColA
   {
-  ctag :: T.Text,
-  cinfo :: T.Text
+  cTag :: T.Text,
+  cInfo :: T.Text
   }
   deriving (Show, Eq)
 
 TokResA = TokResA
   {
-  tid :: T.Text,
-  tag :: T.Text
+  rId :: T.Text,
+  rTag :: T.Text
   }
   deriving (Show, Eq)
 
 TokSeqA = TokSeqA
   {
-  aid :: T.Text,
-  atag :: T.Text,
-  ainfo :: T.Text        
+  aId :: T.Text,
+  aTag :: T.Text,
+  aInfo :: T.Text        
   }
   deriving (Show, Eq)
 
 TokSeq = TokSeq
   {
-  sid :: T.Text,
-  sseq :: T.Text
+  sId :: T.Text,
+  sSeq :: T.Text
   }
   deriving (Show, Eq)
