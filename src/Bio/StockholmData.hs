@@ -33,5 +33,43 @@ AnnotationEntry = AnnotationEntry
   }
   deriving (Show, Eq)
 
-StockholmToken = StockSeq | FileA | ColA | SeqA | Seq | ResA
+--StockholmToken = StockSeq | FileA | ColA | SeqA | Seq | ResA
 
+StockholmToken =  TokFileA | TokColA | TokResA | TokSeq 
+
+
+TokFileA = TokFileA
+  {
+  ftag :: T.Text,
+  finfo :: T.Text
+  }
+  deriving (Show, Eq)
+
+TokColA = TokColA
+  {
+  ctag :: T.Text,
+  cinfo :: T.Text
+  }
+  deriving (Show, Eq)
+
+TokResA = TokResA
+  {
+  tid :: T.Text,
+  tag :: T.Text
+  }
+  deriving (Show, Eq)
+
+TokSeqA = TokSeqA
+  {
+  aid :: T.Text,
+  atag :: T.Text,
+  ainfo :: T.Text        
+  }
+  deriving (Show, Eq)
+
+TokSeq = TokSeq
+  {
+  sid :: T.Text,
+  sseq :: T.Text
+  }
+  deriving (Show, Eq)
