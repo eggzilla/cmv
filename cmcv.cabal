@@ -33,8 +33,8 @@ library
                      Bio.HMMDraw
                      Bio.CMDraw
                      Bio.CMCompareResult
-		     Bio.StockholmParser
-		     Bio.StockholmData
+                     Bio.StockholmParser
+                     Bio.StockholmData
 
   -- compiler-options:
   ghc-options:         -Wall -O2 -fno-warn-unused-do-bind
