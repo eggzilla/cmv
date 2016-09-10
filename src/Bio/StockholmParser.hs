@@ -2,7 +2,7 @@
 module Bio.StockholmParser (
                        parseStockholm,
                        readStockholm,
-                       module Bio.Stockholm
+                       module Bio.StockholmData
                       ) where
 
 import Bio.StockholmData
@@ -96,9 +96,9 @@ tokenToStockholm version token = StockholmAlignment version _fileAnnotation _col
         _seqtoken = filter isSeqTok token
         _fileAnnotation = mergeFileToken _fileAtoken
         _columnAnnotation = mergeColToken _colAtoken
+        mergedSeqAToken = mergeSeqAToken _seqAtoken                    
         mergedRAToken = mergeResAToken _resAtoken
-        mergedSeqAToken = mergeSeqAToken _seqAtoken
-        _sequenceEntries = buildSeqEntries mergedRAToken mergedSeqAToken _seqtoken
+        _sequenceEntries = buildSeqEntries mergedSeqAToken mergedRAToken _seqtoken
 
 isFileTok :: StockholmToken -> Bool                           
 isFileTok (TokFileA x y) = True
@@ -182,14 +182,14 @@ buildSeqEntries token resA seqA = entries
         entries = map (buildSeqEntry token resA seqA) currentId
          
 buildSeqEntry :: [StockholmToken] -> [StockholmToken] -> [StockholmToken] -> T.Text -> SequenceEntry
-buildSeqEntry token resA seqA currentId = entry 
+buildSeqEntry token resAtok seqAtok currentId = entry 
   where idToken = filter (\t -> sId t == currentId ) token
-        idSAToken = filter (\t -> aId t == currentId ) seqA          
-        idRAToken = filter (\t -> rId t == currentId ) resA
+        idSAToken = filter (\t -> aId t == currentId ) seqAtok         
+        idRAToken = filter (\t -> rId t == currentId ) resAtok
         seqA = map buildSAEntry idSAToken
         resA = map buildRAEntry idRAToken      
         tagInfos = T.concat (map sSeq idToken)
-        entry = SequenceEntry currentId tagInfos idSAToken idRAToken
+        entry = SequenceEntry currentId tagInfos seqA resA
 
 buildSAEntry :: StockholmToken -> AnnotationEntry
 buildSAEntry tok = AnnotationEntry (aTag tok) (aInfo tok)

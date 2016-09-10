@@ -17,6 +17,7 @@ import Bio.StockholmParser
 options :: Options
 data Options = Options            
   { modelFile :: String,
+    alignmentFile :: String,             
     modelDetail :: String,
     modelLayout :: String
   } deriving (Show,Data,Typeable)
@@ -43,7 +44,7 @@ main = do
             aln <- readStockholm alignmentFile
             if (isRight aln) then print (fromRight aln) else print (fromLeft aln)
             if (isRight model) then printSVG svgsize (drawHMMER3 modelDetail (fromRight model)) else print (fromLeft model)
-       else do     
-         if (isRight model) then printSVG svgsize (drawHMMER3 modelDetail (fromRight model)) else print (fromLeft model)
+          else do     
+            if (isRight model) then printSVG svgsize (drawHMMER3 modelDetail (fromRight model)) else print (fromLeft model)
      else do
        putStrLn "Input model file not found"
