@@ -26,13 +26,11 @@ readStockholm filePath = do
 genParseStockholm :: GenParser Char st StockholmAlignment
 genParseStockholm = do
   string "# STOCKHOLM"
-  many1 (string " ")
+  many1 (try (string " "))
   _version <- many1 (noneOf "\n")
-  --per file annotations
-  many newline            
-  _stockholmToken <- many genParseToken
-  many newline
-  string "//"
+  many (try newline)
+  _stockholmToken <- many1 genParseToken
+  string "//\n"
   eof
   return (tokenToStockholm (T.pack _version) _stockholmToken)
 
@@ -44,34 +42,41 @@ genParseToken = do
 
 genParseTokFileA :: GenParser Char st StockholmToken
 genParseTokFileA = do
+  many newline
   string "#=GF"
   char ' '
   _tag <- many1 upper
   many1 (char ' ')
   _info <- many1 (noneOf "\n")
+  newline
   return $ (TokFileA (T.pack _tag) (T.pack _info))
   
 genParseTokColA :: GenParser Char st StockholmToken
 genParseTokColA = do
+  many newline
   string "#=GC"
   char ' '
   _tag <- many1 (noneOf " \n")
   many1 (char ' ')
   _info <- many1 (noneOf "\n")
+  newline         
   return $ TokColA (T.pack _tag) (T.pack _info)
            
 genParseTokResA :: GenParser Char st StockholmToken
 genParseTokResA = do
+  many newline
   string "#=GR"
   char ' '
   _id <- many1 (noneOf " \n")
   many1 (char ' ')
   _tag <- many1 (noneOf " \n")
   _info <- many1 (noneOf "\n")
+  newline         
   return $ TokResA (T.pack _id) (T.pack _tag) (T.pack _info)
   
 genParseTokSeqA :: GenParser Char st StockholmToken
 genParseTokSeqA = do
+  many newline
   string "#=GS"
   char ' '
   _id <- many1 (noneOf " \n")
@@ -82,17 +87,19 @@ genParseTokSeqA = do
 
 genParseTokSeq :: GenParser Char st StockholmToken
 genParseTokSeq = do
+  many newline
   _sid <- many1 (noneOf " \n")
   many1 (char ' ')
-  _sequence <- many1 (oneOf "SNYRUAGCT-")
+  _sequence <- many1 (oneOf "ABCDEFGHIJKLMNOPQRSTUVWXYZ-")
+  newline             
   return $ TokSeq (T.pack _sid) (T.pack _sequence)
 
 tokenToStockholm :: T.Text -> [StockholmToken] -> StockholmAlignment
 tokenToStockholm version token = StockholmAlignment version _fileAnnotation _columnAnnotation _sequenceEntries
-  where _fileAtoken =  filter isFileTok token
-        _colAtoken =  filter isColATok token
-        _resAtoken =  filter isResATok token
-        _seqAtoken =  filter isSeqATok token
+  where _fileAtoken = filter isFileTok token
+        _colAtoken = filter isColATok token
+        _resAtoken = filter isResATok token
+        _seqAtoken = filter isSeqATok token
         _seqtoken = filter isSeqTok token
         _fileAnnotation = mergeFileToken _fileAtoken
         _columnAnnotation = mergeColToken _colAtoken
@@ -117,7 +124,7 @@ isSeqATok (TokSeqA x y z) = True
 isSeqATok _ = False
 
 isSeqTok :: StockholmToken -> Bool              
-isSeqTok (TokFileA x y) = True
+isSeqTok (TokSeq x y) = True
 isSeqTok _ = False              
               
 mergeFileToken :: [StockholmToken] -> [AnnotationEntry]
@@ -177,22 +184,26 @@ mergeRAIdTagToken token currentId currentTag= entry
         entry = TokSeqA currentId currentTag tagInfos
 
 buildSeqEntries :: [StockholmToken] -> [StockholmToken] -> [StockholmToken] -> [SequenceEntry]
-buildSeqEntries token resA seqA = entries
+buildSeqEntries  seqA resA token= entries
   where currentId = map sId token
-        entries = map (buildSeqEntry token resA seqA) currentId
+        entries = map (buildSeqEntry seqA resA token) currentId
          
 buildSeqEntry :: [StockholmToken] -> [StockholmToken] -> [StockholmToken] -> T.Text -> SequenceEntry
-buildSeqEntry token resAtok seqAtok currentId = entry 
+buildSeqEntry seqAtok resAtok token currentId = entry 
   where idToken = filter (\t -> sId t == currentId ) token
-        idSAToken = filter (\t -> aId t == currentId ) seqAtok         
+        idSAToken = filter (\t -> aId t == currentId ) seqAtok
         idRAToken = filter (\t -> rId t == currentId ) resAtok
         seqA = map buildSAEntry idSAToken
         resA = map buildRAEntry idRAToken      
         tagInfos = T.concat (map sSeq idToken)
         entry = SequenceEntry currentId tagInfos seqA resA
 
+                
 buildSAEntry :: StockholmToken -> AnnotationEntry
 buildSAEntry tok = AnnotationEntry (aTag tok) (aInfo tok)
 
 buildRAEntry :: StockholmToken -> AnnotationEntry
 buildRAEntry tok = AnnotationEntry (rTag tok) (rInfo tok)
+
+                   
+

@@ -9,7 +9,7 @@ data StockholmAlignment = StockholmAlignment
   { version :: T.Text,
     --annotations with the same tag are merged
     fileAnnotations :: [AnnotationEntry],
-    columnAnnotations :: [AnnotationEntry],
+    columnAnnotations :: [AnnotationEntry],         
     sequenceEntries :: [SequenceEntry]  
   }
   deriving (Show, Eq)
