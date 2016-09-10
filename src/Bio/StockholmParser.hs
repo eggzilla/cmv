@@ -90,7 +90,7 @@ genParseTokSeq = do
   many newline
   _sid <- many1 (noneOf " \n")
   many1 (char ' ')
-  _sequence <- many1 (oneOf "ABCDEFGHIJKLMNOPQRSTUVWXYZ-")
+  _sequence <- many1 (oneOf "ABCDEFGHIJKLMNOPQRSTUVWXYZ-.")
   newline             
   return $ TokSeq (T.pack _sid) (T.pack _sequence)
 
@@ -181,7 +181,7 @@ mergeRAIdTagToken :: [StockholmToken] ->  T.Text -> T.Text -> StockholmToken
 mergeRAIdTagToken token currentId currentTag= entry
   where tagToken = filter (\t -> rId t == currentId) token
         tagInfos = T.concat (map rInfo tagToken)
-        entry = TokSeqA currentId currentTag tagInfos
+        entry = TokResA currentId currentTag tagInfos
 
 buildSeqEntries :: [StockholmToken] -> [StockholmToken] -> [StockholmToken] -> [SequenceEntry]
 buildSeqEntries  seqA resA token= entries
