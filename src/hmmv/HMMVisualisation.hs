@@ -43,8 +43,8 @@ main = do
           then do
             aln <- readStockholm alignmentFile
             if (isRight aln) then print (fromRight aln) else print (fromLeft aln)
-            if (isRight model) then printSVG svgsize (drawHMMER3 modelDetail (fromRight model)) else print (fromLeft model)
+            if (isRight model) then printSVG svgsize (drawHMMER3 modelDetail ((fromRight model),(Just (fromRight aln)))) else print (fromLeft model)
           else do     
-            if (isRight model) then printSVG svgsize (drawHMMER3 modelDetail (fromRight model)) else print (fromLeft model)
+            if (isRight model) then printSVG svgsize (drawHMMER3 modelDetail ((fromRight model),Nothing)) else print (fromLeft model)
      else do
        putStrLn "Input model file not found"

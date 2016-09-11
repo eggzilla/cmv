@@ -21,22 +21,25 @@ import qualified Bio.HMMParser as HM
 import Text.Printf
 import Prelude
 import GHC.Float
-
-
+import qualified Bio.StockholmData as S
+import qualified Data.Text as T    
+import Data.Maybe
+    
 -- | 
 --drawHMMMER3s :: forall b. Renderable (Path V2 Double) b => String -> [HM.HMMER3] -> QDiagram b V2 Double Any
-drawHMMMER3s modelDetail hmms
-  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawHMMER3 modelDetail) hmms))
-  | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (map (drawHMMER3 modelDetail) hmms))
-  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawHMMER3 modelDetail) hmms))
-  | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawHMMER3 modelDetail) hmms))
+drawHMMMER3s modelDetail hmms alns
+  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawHMMER3 modelDetail) zippedInput))
+  | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (map (drawHMMER3 modelDetail) zippedInput))
+  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawHMMER3 modelDetail) zippedInput))
+  | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawHMMER3 modelDetail) zippedInput))
+    where zippedInput = zip hmms alns
 
 -- |
 --drawHMMER3 :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => String -> HM.HMMER3 -> QDiagram b V2 n Any
-drawHMMER3 modelDetail model
+drawHMMER3 modelDetail (model,aln)
    | modelDetail == "flat" = hcat (map drawHMMNodeFlat currentnodes)
    | modelDetail == "simple" = hcat (map drawHMMNodeSimple currentnodes)
-   | modelDetail == "detailed" = applyAll ([bg white] ++ arrowList) verboseNodes
+   | modelDetail == "detailed" = applyAll ([bg white] ++ arrowList) verboseNodesAlignment
    | otherwise = hcat (map drawHMMNodeSimple currentnodes)
      where nodenumber = fromIntegral $ length currentnodes
            currentnodes = HM.nodes model
@@ -44,9 +47,20 @@ drawHMMER3 modelDetail model
            alphabetSymbols = HM.alphabetToSymbols alphabet           
            boxlength = (fromIntegral (length alphabetSymbols)) + 1
            verboseNodes =  hcat (map (drawHMMNodeVerbose alphabetSymbols "box" boxlength) currentnodes)
+           verboseNodesAlignment =  vcat' with { _sep = 5 }  [verboseNodes,alignmentDiagram]
+           alignmentDiagram = if isJust aln then drawStockholm $ fromJust aln else mempty 
            arrowList = makeArrows currentnodes
-           --arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw 0.01 & headLength .~ normalized 0.001
-           
+
+--drawStockholm                       
+drawStockholm aln = vcat' with { _sep = 1 } (map drawStockholmEntry currentEntries)
+  where currentEntries = S.sequenceEntries aln
+               
+drawStockholmEntry entry = entryDia
+  where entryText = T.unpack ((S.sequenceId entry) `T.append` (T.pack " ")  `T.append` (S.entrySequence entry))
+        entryDia = alignedText 0 0 entryText # translate (r2 (negate 0.25,0.25)) <> rect textLength 1 # lw 0.03
+        textLength = fromIntegral (length entryText)
+        
+                    
 makeArrows currentnodes = (map makeArrow (mm1A ++ md1A ++ im1A ++ dm1A ++ dd1A)) ++ (map makeSelfArrow iiA)
   where mm1A = map makemm1A currentnodes 
         miA = map makemiA currentnodes
