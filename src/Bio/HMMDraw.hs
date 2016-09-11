@@ -46,11 +46,12 @@ drawHMMER3 modelDetail (model,aln)
            alphabet = (HM.alpha model)
            alphabetSymbols = HM.alphabetToSymbols alphabet           
            boxlength = (fromIntegral (length alphabetSymbols)) + 1
-           verboseNodes =  hcat (map (drawHMMNodeVerbose alphabetSymbols "box" boxlength) currentnodes)
+           verboseNodes =  hcat (map (drawHMMNodeVerbose alphabetSymbols "box" boxlength) currentnodes) 
            verboseNodesAlignment =  alignTL (vcat' with { _sep = 5 }  [verboseNodes,alignmentDiagram])
            alignmentDiagram = if isJust aln then drawStockholm $ fromJust aln else mempty 
            arrowList = makeArrows currentnodes
-
+           --labellist = makeLabels currentnodes
+                       
 --drawStockholm                       
 drawStockholm aln = alignTL (vcat' with { _sep = 1 } (map (drawStockholmEntry maxIdLength) currentEntries))
   where currentEntries = S.sequenceEntries aln
@@ -61,13 +62,9 @@ drawStockholmEntry maxIdLength entry = entryDia
         seqId = S.sequenceId entry             
         spacerLength = (maxIdLength + 3) - T.length seqId 
         spacer = T.replicate spacerLength (T.pack " ")
-        --entryDia = alignedText 0.5 0.5 entryText # font "Droid Sans Mono" # translate (r2 (0.25,negate 0.25)) <> rect textLength 1 # lw 0.03 # translate (r2 (0, 0))
         entryDia = hcat (map setLetter entryText)         
-        --textLength = (fromIntegral (length entryText))/2  <> rect 1.0 1.0 # lw 0.0001 # translate (r2 (0, 0))
-
-setLetter echar = alignedText 0.5 0.5 [echar] <> rect 0.75 0.75 # lw 0 # translate (r2 (0, 0))                     
-                     
--- translate (r2 (negate 0.25,0.25))                   
+       
+setLetter echar = alignedText 0.5 0.5 [echar] <> rect 0.75 0.75 # lw 0 # translate (r2 (0, 0))                                           
 makeArrows currentnodes = (map makeArrow (mm1A ++ md1A ++ im1A ++ dm1A ++ dd1A)) ++ (map makeSelfArrow iiA)
   where mm1A = map makemm1A currentnodes 
         miA = map makemiA currentnodes
@@ -76,6 +73,16 @@ makeArrows currentnodes = (map makeArrow (mm1A ++ md1A ++ im1A ++ dm1A ++ dd1A))
         iiA = map makeiiA currentnodes
         dm1A = map makedm1A currentnodes
         dd1A = map makedd1A currentnodes
+
+makeLabels currentnodes = (map makeLabel (mm1A ++ md1A ++ im1A ++ dm1A ++ dd1A)) -- ++ (map makeSelfArrow iiA)
+  where mm1A = map makemm1A currentnodes 
+        miA = map makemiA currentnodes
+        md1A = map makemd1A currentnodes
+        im1A = map makeim1A currentnodes
+        --iiA = map makeiiA currentnodes
+        dm1A = map makedm1A currentnodes
+        dd1A = map makedd1A currentnodes               
+               
 makemm1A currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((HM.nodeId currentNode) + 1) ++ "m", maybe 0 (*0.01) (HM.m2m currentNode)) 
 makemiA currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((HM.nodeId currentNode)) ++ "i", (HM.m2i currentNode))
 makemd1A currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((HM.nodeId currentNode) + 1) ++ "d", maybe 0 (*0.01) (HM.m2d currentNode))
@@ -84,12 +91,23 @@ makeiiA currentNode = (show ((HM.nodeId) currentNode) ++ "i", show ((HM.nodeId c
 makedm1A currentNode = (show ((HM.nodeId) currentNode) ++ "d", show ((HM.nodeId currentNode) + 1) ++ "m", maybe 0 (*0.01) (HM.d2m currentNode))
 makedd1A currentNode = (show ((HM.nodeId) currentNode) ++ "d", show ((HM.nodeId currentNode) + 1) ++ "d", maybe 0 (*0.01) (HM.d2d currentNode))
               
-makeArrow (lab1,lab2,weight) = connectOutside' arrowStyle1 lab1 lab2
-  where arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw (local weight) & headLength .~ local 0.001
+makeArrow (lab1,lab2,weight) = connectOutside' arrowStyle1 lab1 lab2 -- # named (lab1 ++ lab2) -- <> topLeftText "A"
+  where arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw (local weight) & headLength .~ local 0.001 
 makeSelfArrow (lab1,lab2,weight) = connectPerim' arrowStyle lab1 lab1 (4/12 @@ turn) (2/12 @@ turn)
   where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw (local weight) & headLength .~ local 0.001  & tailLength .~ 1
         shaft' = arc xDir (-2.7/5 @@ turn)
 
+--makeLabel
+--  :: (TypeableFloat n, Renderable (Path V2 n) b, IsName n1, IsName n2)
+--  => ArrowOpts n -> n1 -> n2 -> QDiagram b V2 n Any -> QDiagram b V2 n Any
+makeLabel (n1,n2,weight)=
+  withName n1 $ \b1 ->
+  withName n2 $ \b2 ->
+    let v = location b2 .-. location b1
+        midpoint = location b1 .+^ (v ^/ 2)
+    in
+      atop (position [(midpoint, topLeftText "Test")])
+                 
     --arrowStyle = with  & arrowHead  .~ spike  & arrowShaft .~ line & shaftStyle %~ lw 0.01 & headLength .~ normalized 0.001
     --    line = trailFromOffsets [unitX]
 
