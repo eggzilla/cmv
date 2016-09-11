@@ -15,7 +15,7 @@ module Bio.HMMDraw
   
 import Diagrams.Prelude
 import Diagrams.Backend.SVG
-import Graphics.SVGFonts
+--import Graphics.SVGFonts
 import Data.Typeable.Internal
 import qualified Bio.HMMParser as HM
 import Text.Printf
@@ -47,20 +47,27 @@ drawHMMER3 modelDetail (model,aln)
            alphabetSymbols = HM.alphabetToSymbols alphabet           
            boxlength = (fromIntegral (length alphabetSymbols)) + 1
            verboseNodes =  hcat (map (drawHMMNodeVerbose alphabetSymbols "box" boxlength) currentnodes)
-           verboseNodesAlignment =  vcat' with { _sep = 5 }  [verboseNodes,alignmentDiagram]
+           verboseNodesAlignment =  alignTL (vcat' with { _sep = 5 }  [verboseNodes,alignmentDiagram])
            alignmentDiagram = if isJust aln then drawStockholm $ fromJust aln else mempty 
            arrowList = makeArrows currentnodes
 
 --drawStockholm                       
-drawStockholm aln = vcat' with { _sep = 1 } (map drawStockholmEntry currentEntries)
+drawStockholm aln = alignTL (vcat' with { _sep = 1 } (map (drawStockholmEntry maxIdLength) currentEntries))
   where currentEntries = S.sequenceEntries aln
+        maxIdLength = maximum (map (T.length . S.sequenceId) currentEntries)
                
-drawStockholmEntry entry = entryDia
-  where entryText = T.unpack ((S.sequenceId entry) `T.append` (T.pack " ")  `T.append` (S.entrySequence entry))
-        entryDia = alignedText 0 0 entryText # translate (r2 (negate 0.25,0.25)) <> rect textLength 1 # lw 0.03
-        textLength = fromIntegral (length entryText)
-        
-                    
+drawStockholmEntry maxIdLength entry = entryDia
+  where entryText = T.unpack (seqId `T.append` spacer `T.append` (S.entrySequence entry))         
+        seqId = S.sequenceId entry             
+        spacerLength = (maxIdLength + 3) - T.length seqId 
+        spacer = T.replicate spacerLength (T.pack " ")
+        --entryDia = alignedText 0.5 0.5 entryText # font "Droid Sans Mono" # translate (r2 (0.25,negate 0.25)) <> rect textLength 1 # lw 0.03 # translate (r2 (0, 0))
+        entryDia = hcat (map setLetter entryText)         
+        --textLength = (fromIntegral (length entryText))/2  <> rect 1.0 1.0 # lw 0.0001 # translate (r2 (0, 0))
+
+setLetter echar = alignedText 0.5 0.5 [echar] <> rect 0.75 0.75 # lw 0 # translate (r2 (0, 0))                     
+                     
+-- translate (r2 (negate 0.25,0.25))                   
 makeArrows currentnodes = (map makeArrow (mm1A ++ md1A ++ im1A ++ dm1A ++ dd1A)) ++ (map makeSelfArrow iiA)
   where mm1A = map makemm1A currentnodes 
         miA = map makemiA currentnodes
