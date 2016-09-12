@@ -39,7 +39,7 @@ drawHMMMER3s modelDetail entriesNumberCutoff hmms alns
 drawHMMER3 modelDetail entriesNumberCutoff (model,aln)
    | modelDetail == "flat" = hcat (map drawHMMNodeFlat currentnodes)
    | modelDetail == "simple" = hcat (map drawHMMNodeSimple currentnodes)
-   | modelDetail == "detailed" = applyAll ([bg white] ++ arrowList) verboseNodesAlignment
+   | modelDetail == "detailed" = applyAll ([bg white] ++ arrowList ++ labelList) verboseNodesAlignment
    | otherwise = hcat (map drawHMMNodeSimple currentnodes)
      where nodenumber = fromIntegral $ length currentnodes
            currentnodes = HM.nodes model
@@ -48,9 +48,11 @@ drawHMMER3 modelDetail entriesNumberCutoff (model,aln)
            boxlength = (fromIntegral (length alphabetSymbols)) + 1
            verboseNodes = hcat (map (drawHMMNodeVerbose alphabetSymbols "box" boxlength) currentnodes) 
            verboseNodesAlignment =  alignTL (vcat' with { _sep = 5 }  [verboseNodes,alignmentDiagram])
-           alignmentDiagram = if isJust aln then drawStockholm entriesNumberCutoff (fromJust aln) else mempty 
-           arrowList = makeArrows currentnodes
-           --labellist = makeLabels currentnodes
+           alignmentDiagram = if isJust aln then drawStockholm entriesNumberCutoff (fromJust aln) else mempty
+           connectedNodes = makeConnections currentnodes
+           selfconnectedNodes = makeSelfConnections currentnodes
+           arrowList = map makeArrow connectedNodes ++ map makeSelfArrow selfconnectedNodes
+           labelList = map makeLabel connectedNodes ++ map makeSelfLabel selfconnectedNodes
                        
 --drawStockholm                       
 drawStockholm entriesNumberCutoff aln = alignTL (vcat' with { _sep = 1 } (map (drawStockholmEntry maxIdLength) currentEntries))
@@ -58,8 +60,6 @@ drawStockholm entriesNumberCutoff aln = alignTL (vcat' with { _sep = 1 } (map (d
         entryNumber = length currentEntries
         maxIdLength = maximum (map (T.length . S.sequenceId) currentEntries)
 
-        
-               
 drawStockholmEntry maxIdLength entry = entryDia
   where entryText = T.unpack (seqId `T.append` spacer `T.append` (S.entrySequence entry))         
         seqId = S.sequenceId entry             
@@ -67,52 +67,50 @@ drawStockholmEntry maxIdLength entry = entryDia
         spacer = T.replicate spacerLength (T.pack " ")
         entryDia = hcat (map setLetter entryText)         
        
-setLetter echar = alignedText 0.5 0.5 [echar] <> rect 0.75 0.75 # lw 0 # translate (r2 (0, 0))                                           
-makeArrows currentnodes = (map makeArrow (mm1A ++ md1A ++ im1A ++ dm1A ++ dd1A)) ++ (map makeSelfArrow iiA)
+setLetter echar = alignedText 0.5 0.5 [echar] # fontSize 2 <> rect 0.5 1 # lw 0 -- # translate (r2 (negate 0.5, 0))                                           
+setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.3 0.5 # lw 0
+
+makeConnections currentnodes =  mm1A  ++ miA ++ md1A ++ im1A ++ dm1A ++ dd1A
   where mm1A = map makemm1A currentnodes 
         miA = map makemiA currentnodes
         md1A = map makemd1A currentnodes
         im1A = map makeim1A currentnodes
-        iiA = map makeiiA currentnodes
         dm1A = map makedm1A currentnodes
         dd1A = map makedd1A currentnodes
 
-makeLabels currentnodes = (map makeLabel (mm1A ++ md1A ++ im1A ++ dm1A ++ dd1A)) -- ++ (map makeSelfArrow iiA)
-  where mm1A = map makemm1A currentnodes 
-        miA = map makemiA currentnodes
-        md1A = map makemd1A currentnodes
-        im1A = map makeim1A currentnodes
-        --iiA = map makeiiA currentnodes
-        dm1A = map makedm1A currentnodes
-        dd1A = map makedd1A currentnodes               
-               
-makemm1A currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((HM.nodeId currentNode) + 1) ++ "m", maybe 0 (*0.01) (HM.m2m currentNode)) 
-makemiA currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((HM.nodeId currentNode)) ++ "i", (HM.m2i currentNode))
-makemd1A currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((HM.nodeId currentNode) + 1) ++ "d", maybe 0 (*0.01) (HM.m2d currentNode))
-makeim1A currentNode = (show ((HM.nodeId) currentNode) ++ "i", show ((HM.nodeId currentNode) + 1) ++ "m", maybe 0 (*0.01) (HM.i2m currentNode))
-makeiiA currentNode = (show ((HM.nodeId) currentNode) ++ "i", show ((HM.nodeId currentNode)) ++ "i", maybe 0 (*0.01) (HM.i2i currentNode))
-makedm1A currentNode = (show ((HM.nodeId) currentNode) ++ "d", show ((HM.nodeId currentNode) + 1) ++ "m", maybe 0 (*0.01) (HM.d2m currentNode))
-makedd1A currentNode = (show ((HM.nodeId) currentNode) ++ "d", show ((HM.nodeId currentNode) + 1) ++ "d", maybe 0 (*0.01) (HM.d2d currentNode))
-              
-makeArrow (lab1,lab2,weight) = connectOutside' arrowStyle1 lab1 lab2 -- # named (lab1 ++ lab2) -- <> topLeftText "A"
-  where arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw (local weight) & headLength .~ local 0.001 
-makeSelfArrow (lab1,lab2,weight) = connectPerim' arrowStyle lab1 lab1 (4/12 @@ turn) (2/12 @@ turn)
-  where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw (local weight) & headLength .~ local 0.001  & tailLength .~ 1
-        shaft' = arc xDir (-2.7/5 @@ turn)
+makeSelfConnections currentnodes = map makeiiA currentnodes
 
---makeLabel
---  :: (TypeableFloat n, Renderable (Path V2 n) b, IsName n1, IsName n2)
---  => ArrowOpts n -> n1 -> n2 -> QDiagram b V2 n Any -> QDiagram b V2 n Any
-makeLabel (n1,n2,weight)=
+makemm1A currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((HM.nodeId currentNode) + 1) ++ "m", maybe 0 ((roundPos 2) . exp . negate) (HM.m2m currentNode),0.0) 
+makemiA currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((HM.nodeId currentNode)) ++ "i",  maybe 0 ((roundPos 2) . exp . negate) (HM.m2i currentNode),4.0)
+makemd1A currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((HM.nodeId currentNode) + 1) ++ "d", maybe 0 ((roundPos 2) . exp . negate) (HM.m2d currentNode),negate 1.0)
+makeim1A currentNode = (show ((HM.nodeId) currentNode) ++ "i", show ((HM.nodeId currentNode) + 1) ++ "m", maybe 0 ((roundPos 2) . exp . negate) (HM.i2m currentNode),0.0)
+makeiiA currentNode = (show ((HM.nodeId) currentNode) ++ "i", show ((HM.nodeId currentNode)) ++ "i", maybe 0 ((roundPos 2) . exp . negate) (HM.i2i currentNode),0.0)
+makedm1A currentNode = (show ((HM.nodeId) currentNode) ++ "d", show ((HM.nodeId currentNode) + 1) ++ "m", maybe 0 ((roundPos 2) . exp . negate) (HM.d2m currentNode),1.0)
+makedd1A currentNode = (show ((HM.nodeId) currentNode) ++ "d", show ((HM.nodeId currentNode) + 1) ++ "d", maybe 0 ((roundPos 2) . exp . negate) (HM.d2d currentNode),0.0)
+              
+makeArrow (lab1,lab2,weight,_) = connectOutside' arrowStyle1 lab1 lab2 
+  where arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw (local (0.1)) & headLength .~ local 0.001 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity weight
+makeSelfArrow (lab1,lab2,weight,_) = connectPerim' arrowStyle lab1 lab1 (4/12 @@ turn) (2/12 @@ turn)
+  where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw (local (0.1)) & headLength .~ local 0.001  & tailLength .~ 1 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity weight
+        shaft' = arc xDir (-2.7/5 @@ turn) 
+
+-- %~ lw (local (0.1 * weight))
+
+makeLabel (n1,n2,weight,yoffset)=
   withName n1 $ \b1 ->
   withName n2 $ \b2 ->
     let v = location b2 .-. location b1
         midpoint = location b1 .+^ (v ^/ 2)
     in
-      atop (position [(midpoint, topLeftText "Test")])
-                 
-    --arrowStyle = with  & arrowHead  .~ spike  & arrowShaft .~ line & shaftStyle %~ lw 0.01 & headLength .~ normalized 0.001
-    --    line = trailFromOffsets [unitX]
+      atop (position [(midpoint, (hcat (map setLabelLetter (show weight))) # translate (r2 (negate 0.5, 0)) )])
+
+makeSelfLabel (n1,n2,weight,yoffset)=
+  withName n1 $ \b1 ->
+  withName n2 $ \b2 ->
+    let v = location b2 .-. location b1
+        midpoint = location b1 .+^ (v ^/ 2)
+    in
+      atop (position [(midpoint, (hcat (map setLabelLetter (show weight))) # translate (r2 (negate 0.5, (4 + yoffset))) )])
 
 -- | 
 --drawHMMNodeFlat :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => HM.HMMER3Node -> b
