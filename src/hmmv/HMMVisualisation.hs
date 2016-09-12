@@ -19,7 +19,8 @@ data Options = Options
   { modelFile :: String,
     alignmentFile :: String,             
     modelDetail :: String,
-    modelLayout :: String
+    modelLayout :: String,
+    alignmentEntries :: Int
   } deriving (Show,Data,Typeable)
 
 
@@ -27,7 +28,8 @@ options = Options
   { modelFile = def &= name "m" &= help "Path to hidden Markov model file",
     alignmentFile = "" &= name "s" &= help "Path to stockholm alignment file",
     modelDetail = "detailed" &= name "d" &= help "Set verbosity of drawn models: simple, detailed",
-    modelLayout = "flat" &= name "l" &= help "Set layout of drawn models: flat, tree"
+    modelLayout = "flat" &= name "l" &= help "Set layout of drawn models: flat, tree",
+    alignmentEntries = (50 :: Int) &= name "n" &= help "Set cutoff for included stockholm alignment entries (Default: 50)"              
   } &= summary "HMMvisualisation devel version" &= help "Florian Eggenhofer - 2016" &= verbosity
 
 main :: IO ()
@@ -42,9 +44,8 @@ main = do
        if alnFileExists
           then do
             aln <- readStockholm alignmentFile
-            if (isRight aln) then print (fromRight aln) else print (fromLeft aln)
-            if (isRight model) then printSVG svgsize (drawHMMER3 modelDetail ((fromRight model),(Just (fromRight aln)))) else print (fromLeft model)
+            if (isRight model) then printSVG svgsize (drawHMMER3 modelDetail alignmentEntries ((fromRight model),(Just (fromRight aln)))) else print (fromLeft model)
           else do     
-            if (isRight model) then printSVG svgsize (drawHMMER3 modelDetail ((fromRight model),Nothing)) else print (fromLeft model)
+            if (isRight model) then printSVG svgsize (drawHMMER3 modelDetail alignmentEntries ((fromRight model),Nothing)) else print (fromLeft model)
      else do
        putStrLn "Input model file not found"
