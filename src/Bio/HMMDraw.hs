@@ -24,36 +24,62 @@ import GHC.Float
 import qualified Bio.StockholmData as S
 import qualified Data.Text as T    
 import Data.Maybe
-    
+import qualified Data.Vector as V
+
 -- | 
 --drawHMMMER3s :: forall b. Renderable (Path V2 Double) b => String -> [HM.HMMER3] -> QDiagram b V2 Double Any
-drawHMMMER3s modelDetail entriesNumberCutoff hmms alns
-  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawHMMER3 modelDetail entriesNumberCutoff) zippedInput))
-  | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (map (drawHMMER3 modelDetail entriesNumberCutoff) zippedInput))
-  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawHMMER3 modelDetail entriesNumberCutoff) zippedInput))
-  | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawHMMER3 modelDetail entriesNumberCutoff) zippedInput))
+drawHMMMER3s modelDetail entryNumberCutoff emissiontype maxWidth hmms alns
+  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
+  | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
+  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
+  | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
     where zippedInput = zip hmms alns
+          --maxWidth = (400 :: Double)
 
 -- |
 --drawHMMER3 :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => String -> HM.HMMER3 -> QDiagram b V2 n Any
-drawHMMER3 modelDetail entriesNumberCutoff (model,aln)
-   | modelDetail == "flat" = hcat (map drawHMMNodeFlat currentnodes)
-   | modelDetail == "simple" = hcat (map drawHMMNodeSimple currentnodes)
-   | modelDetail == "detailed" = applyAll ([bg white] ++ arrowList ++ labelList) verboseNodesAlignment
-   | otherwise = hcat (map drawHMMNodeSimple currentnodes)
-     where nodenumber = fromIntegral $ length currentnodes
-           currentnodes = HM.nodes model
+drawHMMER3 modelDetail entriesNumberCutoff maxWidth emissiontype (model,aln)
+   | modelDetail == "flat" = hcat $ V.toList (V.map drawHMMNodeFlat currentNodes)
+   | modelDetail == "simple" = hcat $ V.toList (V.map drawHMMNodeSimple currentNodes)
+--   | modelDetail == "detailed" = applyAll ([bg white] ++ arrowList ++ labelList) verboseNodesAlignment
+   | modelDetail == "detailed" = applyAll ([bg white]) verboseNodesAlignment
+   | otherwise = hcat $ V.toList (V.map drawHMMNodeSimple currentNodes)
+     where nodeNumber = fromIntegral $ length currentNodes
+           currentNodes = V.fromList (HM.nodes model)
            alphabet = (HM.alpha model)
            alphabetSymbols = HM.alphabetToSymbols alphabet           
            boxlength = (fromIntegral (length alphabetSymbols)) + 1
-           verboseNodes = hcat (map (drawHMMNodeVerbose alphabetSymbols "box" boxlength) currentnodes) 
+	   nodeWidth = (6.0 :: Double)
+	   nodeNumberPerRow = floor (maxWidth / nodeWidth - 2)
+	   nodesIntervals = makeNodeIntervals nodeNumberPerRow nodeNumber -- V.fromList [(0,5),(6,10)]
+           verboseNodes = vcat' with { _sep = 2 } (V.toList (V.map (drawDetailedNodeRow alphabetSymbols emissiontype boxlength currentNodes) nodesIntervals))
            verboseNodesAlignment =  alignTL (vcat' with { _sep = 5 }  [verboseNodes,alignmentDiagram])
            alignmentDiagram = if isJust aln then drawStockholm entriesNumberCutoff (fromJust aln) else mempty
-           connectedNodes = makeConnections boxlength currentnodes
-           selfconnectedNodes = makeSelfConnections boxlength currentnodes
-           arrowList = map makeArrow connectedNodes ++ map makeSelfArrow selfconnectedNodes
-           labelList = map makeLabel connectedNodes ++ map makeSelfLabel selfconnectedNodes
-                       
+           --connectedNodes = makeConnections boxlength currentNodes
+           --selfconnectedNodes = makeSelfConnections boxlength currentNodes
+           --arrowList = map makeArrow connectedNodes ++ map makeSelfArrow selfconnectedNodes
+           --labelList = map makeLabel connectedNodes ++ map makeSelfLabel selfconnectedNodes
+
+makeNodeIntervals :: Int -> Int  -> V.Vector (Int,Int)
+makeNodeIntervals nodeNumberPerRow nodeNumber = rowIntervals
+  where rowVector = V.iterateN rowNumber (1+) 0 
+        rowNumber = ceiling $ (fromIntegral nodeNumber) / (fromIntegral nodeNumberPerRow)
+	rowIntervals = V.map (setRowInterval nodeNumberPerRow nodeNumber) rowVector
+
+setRowInterval nodeNumberPerRow nodeNumber index = (start,safeLength)
+  where start = index*nodeNumberPerRow
+        length = nodeNumberPerRow -1
+	safeLength = if start +length > nodeNumber then nodeNumber - start -1 else length
+
+drawDetailedNodeRow alphabetSymbols emissiontype boxlength allNodes (currentIndex,nextIndex) = detailedRow
+  where currentNodes = V.slice currentIndex nextIndex allNodes
+        detailedRow = applyAll (arrowList ++ labelList) detailedNodes  
+        detailedNodes = hcat (V.toList (V.map (drawHMMNodeVerbose alphabetSymbols "box" boxlength) currentNodes))
+        connectedNodes = makeConnections boxlength currentNodes
+        selfConnectedNodes = makeSelfConnections boxlength currentNodes
+        arrowList = V.toList (V.map makeArrow connectedNodes V.++ V.map makeSelfArrow selfConnectedNodes)
+        labelList = V.toList (V.map makeLabel connectedNodes V.++ V.map makeSelfLabel selfConnectedNodes)
+
 --drawStockholm                       
 drawStockholm entriesNumberCutoff aln = alignTL (vcat' with { _sep = 1 } (map (drawStockholmEntry maxIdLength) currentEntries))
   where currentEntries = take entriesNumberCutoff (S.sequenceEntries aln)
@@ -70,15 +96,15 @@ drawStockholmEntry maxIdLength entry = entryDia
 setLetter echar = alignedText 0.5 0.5 [echar] # fontSize 2 <> rect 0.5 1 # lw 0 -- # translate (r2 (negate 0.5, 0))                                           
 setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0.5 # lw 0
 
-makeConnections boxlength currentnodes =  mm1A  ++ miA ++ md1A ++ im1A ++ dm1A ++ dd1A
-  where mm1A = map makemm1A currentnodes 
-        miA = map (makemiA boxlength) currentnodes
-        md1A = map (makemd1A boxlength) currentnodes
-        im1A = map makeim1A currentnodes
-        dm1A = map (makedm1A boxlength) currentnodes
-        dd1A = map makedd1A currentnodes
+makeConnections boxlength currentnodes =  mm1A V.++ miA V.++ md1A V.++ im1A V.++ dm1A V.++ dd1A
+  where mm1A = V.map makemm1A currentnodes 
+        miA = V.map (makemiA boxlength) currentnodes
+        md1A = V.map (makemd1A boxlength) currentnodes
+        im1A = V.map makeim1A currentnodes
+        dm1A = V.map (makedm1A boxlength) currentnodes
+        dd1A = V.map makedd1A currentnodes
 
-makeSelfConnections boxlength currentnodes = map (makeiiA boxlength) currentnodes
+makeSelfConnections boxlength currentnodes = V.map (makeiiA boxlength) currentnodes
 
 makemm1A currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((HM.nodeId currentNode) + 1) ++ "m", maybe 0 ((roundPos 2) . exp . negate) (HM.m2m currentNode),(0,0.5)) 
 makemiA boxlength currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((HM.nodeId currentNode)) ++ "i",  maybe 0 ((roundPos 2) . exp . negate) (HM.m2i currentNode),(0,setiayOffset boxlength))

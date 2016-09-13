@@ -40,12 +40,14 @@ main = do
   if modelFileExists
      then do
        model <- HM.readHMMER3 modelFile
+       let emissiontype = "bar"
+       let maxWidth = 100 :: Double
        --print model
        if alnFileExists
           then do
             aln <- readStockholm alignmentFile
-            if (isRight model) then printSVG svgsize (drawHMMER3 modelDetail alignmentEntries ((fromRight model),(Just (fromRight aln)))) else print (fromLeft model)
+            if (isRight model) then printSVG svgsize (drawHMMER3 modelDetail alignmentEntries maxWidth emissiontype((fromRight model),(Just (fromRight aln)))) else print (fromLeft model)
           else do     
-            if (isRight model) then printSVG svgsize (drawHMMER3 modelDetail alignmentEntries ((fromRight model),Nothing)) else print (fromLeft model)
+            if (isRight model) then printSVG svgsize (drawHMMER3 modelDetail alignmentEntries maxWidth emissiontype ((fromRight model),Nothing)) else print (fromLeft model)
      else do
        putStrLn "Input model file not found"
