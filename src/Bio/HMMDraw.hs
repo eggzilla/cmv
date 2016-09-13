@@ -45,15 +45,15 @@ drawHMMER3 modelDetail entriesNumberCutoff maxWidth emissiontype (model,aln)
    | modelDetail == "detailed" = applyAll ([bg white]) verboseNodesAlignment
    | otherwise = hcat $ V.toList (V.map drawHMMNodeSimple currentNodes)
      where nodeNumber = fromIntegral $ length currentNodes
-           currentNodes = HM.nodes model
+           currentNodes = HM.begin model `V.cons` HM.nodes model
            alphabet = (HM.alpha model)
            alphabetSymbols = HM.alphabetToSymbols alphabet           
            boxlength = (fromIntegral (length alphabetSymbols)) + 1
 	   nodeWidth = (6.0 :: Double)
 	   nodeNumberPerRow = floor (maxWidth / nodeWidth - 2)
-	   nodesIntervals = makeNodeIntervals nodeNumberPerRow nodeNumber -- V.fromList [(0,5),(6,10)]
+	   nodesIntervals = makeNodeIntervals nodeNumberPerRow nodeNumber
            verboseNodes = vcat' with { _sep = 2 } (V.toList (V.map (drawDetailedNodeRow alphabetSymbols emissiontype boxlength currentNodes) nodesIntervals))
-           verboseNodesAlignment =  alignTL (vcat' with { _sep = 5 }  [verboseNodes,alignmentDiagram])
+           verboseNodesAlignment = alignTL (vcat' with { _sep = 5 }  [verboseNodes,alignmentDiagram])
            alignmentDiagram = if isJust aln then drawStockholm entriesNumberCutoff (fromJust aln) else mempty
            --connectedNodes = makeConnections boxlength currentNodes
            --selfconnectedNodes = makeSelfConnections boxlength currentNodes
@@ -152,13 +152,16 @@ drawHMMNodeSimple node = rect 2 2 # lw 0.1
 
 -- | 
 --drawHMMNodeVerbose :: String -> String -> HM.HMMER3Node -> QDiagram b V2 n Any
-drawHMMNodeVerbose alphabetSymbols emissiontype boxlength node = idBox nid === strutY 0.5 === deletions nid === strutY 1.5 === insertions nid  === strutY 1.5 === matches alphabetSymbols emissiontype boxlength node ||| strutX 4--- transitions boxlength node
-  where nid = show $ HM.nodeId node
+drawHMMNodeVerbose alphabetSymbols emissiontype boxlength node
+  | idNumber == 0 = idBox nid === strutY 0.5 === emptyDeletions nid === strutY 1.5 === insertions nid === strutY 1.5 === beginBox boxlength nid ||| strutX 4  
+  | otherwise = idBox nid === strutY 0.5 === deletions nid === strutY 1.5 === insertions nid  === strutY 1.5 === matches alphabetSymbols emissiontype boxlength node ||| strutX 4
+  where idNumber = HM.nodeId node
+        nid = show idNumber
 
 idBox nid = alignedText 0 0 nid # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nid))/2)),0)) <> rect 1.5 1.5 # lw 0
               
 deletions nid =  alignedText 0 0 "D" # translate (r2 (negate 0.25,0.25)) <> circle 3 # lw 0.1 # fc white # named (nid ++ "d")
-
+emptyDeletions nid = circle 3 # lw 0.0 # fc white # named (nid ++ "d")
 insertions nid = alignedText 0 0 "I" # translate (r2 (0,0.25)) <> rect 4.2426 4.2426 # lw 0.1 # rotateBy (1/8) # fc white # named (nid ++ "i")
 
 matches alphabetSymbols emissiontype boxlength node = entries # translate (r2 (negate 2.5,boxlength/2 -1)) <> outerbox # named (nid ++ "m")
@@ -167,6 +170,9 @@ matches alphabetSymbols emissiontype boxlength node = entries # translate (r2 (n
         symbolsAndEmissions = zip (map wrap alphabetSymbols) (V.toList emissionEntries)
         emissionEntries = setEmissions emissiontype (HM.matchEmissions node)
         nid = show $ HM.nodeId node
+	
+beginBox boxlength nid = outerbox # named (nid ++ "m") <> alignedText 0.5 0.5 "BEGIN"
+  where outerbox = rect 6 boxlength # lw 0.1 # fc white
 
 transitions boxlength node = rect 6 height # lw 0 # translate (r2(0,negate (height/2)))
   where height = (boxlength + 1 + 1 + 6 + 6)
