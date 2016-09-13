@@ -64,7 +64,7 @@ data HMMER3 = HMMER3
     -- Models overall (composite) match state emission probabilities, optional
     compo ::  HMMER3Composite,
     -- HMMER3 nodes
-    nodes :: [HMMER3Node]
+    nodes :: V.Vector HMMER3Node
   }
   deriving (Show, Eq)
   
@@ -73,7 +73,7 @@ data HMMER3Node = HMMER3Node
   {
     nodeId :: Int,
     -- Match emission score, one per symbol in the alphabet
-    matchEmissions :: [Double],
+    matchEmissions :: V.Vector Double,
     -- map annotation - number of the alignment column
     nma :: Maybe Int,
     -- consensus residue 
@@ -85,7 +85,7 @@ data HMMER3Node = HMMER3Node
     -- consensus structure
     ncs :: Maybe Char,
     -- insert emission score, one per symbol in the alphabet
-    insertEmissions :: [Double],
+    insertEmissions :: V.Vector Double,
     -- Transistion scores, m->m m->i m->d i->m i->i d->m d->d
     m2m :: Maybe Double, 
     m2i :: Maybe Double,
@@ -94,7 +94,6 @@ data HMMER3Node = HMMER3Node
     i2i :: Maybe Double,
     d2m :: Maybe Double,
     d2d :: Maybe Double
-    --transitions :: V.Vector Double
   }
   deriving (Show, Eq)
 
@@ -102,9 +101,9 @@ data HMMER3Node = HMMER3Node
 data HMMER3Composite = HMMER3Composite
   {
     -- Match emission score, one per symbol in the alphabet
-    compositeMatchEmissions :: [Double],
+    compositeMatchEmissions :: V.Vector Double,
     -- insert emission score, one per symbol in the alphabet
-    compositeInsertEmissions :: [Double],
+    compositeInsertEmissions :: V.Vector Double,
     --  Transistion scores, m->m m->i m->d i->m i->i d->m d->d
     cm2m :: Maybe Double, 
     cm2i :: Maybe Double,

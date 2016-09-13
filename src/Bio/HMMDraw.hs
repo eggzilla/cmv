@@ -45,7 +45,7 @@ drawHMMER3 modelDetail entriesNumberCutoff maxWidth emissiontype (model,aln)
    | modelDetail == "detailed" = applyAll ([bg white]) verboseNodesAlignment
    | otherwise = hcat $ V.toList (V.map drawHMMNodeSimple currentNodes)
      where nodeNumber = fromIntegral $ length currentNodes
-           currentNodes = V.fromList (HM.nodes model)
+           currentNodes = HM.nodes model
            alphabet = (HM.alpha model)
            alphabetSymbols = HM.alphabetToSymbols alphabet           
            boxlength = (fromIntegral (length alphabetSymbols)) + 1
@@ -164,22 +164,22 @@ insertions nid = alignedText 0 0 "I" # translate (r2 (0,0.25)) <> rect 4.2426 4.
 matches alphabetSymbols emissiontype boxlength node = entries # translate (r2 (negate 2.5,boxlength/2 -1)) <> outerbox # named (nid ++ "m")
   where outerbox = rect 6 boxlength # lw 0.1 # fc white
         entries = vcat (map (emissionEntry emissiontype) symbolsAndEmissions)
-        symbolsAndEmissions = zip (map wrap alphabetSymbols) emissionEntries
+        symbolsAndEmissions = zip (map wrap alphabetSymbols) (V.toList emissionEntries)
         emissionEntries = setEmissions emissiontype (HM.matchEmissions node)
         nid = show $ HM.nodeId node
 
 transitions boxlength node = rect 6 height # lw 0 # translate (r2(0,negate (height/2)))
   where height = (boxlength + 1 + 1 + 6 + 6)
 
-setEmissions :: String -> [Double] -> [Double]
+setEmissions :: String -> V.Vector Double -> V.Vector Double
 setEmissions emissiontype emissions
   | emissiontype == "probability" = scoreentries
   | emissiontype == "score" = propentries
   | emissiontype == "bar" = barentries
   | otherwise = barentries
     where scoreentries = emissions      
-          propentries = map (exp . negate) emissions
-          barentries = map (exp . negate) emissions
+          propentries = V.map (exp . negate) emissions
+          barentries = V.map (exp . negate) emissions
 
 wrap x = [x]
          
