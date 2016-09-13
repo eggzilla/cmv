@@ -60,12 +60,12 @@ genParseHMMER3 = do
   newline
   many1 (noneOf "\n")
   newline
-  _compo <- parseHMMER3Composite _alph
+  (_compo,_begin) <- parseHMMER3Composite _alph
   _nodes <- many1 (parseHMMER3Node _alph)
   string "//"
   newline
   eof
-  return $ HMMER3 _version _name _acc _desc _leng _maxl _alph _rf _mm _cons _cs _map _date _com _nseq _effn _cksum _ga _tc _nc _bm _sm _localmsv _localviterbi _localforward _hmm _compo (V.fromList _nodes)
+  return $ HMMER3 _version _name _acc _desc _leng _maxl _alph _rf _mm _cons _cs _map _date _com _nseq _effn _cksum _ga _tc _nc _bm _sm _localmsv _localviterbi _localforward _hmm _compo _begin (V.fromList _nodes)
 
 parseSwitchAttribute :: String -> GenParser Char st Bool
 parseSwitchAttribute fieldName = do
@@ -116,7 +116,7 @@ parseStatAttribute fieldName = do
   return (_stat1,_stat2)
   
 -- | Parse HMMER3 composite
-parseHMMER3Composite :: String -> GenParser Char st HMMER3Composite
+parseHMMER3Composite :: String -> GenParser Char st (HMMER3Composite,HMMER3Begin)
 parseHMMER3Composite alphabet = do
   many1 (oneOf " ")
   _nodeId <- many1 (noneOf " ")
@@ -124,15 +124,15 @@ parseHMMER3Composite alphabet = do
   newline
   _insertEmissions <- many1 parseDoubleParameter
   newline
-  _cm2m <- parseOptionalFloatParameter
-  _cm2i <- parseOptionalFloatParameter
-  _cm2d <- parseOptionalFloatParameter
-  _ci2m <- parseOptionalFloatParameter
-  _ci2i <- parseOptionalFloatParameter
-  _cd2m <- parseOptionalFloatParameter
-  _cd2d <- parseOptionalFloatParameter
+  _bm2m <- parseOptionalFloatParameter
+  _bm2i <- parseOptionalFloatParameter
+  _bm2d <- parseOptionalFloatParameter
+  _bi2m <- parseOptionalFloatParameter
+  _bi2i <- parseOptionalFloatParameter
+  _bd2m <- parseOptionalFloatParameter
+  _bd2d <- parseOptionalFloatParameter
   newline
-  return $ HMMER3Composite (V.fromList _matchEmissions) (V.fromList _insertEmissions) _cm2m _cm2i _cm2d _ci2m _ci2i _cd2m _cd2d
+  return (HMMER3Composite (V.fromList _matchEmissions),HMMER3Begin (V.fromList _insertEmissions) _bm2m _bm2i _bm2d _bi2m _bi2i _bd2m _bd2d)
 
 -- | Parse HMMER3 node
 parseHMMER3Node :: String -> GenParser Char st HMMER3Node

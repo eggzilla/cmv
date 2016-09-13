@@ -64,6 +64,7 @@ data HMMER3 = HMMER3
     -- Models overall (composite) match state emission probabilities, optional
     compo ::  HMMER3Composite,
     -- HMMER3 nodes
+    begin :: HMMER3Begin,
     nodes :: V.Vector HMMER3Node
   }
   deriving (Show, Eq)
@@ -101,16 +102,22 @@ data HMMER3Node = HMMER3Node
 data HMMER3Composite = HMMER3Composite
   {
     -- Match emission score, one per symbol in the alphabet
-    compositeMatchEmissions :: V.Vector Double,
+    compositeMatchEmissions :: V.Vector Double
+  }
+  deriving (Show, Eq)
+
+-- | Data structure for the HMMER3 begin node
+data HMMER3Begin = HMMER3Begin
+  {
     -- insert emission score, one per symbol in the alphabet
-    compositeInsertEmissions :: V.Vector Double,
+    beginInsertEmissions :: V.Vector Double,
     --  Transistion scores, m->m m->i m->d i->m i->i d->m d->d
-    cm2m :: Maybe Double, 
-    cm2i :: Maybe Double,
-    cm2d :: Maybe Double,
-    ci2m :: Maybe Double,
-    ci2i :: Maybe Double,
-    cd2m :: Maybe Double,
-    cd2d :: Maybe Double
+    bm2m :: Maybe Double, 
+    bm2i :: Maybe Double,
+    bm2d :: Maybe Double,
+    bi2m :: Maybe Double,
+    bi2i :: Maybe Double,
+    bd2m :: Maybe Double,
+    bd2d :: Maybe Double
   }
   deriving (Show, Eq)
