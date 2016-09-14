@@ -52,7 +52,7 @@ drawHMMER3 modelDetail entriesNumberCutoff maxWidth emissiontype (model,aln)
 	   nodeWidth = (6.0 :: Double)
 	   nodeNumberPerRow = floor (maxWidth / nodeWidth - 2)
 	   nodesIntervals = makeNodeIntervals nodeNumberPerRow nodeNumber
-           verboseNodes = vcat' with { _sep = 2 } (V.toList (V.map (drawDetailedNodeRow alphabetSymbols emissiontype boxlength currentNodes) nodesIntervals))
+           verboseNodes = vcat' with { _sep = 2 } (V.toList (V.map (drawDetailedNodeRow alphabetSymbols emissiontype boxlength nodeNumber currentNodes) nodesIntervals))
            verboseNodesAlignment = alignTL (vcat' with { _sep = 5 }  [verboseNodes,alignmentDiagram])
            alignmentDiagram = if isJust aln then drawStockholm entriesNumberCutoff (fromJust aln) else mempty
            --connectedNodes = makeConnections boxlength currentNodes
@@ -68,13 +68,13 @@ makeNodeIntervals nodeNumberPerRow nodeNumber = rowIntervals
 
 setRowInterval nodeNumberPerRow nodeNumber index = (start,safeLength)
   where start = index*nodeNumberPerRow
-        length = nodeNumberPerRow -1
-	safeLength = if start +length > nodeNumber then nodeNumber - start -1 else length
+        length = nodeNumberPerRow
+	safeLength = if start +length > nodeNumber then (nodeNumber - start) else length
 
-drawDetailedNodeRow alphabetSymbols emissiontype boxlength allNodes (currentIndex,nextIndex) = detailedRow
+drawDetailedNodeRow alphabetSymbols emissiontype boxlength lastIndex allNodes (currentIndex,nextIndex) = detailedRow
   where currentNodes = V.slice currentIndex nextIndex allNodes
         detailedRow = applyAll (arrowList ++ labelList) detailedNodes  
-        detailedNodes = hcat (V.toList (V.map (drawHMMNodeVerbose alphabetSymbols "box" boxlength) currentNodes))
+        detailedNodes = hcat (V.toList (V.map (drawHMMNodeVerbose alphabetSymbols "box" boxlength lastIndex) currentNodes))
         connectedNodes = makeConnections boxlength currentNodes
         selfConnectedNodes = makeSelfConnections boxlength currentNodes
         arrowList = V.toList (V.map makeArrow connectedNodes V.++ V.map makeSelfArrow selfConnectedNodes)
@@ -151,19 +151,24 @@ drawHMMNodeFlat node = rect 2 2 # lw 0.1
 drawHMMNodeSimple node = rect 2 2 # lw 0.1
 
 -- | 
---drawHMMNodeVerbose :: String -> String -> HM.HMMER3Node -> QDiagram b V2 n Any
-drawHMMNodeVerbose alphabetSymbols emissiontype boxlength node
-  | idNumber == 0 = idBox nid === strutY 0.5 === emptyDeletions nid === strutY 1.5 === insertions nid === strutY 1.5 === beginBox boxlength nid ||| strutX 4  
-  | otherwise = idBox nid === strutY 0.5 === deletions nid === strutY 1.5 === insertions nid  === strutY 1.5 === matches alphabetSymbols emissiontype boxlength node ||| strutX 4
+--drawHMMNodeVerbose :: String -> String -> Int -> HM.HMMER3Node -> QDiagram b V2 n Any
+drawHMMNodeVerbose alphabetSymbols emissiontype boxlength lastIndex node 
+  | idNumber == 0 = beginBox
+  | idNumber == (lastIndex -1) = nodeBox ||| endBox
+  | otherwise = nodeBox 
   where idNumber = HM.nodeId node
         nid = show idNumber
-
+        beginBox = idBox nid === strutY 0.5 === emptyDeletions === strutY 1.5 === insertions nid === strutY 1.5 === beginState boxlength nid ||| strutX 4
+	nodeBox = idBox nid === strutY 0.5 === deletions nid === strutY 1.5 === insertions nid  === strutY 1.5 === matches alphabetSymbols emissiontype boxlength node ||| strutX 4
+	endBox = emptyIdBox === strutY 0.5 === emptyDeletions === strutY 1.5 === emptyInsertions  === strutY 1.5 === endState boxlength idNumber ||| strutX 4
+	
 idBox nid = alignedText 0 0 nid # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nid))/2)),0)) <> rect 1.5 1.5 # lw 0
+emptyIdBox = rect 1.5 1.5 # lw 0
               
 deletions nid =  alignedText 0 0 "D" # translate (r2 (negate 0.25,0.25)) <> circle 3 # lw 0.1 # fc white # named (nid ++ "d")
-emptyDeletions nid = circle 3 # lw 0.0 # fc white 
+emptyDeletions = circle 3 # lw 0.0 # fc white 
 insertions nid = alignedText 0 0 "I" # translate (r2 (0,0.25)) <> rect 4.2426 4.2426 # lw 0.1 # rotateBy (1/8) # fc white # named (nid ++ "i")
-
+emptyInsertions = rect 4.2426 4.2426 # lw 0 # rotateBy (1/8) # fc white 
 matches alphabetSymbols emissiontype boxlength node = entries # translate (r2 (negate 2.5,boxlength/2 -1)) <> outerbox # named (nid ++ "m")
   where outerbox = rect 6 boxlength # lw 0.1 # fc white
         entries = vcat (map (emissionEntry emissiontype) symbolsAndEmissions)
@@ -172,8 +177,12 @@ matches alphabetSymbols emissiontype boxlength node = entries # translate (r2 (n
         nid = show $ HM.nodeId node
 
 -- B → M 1 , B → I 0 , B → D 1 ; I 0 → M 1 , I 0 → I 0
-beginBox boxlength nid = alignedText 0.5 0.5 "BEGIN" <> outerbox # named (nid ++ "m") <> rect 6 boxlength # named (nid ++ "d")
+beginState boxlength nid = alignedText 0.5 0.5 "BEGIN" <> outerbox # named (nid ++ "m") <> rect 6 boxlength # named (nid ++ "d")
   where outerbox = rect 6 boxlength # lw 0.1 # fc white
+
+endState boxlength idNumber = alignedText 0.5 0.5 "END" <> outerbox # named (nid ++ "m") <> rect 6 boxlength # named (nid ++ "d") <> rect 6 boxlength # named (nid ++ "i")
+  where outerbox = rect 6 boxlength # lw 0.1 # fc white
+        nid = show (idNumber + 1)
 
 transitions boxlength node = rect 6 height # lw 0 # translate (r2(0,negate (height/2)))
   where height = (boxlength + 1 + 1 + 6 + 6)
