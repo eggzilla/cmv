@@ -46,7 +46,7 @@ drawHMMER3 modelDetail entriesNumberCutoff maxWidth emissiontype (model,aln)
    | otherwise = hcat $ V.toList (V.map drawHMMNodeSimple currentNodes)
      where nodeNumber = fromIntegral $ length currentNodes
            currentNodes = HM.begin model `V.cons` HM.nodes model
-           alphabet = (HM.alpha model)
+           alphabet = HM.alpha model
            alphabetSymbols = HM.alphabetToSymbols alphabet           
            boxlength = (fromIntegral (length alphabetSymbols)) + 1
 	   nodeWidth = (6.0 :: Double)
@@ -68,12 +68,13 @@ makeNodeIntervals nodeNumberPerRow nodeNumber = rowIntervals
 
 setRowInterval nodeNumberPerRow nodeNumber index = (start,safeLength)
   where start = index*nodeNumberPerRow
-        length = nodeNumberPerRow
+        length = nodeNumberPerRow 
 	safeLength = if start +length > nodeNumber then (nodeNumber - start) else length
 
-drawDetailedNodeRow alphabetSymbols emissiontype boxlength lastIndex allNodes (currentIndex,nextIndex) = detailedRow
-  where currentNodes = V.slice currentIndex nextIndex allNodes
-        detailedRow = applyAll (arrowList ++ labelList) detailedNodes  
+drawDetailedNodeRow alphabetSymbols emissiontype boxlength lastIndex allNodes (currentIndex,nodeSliceLength) = detailedRow
+  where currentNodes = V.slice currentIndex nodeSliceLength allNodes
+        detailedRow = applyAll (arrowList ++ labelList) detailedNodes
+	nextIndex = currentIndex + nodeSliceLength
         detailedNodes = hcat (V.toList (V.map (drawHMMNodeVerbose alphabetSymbols "box" boxlength currentIndex nextIndex lastIndex) currentNodes))
         connectedNodes = makeConnections boxlength currentNodes
         selfConnectedNodes = makeSelfConnections boxlength currentNodes
@@ -91,9 +92,10 @@ drawStockholmEntry maxIdLength entry = entryDia
         seqId = S.sequenceId entry             
         spacerLength = (maxIdLength + 3) - T.length seqId 
         spacer = T.replicate spacerLength (T.pack " ")
-        entryDia = hcat (map setLetter entryText)         
+        entryDia = hcat (map setAlignmentLetter entryText)         
        
-setLetter echar = alignedText 0.5 0.5 [echar] # fontSize 2 <> rect 1 1 # lw 0 -- # translate (r2 (negate 0.5, 0))                                           
+setLetter echar = alignedText 0.5 0.5 [echar] # fontSize 2 <> rect 1 1 # lw 0 -- # translate (r2 (negate 0.5, 0))
+setAlignmentLetter echar = alignedText 0.5 0.5 [echar] # fontSize 2 <> rect 2 1 # lw 0
 setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0.5 # lw 0
 
 makeConnections boxlength currentnodes =  mm1A V.++ miA V.++ md1A V.++ im1A V.++ dm1A V.++ dd1A
@@ -153,22 +155,22 @@ drawHMMNodeSimple node = rect 2 2 # lw 0.1
 -- | 
 --drawHMMNodeVerbose :: String -> String -> Int -> Int -> Int -> HM.HMMER3Node -> QDiagram b V2 n Any
 drawHMMNodeVerbose alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex node 
-  | idNumber == 0 = beginBox
-  | idNumber == rowStart = (rowStartBox idNumber) ||| nodeBox
-  | idNumber == rowEnd = nodeBox ||| (rowEndBox idNumber)
-  | idNumber == (lastIndex -1) = nodeBox ||| endBox
+  | idNumber == 0 = strutX 1 ||| beginBox
+  | idNumber == (lastIndex - 1) = nodeBox ||| endBox
+  | idNumber == rowStart = rowStartBox idNumber ||| nodeBox
+  | idNumber == rowEnd -1 = nodeBox ||| rowEndBox idNumber boxlength
   | otherwise = nodeBox 
   where idNumber = HM.nodeId node
         nid = show idNumber
-        beginBox = idBox nid === strutY 0.5 === emptyDeletions === strutY 1.5 === insertions nid === strutY 1.5 === beginState boxlength nid ||| strutX 4
+        beginBox = (idBox nid === strutY 0.5 === emptyDeletions === strutY 1.5 === insertions nid === strutY 1.5 === beginState boxlength nid) ||| strutX 4
 	nodeBox = idBox nid === strutY 0.5 === deletions nid === strutY 1.5 === insertions nid  === strutY 1.5 === matches alphabetSymbols emissiontype boxlength node ||| strutX 4
 	endBox = emptyIdBox === strutY 0.5 === emptyDeletions === strutY 1.5 === emptyInsertions  === strutY 1.5 === endState boxlength idNumber ||| strutX 4
 	
 idBox nid = alignedText 0 0 nid # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nid))/2)),negate 0.5)) <> rect 1.5 1.5 # lw 0
 emptyIdBox = rect 1.5 1.5 # lw 0
-rowStartBox idNumber = rect 0.1 5 #lw 0.1 #named (nid ++ "d")<>rect 0.1 5 #lw 0 #named (nid ++ "m") <> rect 0.1 5 # lw 0 #named (nid ++ "i")
+rowStartBox idNumber = rect 0.1 1.5 #lw 0.0 #named (nid ++ "d") === rect 0.1 6 #lw 0.1 === rect 0.1 5 #lw 0.1 === rect 0.1 5 # lw 0.1  ||| strutX 0.9
   where nid = show (idNumber - 1)
-rowEndBox idNumber = rect 0.1 5 #lw 0.1 #named (nid ++ "d")<>rect 0.1 5 #lw 0.1 #named (nid ++ "m") <> rect 0.1 5 #lw 0.1 #named (nid ++ "i")
+rowEndBox idNumber boxlength = rect 0.1 1.5 #lw 0.0 === rect 0.1 6 #lw 0.1 #named (nid ++ "d") === rect 0.1 6 #lw 0.1 #named (nid ++ "i") === rect 0.1 (boxlength + 2) #lw 0.1 #named (nid ++ "m")
   where nid = show (idNumber + 1)
 deletions nid =  alignedText 0 0 "D" # translate (r2 (negate 0.25,0.25)) <> circle 3 # lw 0.1 # fc white # named (nid ++ "d")
 emptyDeletions = circle 3 # lw 0.0 # fc white 
