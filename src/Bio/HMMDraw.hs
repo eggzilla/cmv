@@ -60,7 +60,7 @@ drawHMMER3 modelDetail entriesNumberCutoff maxWidth emissiontype (model,aln)
            --arrowList = map makeArrow connectedNodes ++ map makeSelfArrow selfconnectedNodes
            --labelList = map makeLabel connectedNodes ++ map makeSelfLabel selfconnectedNodes
 
-makeNodeIntervals :: Int -> Int  -> V.Vector (Int,Int)
+makeNodeIntervals :: Int -> Int -> V.Vector (Int,Int)
 makeNodeIntervals nodeNumberPerRow nodeNumber = rowIntervals
   where rowVector = V.iterateN rowNumber (1+) 0 
         rowNumber = ceiling $ (fromIntegral nodeNumber) / (fromIntegral nodeNumberPerRow)
@@ -75,7 +75,7 @@ drawDetailedNodeRow alphabetSymbols emissiontype boxlength lastIndex allNodes (c
   where currentNodes = V.slice currentIndex nodeSliceLength allNodes
         detailedRow = applyAll (arrowList ++ labelList) detailedNodes
 	nextIndex = currentIndex + nodeSliceLength
-        detailedNodes = hcat (V.toList (V.map (drawHMMNodeVerbose alphabetSymbols "box" boxlength currentIndex nextIndex lastIndex) currentNodes))
+        detailedNodes = hcat (V.toList (V.map (drawHMMNodeVerbose alphabetSymbols emissiontype boxlength currentIndex nextIndex lastIndex) currentNodes))
         connectedNodes = makeConnections boxlength currentNodes
         selfConnectedNodes = makeSelfConnections boxlength currentNodes
         arrowList = V.toList (V.map makeArrow connectedNodes V.++ V.map makeSelfArrow selfConnectedNodes)
@@ -155,14 +155,14 @@ drawHMMNodeSimple node = rect 2 2 # lw 0.1
 -- | 
 --drawHMMNodeVerbose :: String -> String -> Int -> Int -> Int -> HM.HMMER3Node -> QDiagram b V2 n Any
 drawHMMNodeVerbose alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex node 
-  | idNumber == 0 = strutX 1 ||| beginBox
+  | idNumber == 0 = beginBox
   | idNumber == (lastIndex - 1) = nodeBox ||| endBox
   | idNumber == rowStart = rowStartBox idNumber ||| nodeBox
   | idNumber == rowEnd -1 = nodeBox ||| rowEndBox idNumber boxlength
   | otherwise = nodeBox 
   where idNumber = HM.nodeId node
         nid = show idNumber
-        beginBox = (idBox nid === strutY 0.5 === emptyDeletions === strutY 1.5 === insertions nid === strutY 1.5 === beginState boxlength nid) ||| strutX 4
+        beginBox = rect 1 1 # lw 0.0 ||| (idBox nid === strutY 0.5 === emptyDeletions === strutY 1.5 === insertions nid === strutY 1.5 === beginState boxlength nid) ||| strutX 4
 	nodeBox = idBox nid === strutY 0.5 === deletions nid === strutY 1.5 === insertions nid  === strutY 1.5 === matches alphabetSymbols emissiontype boxlength node ||| strutX 4
 	endBox = emptyIdBox === strutY 0.5 === emptyDeletions === strutY 1.5 === emptyInsertions  === strutY 1.5 === endState boxlength idNumber ||| strutX 4
 	
@@ -196,8 +196,8 @@ transitions boxlength node = rect 6 height # lw 0 # translate (r2(0,negate (heig
 
 setEmissions :: String -> V.Vector Double -> V.Vector Double
 setEmissions emissiontype emissions
-  | emissiontype == "probability" = scoreentries
-  | emissiontype == "score" = propentries
+  | emissiontype == "score" = scoreentries
+  | emissiontype == "probability" = propentries
   | emissiontype == "bar" = barentries
   | otherwise = barentries
     where scoreentries = emissions      
