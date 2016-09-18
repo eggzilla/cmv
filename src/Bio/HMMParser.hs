@@ -15,14 +15,20 @@ import qualified Control.Exception.Base as CE
 import qualified Data.Vector as V
 
 -- | parse HMMER3 model from input string
-parseHMMER3 :: [Char] -> Either ParseError HMMER3
-parseHMMER3 input = parse genParseHMMER3 "HMMER3" input
+parseHMMER3 :: [Char] -> Either ParseError [HMMER3]
+parseHMMER3 input = parse genParseHMMER3s "HMMER3" input
 
 -- | parse HMMER3 from input filePath                      
-readHMMER3 :: String -> IO (Either ParseError HMMER3)                  
+readHMMER3 :: String -> IO (Either ParseError [HMMER3])                  
 readHMMER3 filePath = do 
-  parsedFile <- parseFromFile genParseHMMER3 filePath
+  parsedFile <- parseFromFile genParseHMMER3s filePath
   CE.evaluate parsedFile
+
+-- | Parse the input as HMMER3 datatype
+genParseHMMER3s :: GenParser Char st [HMMER3]
+genParseHMMER3s = do
+  hmmers  <- many1 genParseHMMER3
+  return hmmers
 
 -- | Parse the input as HMMER3 datatype
 genParseHMMER3 :: GenParser Char st HMMER3
@@ -116,7 +122,7 @@ parseStatAttribute fieldName = do
   return (_stat1,_stat2)
   
 -- | Parse HMMER3 composite
-parseHMMER3Composite :: String -> GenParser Char st (HMMER3Composite,HMMER3Begin)
+parseHMMER3Composite :: String -> GenParser Char st (HMMER3Composite,HMMER3Node)
 parseHMMER3Composite alphabet = do
   many1 (oneOf " ")
   _nodeId <- many1 (noneOf " ")
@@ -132,7 +138,7 @@ parseHMMER3Composite alphabet = do
   _bd2m <- parseOptionalFloatParameter
   _bd2d <- parseOptionalFloatParameter
   newline
-  return (HMMER3Composite (V.fromList _matchEmissions),HMMER3Begin (V.fromList _insertEmissions) _bm2m _bm2i _bm2d _bi2m _bi2i _bd2m _bd2d)
+  return (HMMER3Composite (V.fromList _matchEmissions),HMMER3Node (0 :: Int) V.empty Nothing Nothing Nothing False Nothing (V.fromList _insertEmissions) _bm2m _bm2i _bm2d _bi2m _bi2i _bd2m _bd2d)
 
 -- | Parse HMMER3 node
 parseHMMER3Node :: String -> GenParser Char st HMMER3Node

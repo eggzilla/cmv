@@ -10,12 +10,13 @@ module Bio.HMMDraw
       drawHMMER3,
       svgsize,
       diagramName,
-      printSVG
+      printSVG,
+      getComparisonsHighlightParameters,
+      drawHMMComparison
     ) where
   
 import Diagrams.Prelude
 import Diagrams.Backend.SVG
---import Graphics.SVGFonts
 import Data.Typeable.Internal
 import qualified Bio.HMMParser as HM
 import Text.Printf
@@ -25,6 +26,17 @@ import qualified Bio.StockholmData as S
 import qualified Data.Text as T    
 import Data.Maybe
 import qualified Data.Vector as V
+import Bio.HMMCompareResult
+
+
+
+drawHMMComparison modelDetail entryNumberCutoff emissiontype maxWidth hmms alns 
+  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
+  | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
+  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
+  | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
+    where zippedInput = zip hmms alns
+          
 
 -- | 
 --drawHMMMER3s :: forall b. Renderable (Path V2 Double) b => String -> [HM.HMMER3] -> QDiagram b V2 Double Any
@@ -34,7 +46,7 @@ drawHMMMER3s modelDetail entryNumberCutoff emissiontype maxWidth hmms alns
   | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
   | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
     where zippedInput = zip hmms alns
-          --maxWidth = (400 :: Double)
+          
 
 -- |
 --drawHMMER3 :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => String -> HM.HMMER3 -> QDiagram b V2 n Any
@@ -49,9 +61,9 @@ drawHMMER3 modelDetail entriesNumberCutoff maxWidth emissiontype (model,aln)
            alphabet = HM.alpha model
            alphabetSymbols = HM.alphabetToSymbols alphabet           
            boxlength = (fromIntegral (length alphabetSymbols)) + 1
-	   nodeWidth = (6.0 :: Double)
-	   nodeNumberPerRow = floor (maxWidth / nodeWidth - 2)
-	   nodesIntervals = makeNodeIntervals nodeNumberPerRow nodeNumber
+           nodeWidth = (6.0 :: Double)
+           nodeNumberPerRow = floor (maxWidth / nodeWidth - 2)
+           nodesIntervals = makeNodeIntervals nodeNumberPerRow nodeNumber
            verboseNodes = vcat' with { _sep = 2 } (V.toList (V.map (drawDetailedNodeRow alphabetSymbols emissiontype boxlength nodeNumber currentNodes) nodesIntervals))
            verboseNodesAlignment = alignTL (vcat' with { _sep = 5 }  [verboseNodes,alignmentDiagram])
            alignmentDiagram = if isJust aln then drawStockholm entriesNumberCutoff (fromJust aln) else mempty
@@ -246,3 +258,14 @@ printSVG = renderSVG diagramName
 roundPos :: (RealFrac a) => Int -> a -> a
 roundPos positions number  = (fromInteger $ round $ number * (10^positions)) / (10.0^^positions)
  
+getComparisonsHighlightParameters :: [HM.HMMER3] -> [HMMCompareResult] -> [(Int,Int,Int,Int,Int,Int,Int,Int)]
+getComparisonsHighlightParameters sortedmodels comp = map (getComparisonHighlightParameters sortedmodels) comp
+
+getComparisonHighlightParameters :: [HM.HMMER3] -> HMMCompareResult -> (Int,Int,Int,Int,Int,Int,Int,Int)
+getComparisonHighlightParameters sortedmodels comp = (a,b,c,d,a,f,c,e)
+  where a = 1
+        b = head (model1matchednodes comp)
+        c = 2
+        d = head (model2matchednodes comp)
+        e = last (model2matchednodes comp)
+        f = last (model1matchednodes comp)

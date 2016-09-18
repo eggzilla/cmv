@@ -2,14 +2,17 @@
 
 module Bio.HMMCompareResult
     (
-     HMMcompareResult,
+     HMMCompareResult,
      model1Name,
      model2Name,
      linkscore1, 
      linkscore2,
      linksequence,
      model1matchednodes,
-     model2matchednodes
+     model2matchednodes,
+     getHMMCompareResults,
+     getModelsNames,
+     getModelNames
     ) where
 
 import Text.ParserCombinators.Parsec 
@@ -18,7 +21,7 @@ import Text.ParserCombinators.Parsec.Language (emptyDef)
 import Control.Monad
 
 -- | Datastructure for result strings of comparisons between covariance models by HMMCompare
-data HMMcompareResult = HMMcompareResult           
+data HMMCompareResult = HMMCompareResult           
   { model1Name :: String,
     model2Name :: String,
     linkscore1 :: Double,
@@ -44,9 +47,9 @@ parseFloat = do sign <- option 1 (do s <- oneOf "+-"
                 x  <- float $ makeTokenParser emptyDef
                 return $ sign * x
 
--- | Parse a HMMcompare result string
-parseHMMcompareResult :: GenParser Char st HMMcompareResult
-parseHMMcompareResult = do
+-- | Parse a HMMCompare result string
+parseHMMCompareResult :: GenParser Char st HMMCompareResult
+parseHMMCompareResult = do
     name1 <-  many1 (noneOf " ")
     _ <- many1 space
     name2 <-  many1 (noneOf " ")
@@ -64,7 +67,7 @@ parseHMMcompareResult = do
     _ <- char '['
     nodes2 <- many1 parseMatchedNodes
     _ <- char ']'
-    return $ HMMcompareResult name1 name2 (readDouble score1) (readDouble score2) linkseq structure1 structure2 nodes1 nodes2
+    return $ HMMCompareResult name1 name2 (readDouble score1) (readDouble score2) linkseq nodes1 nodes2
 
 -- | Parse indices of matched nodes between models as integers
 parseMatchedNodes :: GenParser Char st Int 
@@ -74,10 +77,10 @@ parseMatchedNodes = do
     return $ (readInt nodeNumber)
 
 -- | Parser for HMMCompare result strings
-getHMMcompareResults :: FilePath -> IO [Either ParseError HMMcompareResult]    
-getHMMcompareResults filePath = let
+getHMMCompareResults :: FilePath -> IO [Either ParseError HMMCompareResult]    
+getHMMCompareResults filePath = let
         fp = filePath
-        doParseLine' = parse parseHMMcompareResult "parseHMMCompareResults"
+        doParseLine' = parse parseHMMCompareResult "parseHMMCompareResults"
         doParseLine l = case (doParseLine' l) of
             Right x -> x
             Left _  -> error "Failed to parse line"

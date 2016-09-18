@@ -12,6 +12,7 @@ import Bio.HMMCompareResult
 import Bio.HMMDraw
 import System.Console.CmdArgs
 import Data.Either
+import qualified Data.Either.Unwrap as E
 import System.Directory
 
 options :: Options
@@ -36,20 +37,23 @@ main = do
   Options{..} <- cmdArgs options
   --Validate input
   modelFileExists <- doesFileExist modelsFile
-  cmcFileExists <- doesFileExist cmcompareResultFile
-  if modelFileExists && cmcFileExists
+  hmmCFileExists <- doesFileExist hmmCompareResultFile
+  if modelFileExists && hmmCFileExists
      then do
-       models <- fromFile modelsFile
-       cmcResultParsed <- getHMMCompareResults hmmCompareResultFile
-       checkHMMResultsParsed (lefts hmmcResultParsed)
-       let righthmmcResultsParsed = rights hmmcResultParsed
-       let comparisonModelNames = getModelsNames righthmmcResultsParsed
-       let comparisonsHighlightParameters = getComparisonsHighlightParameters models righthmmcResultsParsed
-       print comparisonsHighlightParameters
-       printSVG svgsize (drawHMMComparison modelDetail models) comparisonsHighlightParameters
+       models <-  modelsFile
+       hmmCResultParsed <- getHMMCompareResults hmmCompareResultFile
+       if isRight hmmCResultParsed
+         then do
+           let rightHMMCResultsParsed = rights hmmCResultParsed
+           let comparisonModelNames = getModelsNames rightHMMCResultsParsed
+           let comparisonsHighlightParameters = getComparisonsHighlightParameters models rightHMMCResultsParsed
+           --print comparisonsHighlightParameters
+           printSVG svgsize (drawHMMComparison modelDetail models) comparisonsHighlightParameters
+	 else do
+	   print (E.fromLeft hmmCResultParsed)
      else do
        if modelFileExists then return () else putStrLn "Model file not found"
-       if cmcFileExists then return () else putStrLn "Comparison file not found"
+       if hmmCFileExists then return () else putStrLn "Comparison file not found"
 
 
   

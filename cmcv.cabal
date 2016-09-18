@@ -35,6 +35,7 @@ library
                      Bio.CMCompareResult
                      Bio.StockholmParser
                      Bio.StockholmData
+                     Bio.HMMCompareResult
 
   -- compiler-options:
   ghc-options:         -Wall -O2 -fno-warn-unused-do-bind
@@ -58,6 +59,13 @@ executable cmv
   ghc-options:         -Wall -O2
   build-depends:       base >=4.5, cmdargs, BiobaseInfernal==0.8.0.0, BiobaseXNA, diagrams-svg>=1.3.1.10, diagrams-lib>=1.3.1.0, parsec, SVGFonts, colour, containers, bytestring, template-haskell, text, vector, directory, cmcv
   --other-modules:       Bio.CMDraw, Bio.CMCompareResult
+
+executable hmmcv
+  Hs-Source-Dirs:      ./src/hmmcv/
+  main-is:	       HMMCVisualisation.hs
+  ghc-options:         -Wall -O2
+  build-depends:       base >=4.5, cmdargs, diagrams-svg>=1.3.1.10, diagrams-lib>=1.3.1.0, parsec, SVGFonts, colour, containers, bytestring, text, vector, directory, cmcv, either-unwrap
+  --other-modules:       Bio.HMMParser, Bio.HMMData
 
 executable hmmv
   Hs-Source-Dirs:      ./src/hmmv/
