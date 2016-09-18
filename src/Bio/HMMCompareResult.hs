@@ -3,6 +3,8 @@
 module Bio.HMMCompareResult
     (
      HMMCompareResult,
+     parseHMMCompareResult,
+     readHMMCompareResult,
      model1Name,
      model2Name,
      linkscore1, 
@@ -27,12 +29,25 @@ data HMMCompareResult = HMMCompareResult
     linkscore1 :: Double,
     linkscore2 :: Double,
     linksequence  :: String,
-    model1matchednodes :: MatchedNodes,
-    model2matchednodes :: MatchedNodes
+    model1matchednodes :: [Int],
+    model2matchednodes :: [Int]
   } deriving (Show)
 
--- | Type alias for matched nodes
-type MatchedNodes = [Int]
+-- | parse HMMCompareResult model from input string
+parseHMMCompareResult :: [Char] -> Either ParseError [HMMCompareResult]
+parseHMMCompareResult input = parse genParseHMMCompareResults "HMMCompareResult" input
+
+-- | parse HMMCompareResult from input filePath                      
+readHMMCompareResult :: String -> IO (Either ParseError [HMMCompareResult])                  
+readHMMCompareResult filePath = do 
+  parsedFile <- parseFromFile genParseHMMCompareResults filePath
+  return parsedFile
+
+-- | Parse the input as HMMCompareResult datatype
+genParseHMMCompareResults :: GenParser Char st [HMMCompareResult]
+genParseHMMCompareResults = do
+  hmmcs  <- many1 genParseHMMCompareResult
+  return hmmcs
 
 readDouble :: String -> Double
 readDouble = read              
@@ -48,8 +63,8 @@ parseFloat = do sign <- option 1 (do s <- oneOf "+-"
                 return $ sign * x
 
 -- | Parse a HMMCompare result string
-parseHMMCompareResult :: GenParser Char st HMMCompareResult
-parseHMMCompareResult = do
+genParseHMMCompareResult :: GenParser Char st HMMCompareResult
+genParseHMMCompareResult = do
     name1 <-  many1 (noneOf " ")
     _ <- many1 space
     name2 <-  many1 (noneOf " ")
@@ -80,7 +95,7 @@ parseMatchedNodes = do
 getHMMCompareResults :: FilePath -> IO [Either ParseError HMMCompareResult]    
 getHMMCompareResults filePath = let
         fp = filePath
-        doParseLine' = parse parseHMMCompareResult "parseHMMCompareResults"
+        doParseLine' = parse genParseHMMCompareResult "genParseHMMCompareResults"
         doParseLine l = case (doParseLine' l) of
             Right x -> x
             Left _  -> error "Failed to parse line"

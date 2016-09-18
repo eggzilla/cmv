@@ -13,14 +13,22 @@ import qualified Data.Text as T
 import Data.List
 
 -- | parse 
-parseStockholm :: [Char] -> Either ParseError StockholmAlignment
-parseStockholm input = parse genParseStockholm "Stockholm" input
+parseStockholm :: [Char] -> Either ParseError [StockholmAlignment]
+parseStockholm input = parse genParseStockholms "Stockholm" input
 
 -- | parse StockholmAlignment from input filePath                      
-readStockholm :: String -> IO (Either ParseError StockholmAlignment)                  
+readStockholm :: String -> IO (Either ParseError [StockholmAlignment])
 readStockholm filePath = do 
-  parsedFile <- parseFromFile genParseStockholm filePath
+  parsedFile <- parseFromFile genParseStockholms filePath
   CE.evaluate parsedFile
+
+-- | Parse the input as StockholmAlignment
+genParseStockholms :: GenParser Char st [StockholmAlignment]
+genParseStockholms = do
+  alns <- many1 genParseStockholm
+  eof
+  return alns
+
 
 -- | Parse the input as StockholmAlignment
 genParseStockholm :: GenParser Char st StockholmAlignment
@@ -31,7 +39,6 @@ genParseStockholm = do
   many (try newline)
   _stockholmToken <- many1 genParseToken
   string "//\n"
-  eof
   return (tokenToStockholm (T.pack _version) _stockholmToken)
 
 -- | Parse the input as StockholmAlignment datatype

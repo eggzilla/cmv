@@ -28,9 +28,7 @@ import Data.Maybe
 import qualified Data.Vector as V
 import Bio.HMMCompareResult
 
-
-
-drawHMMComparison modelDetail entryNumberCutoff emissiontype maxWidth hmms alns 
+drawHMMComparison modelDetail entryNumberCutoff emissiontype maxWidth hmms alns comparisonHighlights
   | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
   | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
   | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
