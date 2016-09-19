@@ -64,7 +64,7 @@ drawHMMER3 modelDetail entriesNumberCutoff maxWidth emissiontype (model,aln)
            nodesIntervals = makeNodeIntervals nodeNumberPerRow nodeNumber
            verboseNodes = vcat' with { _sep = 2 } (V.toList (V.map (drawDetailedNodeRow alphabetSymbols emissiontype boxlength nodeNumber currentNodes) nodesIntervals))
            verboseNodesAlignment = alignTL (vcat' with { _sep = 5 }  [verboseNodes,alignmentDiagram])
-           alignmentDiagram = if isJust aln then drawStockholm entriesNumberCutoff (fromJust aln) else mempty
+           alignmentDiagram = if isJust aln then drawStockholm entriesNumberCutoff maxWidth (fromJust aln) else mempty
            --connectedNodes = makeConnections boxlength currentNodes
            --selfconnectedNodes = makeSelfConnections boxlength currentNodes
            --arrowList = map makeArrow connectedNodes ++ map makeSelfArrow selfconnectedNodes
@@ -91,7 +91,29 @@ drawDetailedNodeRow alphabetSymbols emissiontype boxlength lastIndex allNodes (c
         arrowList = V.toList (V.map makeArrow connectedNodes V.++ V.map makeSelfArrow selfConnectedNodes)
         labelList = V.toList (V.map makeLabel connectedNodes V.++ V.map makeSelfLabel selfConnectedNodes)
 
---drawStockholm                       
+--drawStockholm
+drawStockholmLines entriesNumberCutoff maxWidth aln = alignTL (vcat' with { _sep = 1 } (map (drawStockholmEntry maxIdLength) currentEntries))
+  where currentEntries = take entriesNumberCutoff (S.sequenceEntries aln)
+        entryNumber = length currentEntries
+        maxIdLength = maximum (map (T.length . S.sequenceId) currentEntries)
+        headerLength =  maxIdLength  + 3 * letterWidth
+        letterWidth = (2.0 :: Double)
+        availableLettersPerRow = (maxWidth -  headerLength) / letterWidth
+        rowNumber = floor (availableLettersPerRow maxWidth / nodeWidth)
+        letterIntervals = makeLetterIntervals nodeNumberPerRow nodeNumber
+        alignmentRows = vcat' with { _sep = 2 } (V.toList (V.map (drawStockholmEntry maxIdLength entry) letterIntervals))
+
+makeLetterIntervals :: Int -> Int -> V.Vector (Int,Int)
+makeLetterIntervals nodeNumberPerRow nodeNumber = rowIntervals
+  where rowVector = V.iterateN rowNumber (1+) 0 
+        rowNumber = ceiling $ (fromIntegral nodeNumber) / (fromIntegral nodeNumberPerRow)
+	rowIntervals = V.map (setAlignmentInterval nodeNumberPerRow nodeNumber) rowVector
+
+setAlignmentInterval nodeNumberPerRow nodeNumber index = (start,safeLength)
+  where start = index*nodeNumberPerRow
+        length = nodeNumberPerRow 
+	safeLength = if start +length > nodeNumber then (nodeNumber - start) else length
+
 drawStockholm entriesNumberCutoff aln = alignTL (vcat' with { _sep = 1 } (map (drawStockholmEntry maxIdLength) currentEntries))
   where currentEntries = take entriesNumberCutoff (S.sequenceEntries aln)
         entryNumber = length currentEntries
