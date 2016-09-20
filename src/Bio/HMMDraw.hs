@@ -64,7 +64,7 @@ drawHMMER3 modelDetail entriesNumberCutoff maxWidth emissiontype (model,aln)
            nodesIntervals = makeNodeIntervals nodeNumberPerRow nodeNumber
            verboseNodes = vcat' with { _sep = 2 } (V.toList (V.map (drawDetailedNodeRow alphabetSymbols emissiontype boxlength nodeNumber currentNodes) nodesIntervals))
            verboseNodesAlignment = alignTL (vcat' with { _sep = 5 }  [verboseNodes,alignmentDiagram])
-           alignmentDiagram = if isJust aln then drawStockholm entriesNumberCutoff maxWidth (fromJust aln) else mempty
+           alignmentDiagram = if isJust aln then drawStockholmLines entriesNumberCutoff maxWidth (fromJust aln) else mempty
            --connectedNodes = makeConnections boxlength currentNodes
            --selfconnectedNodes = makeSelfConnections boxlength currentNodes
            --arrowList = map makeArrow connectedNodes ++ map makeSelfArrow selfconnectedNodes
@@ -91,28 +91,53 @@ drawDetailedNodeRow alphabetSymbols emissiontype boxlength lastIndex allNodes (c
         arrowList = V.toList (V.map makeArrow connectedNodes V.++ V.map makeSelfArrow selfConnectedNodes)
         labelList = V.toList (V.map makeLabel connectedNodes V.++ V.map makeSelfLabel selfConnectedNodes)
 
---drawStockholm
+--drawStockholmLines
 drawStockholmLines entriesNumberCutoff maxWidth aln = alignTL (vcat' with { _sep = 1 } (map (drawStockholmEntry maxIdLength) currentEntries))
-  where currentEntries = take entriesNumberCutoff (S.sequenceEntries aln)
-        entryNumber = length currentEntries
-        maxIdLength = maximum (map (T.length . S.sequenceId) currentEntries)
+  where currentEntries = V.fromList (take entriesNumberCutoff (S.sequenceEntries aln))
+        entryNumber = V.length currentEntries
+        vectorEntries = V.map makeVectorEntries currentEntries
+        maxEntryLength = V.maximum (V.map (V.length . snd) vectorEntries)
+        maxIdLength = V.maximum (V.map (length . fst) vectorEntries)
         headerLength =  maxIdLength  + 3 * letterWidth
         letterWidth = (2.0 :: Double)
         availableLettersPerRow = (maxWidth -  headerLength) / letterWidth
-        rowNumber = floor (availableLettersPerRow maxWidth / nodeWidth)
-        letterIntervals = makeLetterIntervals nodeNumberPerRow nodeNumber
-        alignmentRows = vcat' with { _sep = 2 } (V.toList (V.map (drawStockholmEntry maxIdLength entry) letterIntervals))
+        rowNumber = floor (availableLettersPerRow / maxEntryLength)
+        letterIntervals = makeLetterIntervals entryNumber availableLettersPerRow maxEntryLength
+        alignmentRows = vcat' with { _sep = 2 } (V.toList (V.map (drawStockholmEntryLine maxIdLength vectorEntries) letterIntervals))
 
-makeLetterIntervals :: Int -> Int -> V.Vector (Int,Int)
-makeLetterIntervals nodeNumberPerRow nodeNumber = rowIntervals
-  where rowVector = V.iterateN rowNumber (1+) 0 
-        rowNumber = ceiling $ (fromIntegral nodeNumber) / (fromIntegral nodeNumberPerRow)
-	rowIntervals = V.map (setAlignmentInterval nodeNumberPerRow nodeNumber) rowVector
+makeVectorEntries :: S.SequenceEntry -> (String, V.Vector Char)
+makeVectorEntries entry = (entrySeqId,entrySeq)
+  where entrySeq = V.fromList (T.unpack (S.entrySequence entry))
+        entrySeqId = T.unpack (S.sequenceId entry)
 
-setAlignmentInterval nodeNumberPerRow nodeNumber index = (start,safeLength)
-  where start = index*nodeNumberPerRow
-        length = nodeNumberPerRow 
-	safeLength = if start +length > nodeNumber then (nodeNumber - start) else length
+-- LetterInterval (SeqNr,Start,Length)
+makeLetterIntervals :: Int -> Int -> Int -> V.Vector (Int,Int,Int)
+makeLetterIntervals seqNumber letterNumberPerRow letterNumber = rowIntervals
+  where rowVector = V.iterateN rowNumber (1+) 0
+        rowNumber = ceiling $ (fromIntegral letterNumber) / (fromIntegral letterNumberPerRow)
+	rowIntervals = V.map (++) (V.map (setAlignmentInterval letterNumberPerRow letterNumber seqNumber)  rowVector)
+
+setAlignmentInterval :: Int -> Int -> Int -> Int ->  V.Vector (Int,Int,Int)
+setAlignmentInterval letterNumberPerRow letterNumber seqNumber rowIndex = seqLines
+  where seqVector = V.iterateN seqNumber (1+) 0
+        seqLines = V.map (++) (V.map (setAlignmentInterval letterNumberPerRow letterNumber rowIndex) seqVector)
+
+setAlignmentLineInterval :: Int -> Int -> Int -> Int -> (Int,Int,Int)
+setAlignmentLineInterval letterNumberPerRow letterNumber rowIndex seqIndex = (seqIndex,currentStart,safeLength)
+  where currentStart = rowIndex * letterNumberPerRow
+        length = letterNumberPerRow 
+	safeLength = if currentStart +length > letterNumber then (letterNumber - currentStart) else length
+
+
+--drawStockholmEntryLine :: (RealFloat n0, Typeable n0, Renderable (Path V2 n1) b0) => Int -> V.Vector (String, V.Vector Char) -> (Int,Int,Int) -> QDiagram b0 V2 n0 Any
+drawStockholmEntryLine maxIdLength aln (seqIndex,start,safeLength) = entryDia
+  where entry = aln V.! seqIndex
+        entryText = (seqId ++ spacer ++ entrySeq)
+        seqId = fst entry      
+        entrySeq = V.toList (V.slice start safeLength (snd entry))
+        spacerLength = (maxIdLength + 3) - length seqId 
+        spacer = replicate spacerLength ' '
+        entryDia = hcat (map setAlignmentLetter entryText) 
 
 drawStockholm entriesNumberCutoff aln = alignTL (vcat' with { _sep = 1 } (map (drawStockholmEntry maxIdLength) currentEntries))
   where currentEntries = take entriesNumberCutoff (S.sequenceEntries aln)
@@ -126,8 +151,8 @@ drawStockholmEntry maxIdLength entry = entryDia
         spacer = T.replicate spacerLength (T.pack " ")
         entryDia = hcat (map setAlignmentLetter entryText)         
        
-setLetter echar = alignedText 0.5 0.5 [echar] # fontSize 2 <> rect 1 1 # lw 0 -- # translate (r2 (negate 0.5, 0))
-setAlignmentLetter echar = alignedText 0.5 0.5 [echar] # fontSize 2 <> rect 2 1 # lw 0
+setLetter echar = alignedText 0.5 0.5 [echar] # fontSize 2 <> rect 1.0 1.0 # lw 0 -- # translate (r2 (negate 0.5, 0))
+setAlignmentLetter echar = alignedText 0.5 0.5 [echar] # fontSize 2 <> rect 2.0 1.0 # lw 0
 setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0.5 # lw 0
 
 makeConnections boxlength currentnodes =  mm1A V.++ miA V.++ md1A V.++ im1A V.++ dm1A V.++ dd1A
