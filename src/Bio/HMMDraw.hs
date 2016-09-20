@@ -92,18 +92,18 @@ drawDetailedNodeRow alphabetSymbols emissiontype boxlength lastIndex allNodes (c
         labelList = V.toList (V.map makeLabel connectedNodes V.++ V.map makeSelfLabel selfConnectedNodes)
 
 --drawStockholmLines
-drawStockholmLines entriesNumberCutoff maxWidth aln = alignTL (vcat' with { _sep = 1 } (map (drawStockholmEntry maxIdLength) currentEntries))
+drawStockholmLines entriesNumberCutoff maxWidth aln = alignmentRows
   where currentEntries = V.fromList (take entriesNumberCutoff (S.sequenceEntries aln))
         entryNumber = V.length currentEntries
         vectorEntries = V.map makeVectorEntries currentEntries
         maxEntryLength = V.maximum (V.map (V.length . snd) vectorEntries)
         maxIdLength = V.maximum (V.map (length . fst) vectorEntries)
-        headerLength =  maxIdLength  + 3 * letterWidth
+        headerLength =  (fromIntegral maxIdLength)  + 3 * letterWidth
         letterWidth = (2.0 :: Double)
         availableLettersPerRow = (maxWidth -  headerLength) / letterWidth
-        rowNumber = floor (availableLettersPerRow / maxEntryLength)
+        rowNumber = floor (availableLettersPerRow / (fromIntegral maxEntryLength))
         letterIntervals = makeLetterIntervals entryNumber availableLettersPerRow maxEntryLength
-        alignmentRows = vcat' with { _sep = 2 } (V.toList (V.map (drawStockholmEntryLine maxIdLength vectorEntries) letterIntervals))
+        alignmentRows = vcat' with { _sep = 2.0 } (V.toList (V.map (drawStockholmEntryLine maxIdLength vectorEntries) letterIntervals))
 
 makeVectorEntries :: S.SequenceEntry -> (String, V.Vector Char)
 makeVectorEntries entry = (entrySeqId,entrySeq)
@@ -111,25 +111,27 @@ makeVectorEntries entry = (entrySeqId,entrySeq)
         entrySeqId = T.unpack (S.sequenceId entry)
 
 -- LetterInterval (SeqNr,Start,Length)
-makeLetterIntervals :: Int -> Int -> Int -> V.Vector (Int,Int,Int)
+makeLetterIntervals :: Int -> Double -> Int -> V.Vector (Int,Int,Int)
 makeLetterIntervals seqNumber letterNumberPerRow letterNumber = rowIntervals
-  where rowVector = V.iterateN rowNumber (1+) 0
-        rowNumber = ceiling $ (fromIntegral letterNumber) / (fromIntegral letterNumberPerRow)
-	rowIntervals = V.map (++) (V.map (setAlignmentInterval letterNumberPerRow letterNumber seqNumber)  rowVector)
-
-setAlignmentInterval :: Int -> Int -> Int -> Int ->  V.Vector (Int,Int,Int)
+  where --rowVector = V.iterateN rowNumber (1+) 0
+        rowList = [0..(rowNumber-1)]
+        rowNumber = ceiling $ (fromIntegral letterNumber) / letterNumberPerRow
+	rowIntervals = V.concat (map (setAlignmentInterval (floor letterNumberPerRow) letterNumber seqNumber)  rowList)
+                       
+setAlignmentInterval :: Int -> Int -> Int -> Int -> V.Vector (Int,Int,Int)
 setAlignmentInterval letterNumberPerRow letterNumber seqNumber rowIndex = seqLines
-  where seqVector = V.iterateN seqNumber (1+) 0
-        seqLines = V.map (++) (V.map (setAlignmentInterval letterNumberPerRow letterNumber rowIndex) seqVector)
+  where --seqList = [0..seqNumber]
+        seqVector = V.iterateN seqNumber (1+) 0
+        seqLines = V.map (setAlignmentLineInterval letterNumberPerRow letterNumber rowIndex) seqVector
 
 setAlignmentLineInterval :: Int -> Int -> Int -> Int -> (Int,Int,Int)
 setAlignmentLineInterval letterNumberPerRow letterNumber rowIndex seqIndex = (seqIndex,currentStart,safeLength)
   where currentStart = rowIndex * letterNumberPerRow
         length = letterNumberPerRow 
-	safeLength = if currentStart +length > letterNumber then (letterNumber - currentStart) else length
+	safeLength = if currentStart +length >= letterNumber then (letterNumber - currentStart) else length
 
 
---drawStockholmEntryLine :: (RealFloat n0, Typeable n0, Renderable (Path V2 n1) b0) => Int -> V.Vector (String, V.Vector Char) -> (Int,Int,Int) -> QDiagram b0 V2 n0 Any
+--drawStockholmEntryLine :: (RealFloat n0,Typeable n0)  => Int -> V.Vector (String, V.Vector Char) -> (Int,Int,Int) -> QDiagram b0 V2 n0 Any
 drawStockholmEntryLine maxIdLength aln (seqIndex,start,safeLength) = entryDia
   where entry = aln V.! seqIndex
         entryText = (seqId ++ spacer ++ entrySeq)
@@ -152,7 +154,8 @@ drawStockholmEntry maxIdLength entry = entryDia
         entryDia = hcat (map setAlignmentLetter entryText)         
        
 setLetter echar = alignedText 0.5 0.5 [echar] # fontSize 2 <> rect 1.0 1.0 # lw 0 -- # translate (r2 (negate 0.5, 0))
-setAlignmentLetter echar = alignedText 0.5 0.5 [echar] # fontSize 2 <> rect 2.0 1.0 # lw 0
+--setAlignmentLetter :: (Typeable n1,RealFloat n1, Ord n1, Floating n1,Renderable (Path V2 n1) b0) => Char -> QDiagram b0 V2 n1 Any
+setAlignmentLetter echar = alignedText 0.5 0.5 [echar] # fontSize 2.0 <> rect 2.0 1.0 # lw 0
 setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0.5 # lw 0
 
 makeConnections boxlength currentnodes =  mm1A V.++ miA V.++ md1A V.++ im1A V.++ dm1A V.++ dd1A
