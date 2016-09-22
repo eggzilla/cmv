@@ -83,7 +83,7 @@ setRowInterval nodeNumberPerRow nodeNumber index = (start,safeLength)
 
 drawDetailedNodeRow alphabetSymbols emissiontype boxlength lastIndex allNodes (currentIndex,nodeSliceLength) = detailedRow
   where currentNodes = V.slice currentIndex nodeSliceLength allNodes
-        withLastRowNodes = V.slice (currentIndex -1) nodeSliceLength allNodes               
+        withLastRowNodes = V.slice (currentIndex -1) (nodeSliceLength +1) allNodes               
         detailedRow = applyAll (arrowList ++ labelList) detailedNodes
 	nextIndex = currentIndex + nodeSliceLength
         detailedNodes = hcat (V.toList (V.map (drawHMMNodeVerbose alphabetSymbols emissiontype boxlength currentIndex nextIndex lastIndex) currentNodes))
