@@ -83,15 +83,19 @@ setRowInterval nodeNumberPerRow nodeNumber index = (start,safeLength)
 
 drawDetailedNodeRow alphabetSymbols emissiontype boxlength lastIndex allNodes (currentIndex,nodeSliceLength) = detailedRow
   where currentNodes = V.slice currentIndex nodeSliceLength allNodes
-        withLastRowNodes = V.slice (currentIndex -1) (nodeSliceLength +1) allNodes               
-        detailedRow = applyAll (arrowList ++ labelList) detailedNodes
+        withLastRowNodes = V.slice (currentIndex -1) (nodeSliceLength +1) allNodes
+        detailedRow = applyAll (lastRowList ++ arrowList ++ labelList) detailedNodes
 	nextIndex = currentIndex + nodeSliceLength
         detailedNodes = hcat (V.toList (V.map (drawHMMNodeVerbose alphabetSymbols emissiontype boxlength currentIndex nextIndex lastIndex) currentNodes))
-        arrowNodes = if currentIndex > 1 then withLastRowNodes else currentNodes
+        arrowNodes = if currentIndex > 1 then currentNodes else currentNodes
         connectedNodes = makeConnections boxlength arrowNodes
         selfConnectedNodes = makeSelfConnections boxlength arrowNodes
         arrowList = V.toList (V.map makeArrow connectedNodes V.++ V.map makeSelfArrow selfConnectedNodes)
         labelList = V.toList (V.map makeLabel connectedNodes V.++ V.map makeSelfLabel selfConnectedNodes)
+        --add arrows and labels for transitions from previous row
+        lastNode = if currentIndex > 1 then V.slice (currentIndex -1) 1 allNodes else V.empty
+        lastRowConnections = makeLastRowConnections boxlength lastNode
+        lastRowList = V.toList (V.map makeArrow lastRowConnections V.++ V.map makeLabel lastRowConnections)
 
 --drawStockholmLines
 drawStockholmLines entriesNumberCutoff maxWidth aln = alignmentRows
@@ -160,6 +164,13 @@ setLetter echar = alignedText 0.5 0.5 [echar] # fontSize 2 <> rect 1.0 1.0 # lw 
 setAlignmentLetter echar = alignedText 0.5 0.5 [echar] # fontSize 2.0 <> rect 2.0 1.0 # lw 0
 setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0.5 # lw 0
 
+makeLastRowConnections boxlength currentnodes =  mm1A V.++ md1A V.++ im1A V.++ dm1A V.++ dd1A
+  where mm1A = V.map makemm1A currentnodes 
+        md1A = V.map (makemd1A boxlength) currentnodes
+        im1A = V.map makeim1A currentnodes
+        dm1A = V.map (makedm1A boxlength) currentnodes
+        dd1A = V.map makedd1A currentnodes
+
 makeConnections boxlength currentnodes =  mm1A V.++ miA V.++ md1A V.++ im1A V.++ dm1A V.++ dd1A
   where mm1A = V.map makemm1A currentnodes 
         miA = V.map (makemiA boxlength) currentnodes
@@ -176,7 +187,7 @@ makemd1A boxlength currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((
 makeim1A currentNode = (show ((HM.nodeId) currentNode) ++ "i", show ((HM.nodeId currentNode) + 1) ++ "m", maybe 0 ((roundPos 2) . exp . negate) (HM.i2m currentNode),(0,negate 0.5))
 makeiiA boxlength currentNode = (show ((HM.nodeId) currentNode) ++ "i", show ((HM.nodeId currentNode)) ++ "i", maybe 0 ((roundPos 2) . exp . negate) (HM.i2i currentNode),(0,3.0))
 makedm1A boxlength currentNode = (show ((HM.nodeId) currentNode) ++ "d", show ((HM.nodeId currentNode) + 1) ++ "m", maybe 0 ((roundPos 2) . exp . negate) (HM.d2m currentNode),(negate 1.5,2.0))
-makedd1A currentNode = (show ((HM.nodeId) currentNode) ++ "d", show ((HM.nodeId currentNode) + 1) ++ "d", maybe 0 ((roundPos 2) . exp . negate) (HM.d2d currentNode),(0,0.5))
+makedd1A currentNode = (show ((HM.nodeId) currentNode) ++ "d", show ((HM.nodeId currentNode) + 1) ++ "d", maybe 0 ((roundPos 2) . exp . negate) (HM.d2d currentNode),(negate 1,1))
 
 setiayOffset boxlength
   | boxlength <= 10 = negate 0.3
@@ -219,8 +230,8 @@ drawHMMNodeSimple node = rect 2 2 # lw 0.1
 drawHMMNodeVerbose alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex node 
   | idNumber == 0 = beginBox
   | idNumber == (lastIndex - 1) = nodeBox ||| endBox
-  | idNumber == rowStart = rowStartBox idNumber ||| nodeBox
-  | idNumber == rowEnd -1 = nodeBox ||| rowEndBox idNumber boxlength
+  | idNumber == rowStart = rowStartBox idNumber boxlength ||| nodeBox
+  | idNumber == rowEnd - 1 = nodeBox ||| rowEndBox idNumber boxlength
   | otherwise = nodeBox 
   where idNumber = HM.nodeId node
         nid = show idNumber
@@ -230,9 +241,9 @@ drawHMMNodeVerbose alphabetSymbols emissiontype boxlength rowStart rowEnd lastIn
 	
 idBox nid = alignedText 0 0 nid # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nid))/2)),negate 0.5)) <> rect 1.5 1.5 # lw 0
 emptyIdBox = rect 1.5 1.5 # lw 0
-rowStartBox idNumber = rect 0.1 1.5 #lw 0.0 #named (nid ++ "d") === rect 0.1 6 #lw 0.1 === rect 0.1 5 #lw 0.1 === rect 0.1 5 # lw 0.1  ||| strutX 0.9
+rowStartBox idNumber boxlength = rect 0.1 1.5 #lw 0.0 === rect 0.1 6 # lw 0.1 # named (nid ++ "d") === rect 0.1 6 # lw 0.1 #named (nid ++ "i") === rect 0.1 (boxlength + 2) # lw 0.1 # named (nid ++ "m") ||| strutX 2.5
   where nid = show (idNumber - 1)
-rowEndBox idNumber boxlength = rect 0.1 1.5 #lw 0.0 === rect 0.1 6 #lw 0.1 #named (nid ++ "d") === rect 0.1 6 #lw 0.1 #named (nid ++ "i") === rect 0.1 (boxlength + 2) #lw 0.1 #named (nid ++ "m")
+rowEndBox idNumber boxlength = rect 0.1 1.5 #lw 0.0 === rect 0.1 6 # lw 0.1 #named (nid ++ "d") === rect 0.1 6 # lw 0.1 #named (nid ++ "i") === rect 0.1 (boxlength + 2) #lw 0.1 #named (nid ++ "m")
   where nid = show (idNumber + 1)
 deletions nid =  alignedText 0 0 "D" # translate (r2 (negate 0.25,0.25)) <> circle 3 # lw 0.1 # fc white # named (nid ++ "d")
 emptyDeletions = circle 3 # lw 0.0 # fc white 
