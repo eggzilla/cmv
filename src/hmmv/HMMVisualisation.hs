@@ -22,7 +22,8 @@ data Options = Options
     modelLayout :: String,
     emissionLayout :: String,
     alignmentEntries :: Int,
-    maxWidth :: Double
+    maxWidth :: Double,
+    outputFormat :: String
   } deriving (Show,Data,Typeable)
 
 
@@ -33,7 +34,8 @@ options = Options
     modelLayout = "detailed" &= name "l" &= help "Set layout of drawn models: flat, tree (Default: detailed)",
     emissionLayout = "box" &= name "e" &= help "Set layout of drawn models: score, probability, box (Default: box)",
     alignmentEntries = (50 :: Int) &= name "n" &= help "Set cutoff for included stockholm alignment entries (Default: 50)",
-    maxWidth = (100:: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)"
+    maxWidth = (100:: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)",
+    outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)"
   } &= summary "HMMvisualisation devel version" &= help "Florian Eggenhofer - 2016" &= verbosity
 
 main :: IO ()
@@ -47,7 +49,8 @@ main = do
        if alnFileExists
           then do
             aln <- readStockholm alignmentFile
-            if (isRight model) then printSVG svgsize (drawHMMER3 modelDetail alignmentEntries maxWidth emissionLayout (head (fromRight model),(Just (head (fromRight aln))))) else print (fromLeft model)
+            --if (isRight model) then printSVG svgsize (drawHMMER3 modelDetail alignmentEntries maxWidth emissionLayout (head (fromRight model),(Just (head (fromRight aln))))) else print (fromLeft model)
+	    if (isRight model) then printPDF svgsize (drawHMMER3 modelDetail alignmentEntries maxWidth emissionLayout (head (fromRight model),(Just (head (fromRight aln))))) else print (fromLeft model)
           else do     
             if (isRight model) then printSVG svgsize (drawHMMER3 modelDetail alignmentEntries maxWidth emissionLayout (head (fromRight model),Nothing)) else print (fromLeft model)
      else do
