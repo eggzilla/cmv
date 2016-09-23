@@ -43,6 +43,7 @@ import Data.List
 import Text.Parsec.Error
 import qualified Data.Text as T
 import qualified Data.Vector as V
+import Bio.StockholmDraw
   
 -- | Draw one or more CM guide trees and concatenate them vertically
 drawCMGuideForestComparison :: forall b. Renderable (Path V2 Double) b => [Char] -> [[(String, [Char])]] -> [(Int, Int, Int, Int, Int, Int, Int, Int)] -> QDiagram b V2 Double Any
