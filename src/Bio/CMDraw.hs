@@ -13,7 +13,8 @@ module Bio.CMDraw
      drawCMGuideTree,
      text',
      svgsize,
-     printSVG,
+     diagramName,
+     printCM,
      processCMs,
      processCMGuideTree,
      getNodeInfo,
@@ -34,8 +35,8 @@ module Bio.CMDraw
     ) where
   
 import Diagrams.Prelude
-import Diagrams.Backend.SVG
-import Graphics.SVGFonts
+--import Diagrams.Backend.SVG
+--import Graphics.SVGFonts
 import Data.Typeable.Internal
 import Bio.CMCompareResult
 import qualified Biobase.SElab.CM as CM
@@ -44,16 +45,17 @@ import Text.Parsec.Error
 import qualified Data.Text as T
 import qualified Data.Vector as V
 import Bio.StockholmDraw
-  
+import qualified Diagrams.Backend.Cairo as C
+    
 -- | Draw one or more CM guide trees and concatenate them vertically
-drawCMGuideForestComparison :: forall b. Renderable (Path V2 Double) b => [Char] -> [[(String, [Char])]] -> [(Int, Int, Int, Int, Int, Int, Int, Int)] -> QDiagram b V2 Double Any
+--drawCMGuideForestComparison :: forall b. Renderable (Path V2 Double) b => [Char] -> [[(String, [Char])]] -> [(Int, Int, Int, Int, Int, Int, Int, Int)] -> QDiagram b V2 Double Any
 drawCMGuideForestComparison modelDetail cms comparisonshighlightparameter 
   | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (drawCMGuideTrees modelDetail  cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
   | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
   | otherwise = alignTL (vcat' with { _sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
 
 -- | Draw one or more CM guide trees and concatenate them vertically
-drawCMGuideForest :: forall b. Renderable (Path V2 Double) b => [Char] -> [[(String, [Char])]] -> QDiagram b V2 Double Any
+--drawCMGuideForest :: forall b. Renderable (Path V2 Double) b => [Char] -> [[(String, [Char])]] -> QDiagram b V2 Double Any
 drawCMGuideForest modelDetail cms 
   | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (drawCMGuideTrees modelDetail  cms))
   | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (drawCMGuideTrees modelDetail cms))
@@ -114,34 +116,36 @@ paralellogram :: forall (v :: * -> *) n. (Floating n, Ord n, Metric v) => Point 
 paralellogram a b c d = pathFromTrailAt (closeTrail (trailFromVertices [a,b,d,c,a])) a
 
 -- | Draw the Guide Trees of multiple CMs, utilizes drawCMGuideNode
-drawCMGuideTrees :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => [Char] -> [[(String, [Char])]] -> [QDiagram b V2 n Any]
+--drawCMGuideTrees :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => [Char] -> [[(String, [Char])]] -> [QDiagram b V2 n Any]
 drawCMGuideTrees detail cms  = map (drawCMGuideTree detail) cms
 
 -- | Draw the guide Tree of a single CM, utilizes drawCMGuideNode
-drawCMGuideTree :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => [Char] -> [(String, [Char])] -> QDiagram b V2 n Any
+--drawCMGuideTree :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => [Char] -> [(String, [Char])] -> QDiagram b V2 n Any
 drawCMGuideTree modelDetail nodes 
    | modelDetail == "simple" = hcat (drawCMGuideNodesSimple nodes)
    | modelDetail == "detailed" = hcat (drawCMGuideNodesVerbose nodes)
    | otherwise = hcat (drawCMGuideNodesSimple nodes)
 
 -- | Draw the guide Tree of a single CM, utilizes drawCMGuideNode
-drawCMGuideNodesVerbose :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => [(String, String)] -> [QDiagram b V2 n Any]
+--drawCMGuideNodesVerbose :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => [(String, String)] -> [QDiagram b V2 n Any]
 drawCMGuideNodesVerbose nodes = map drawCMGuideNodeVerbose nodes
 
 drawCMGuideNodesSimple :: forall b t. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => [(t, [Char])] -> [b]
 drawCMGuideNodesSimple nodes = map drawCMGuideNodeSimple nodes
 
 -- | Draws the guide tree nodes of a CM, verbose with label and index
-drawCMGuideNodeVerbose :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => (String, String) -> QDiagram b V2 n Any
-drawCMGuideNodeVerbose (number,label) =  text' label # translate (r2 (0,2)) <> text' number # translate (r2 (0,-2)) <> rect 10 10 # lw 0.5 # fc (labelToColor label)
+--drawCMGuideNodeVerbose :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => (String, String) -> QDiagram b V2 n Any
+drawCMGuideNodeVerbose (number,label) = text' label # translate (r2 (0,2)) <> text' number # translate (r2 (0,negate 2)) <> rect 10 10 # lw 0.5 # fc (labelToColor label)
 
 -- | Draws the guide tree nodes of a CM, simplified
 drawCMGuideNodeSimple :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => (t, [Char]) -> b
 drawCMGuideNodeSimple (_,label) =  rect 2 2 # lw 0.1 # fc (labelToColor label)
 
 -- | Render text as SVG
-text' :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => String -> QDiagram b V2 n Any
-text' t = stroke (textSVG t 4) # fc black # fillRule EvenOdd
+--text' :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => String -> QDiagram b V2 n Any
+--text' t = stroke (textSVG t 4) # fc black # fillRule EvenOdd
+--text2 :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => String -> QDiagram b V2 n Any
+text' t = alignedText 0.5 0.5 t # fontSize 4 <> rect 4 4 # lw 0.0
 
 -- | Transform covariance model node labels to colors
 labelToColor :: forall b. (Floating b, Ord b) => [Char] -> Colour b
@@ -163,13 +167,24 @@ labelToColor _ = sRGB24 245 245 245
 svgsize :: SizeSpec V2 Double
 svgsize = mkSizeSpec2D Nothing Nothing
 
-diagramName :: [Char]
-diagramName = "./diagram.svg"
+-- diagramName :: [Char]
+-- diagramName = "./diagram.svg"
 
--- | Print drawn diagram as svg, already curried with diagram name, svgsize and the drawing have to specified
-printSVG :: forall n. (RealFloat n, Show n, Data.Typeable.Internal.Typeable n) => SizeSpec V2 n -> QDiagram SVG V2 n Any -> IO ()
-printSVG = renderSVG diagramName 
+-- -- | Print drawn diagram as svg, already curried with diagram name, svgsize and the drawing have to specified
+-- printSVG :: forall n. (RealFloat n, Show n, Data.Typeable.Internal.Typeable n) => SizeSpec V2 n -> QDiagram SVG V2 n Any -> IO ()
+-- printSVG = renderSVG diagramName
+           
+-- | Check for available cairo output formats
+diagramName :: String -> String -> Either String String
+diagramName filename fileformat
+  | fileformat == "pdf" = Right (filename ++ "." ++ fileformat )
+  | fileformat == "svg" = Right (filename ++ "." ++ fileformat )
+  | fileformat == "png" = Right (filename ++ "." ++ fileformat )
+  | fileformat == "ps" = Right (filename ++ "." ++ fileformat )
+  | otherwise = Left "Unsupported output format requested (use svg, pdf, ps, png)"
 
+printCM outputName = C.renderCairo outputName
+                
 processCMs :: [CM.CM] -> [[(String,String)]]
 processCMs cms = map processCMGuideTree cms
 

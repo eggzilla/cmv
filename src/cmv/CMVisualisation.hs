@@ -24,7 +24,9 @@ data Options = Options
   { modelFile :: String,
     alignmentFile :: String, 
     modelDetail :: String,
-    modelLayout :: String
+    modelLayout :: String,
+    maxWidth :: Double,
+    outputFormat :: String               
   } deriving (Show,Data,Typeable)
 
 
@@ -32,7 +34,9 @@ options = Options
   { modelFile = def &= name "m" &= help "Path to covariance model file",
     alignmentFile = "" &= name "s" &= help "Path to stockholm alignment file",
     modelDetail = "detailed" &= name "d" &= help "Set verbosity of drawn models: simple, detailed",
-    modelLayout = "flat" &= name "l" &= help "Set layout of drawn models: flat, tree"
+    modelLayout = "flat" &= name "l" &= help "Set layout of drawn models: flat, tree",
+    maxWidth = (100:: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)",
+    outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)" 
   } &= summary "CMV devel version" &= help "Florian Eggenhofer - 2013-2016" &= verbosity
 
 main :: IO ()
@@ -47,7 +51,8 @@ main = do
           then do
             alnInput <- readStockholm alignmentFile
             let aln = if (isRight alnInput) then (Just (head (fromRight alnInput))) else Nothing
-            printSVG svgsize (drawCMGuideForest modelDetail (processCMs (model)))    
+            let outputName = diagramName "test" outputFormat       
+            printCM (fromRight outputName) svgsize (drawCMGuideForest modelDetail (processCMs (model)))    
           else 
             print "Could not read covariance models from input file"
      else do

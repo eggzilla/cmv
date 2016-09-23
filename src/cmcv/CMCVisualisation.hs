@@ -16,6 +16,7 @@ import qualified Biobase.SElab.CM as CM
 import Biobase.SElab.CM.Import     
 import System.Console.CmdArgs
 import Data.Either
+import qualified Data.Either.Unwrap as E
 import System.Directory
 
 options :: Options
@@ -24,7 +25,9 @@ data Options = Options
     modelsFile :: ModelsFile,
     modelDetail :: ModelDetail,
     modelLayout :: ModelLayout,
-    comparisonAlignment :: ComparisonAlignment
+    maxWidth :: Double,              
+    comparisonAlignment :: ComparisonAlignment,
+    outputFormat :: String 
   } deriving (Show,Data,Typeable)
 
 type CmcompareResultFile = String
@@ -38,7 +41,9 @@ options = Options
     modelsFile = def &= name "m" &= help "Path to covariance model file",
     modelDetail = "detailed" &= name "d" &= help "Set verbosity of drawn models: simple, detailed",
     modelLayout = "flat" &= name "l" &= help "Set layout of drawn models: flat, tree",
-    comparisonAlignment = "model" &= name "a" &= help "Set layout of drawn models: model, comparison"
+    maxWidth = (100:: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)", 
+    comparisonAlignment = "model" &= name "a" &= help "Set layout of drawn models: model, comparison",
+    outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)"
   } &= summary "CMCV devel version" &= help "Florian Eggenhofer - 2013-2016" &= verbosity
 
 main :: IO ()
@@ -69,7 +74,9 @@ main = do
        --printSVG svgsize (drawCMGuideForest c (processCMs (rightSortedModels)) (getComparisonsHighlightParameters rightSortedModels rightcmcResultsParsed))
        let comparisonsHighlightParameters = getComparisonsHighlightParameters models rightcmcResultsParsed
        print comparisonsHighlightParameters
-       printSVG svgsize (drawCMGuideForestComparison modelDetail (processCMs (models)) (comparisonsHighlightParameters)) 
+       --printSVG svgsize (drawCMGuideForestComparison modelDetail (processCMs (models)) (comparisonsHighlightParameters))
+       let outputName = diagramName "test" outputFormat
+       printCM (E.fromRight outputName) svgsize (drawCMGuideForestComparison modelDetail (processCMs (models)) (comparisonsHighlightParameters))     
      else do
        if modelFileExists then return () else putStrLn "Model file not found"
        if cmcFileExists then return () else putStrLn "Comparison file not found"
