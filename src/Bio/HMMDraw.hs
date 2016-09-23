@@ -9,16 +9,14 @@ module Bio.HMMDraw
       drawHMMMER3s,
       drawHMMER3,
       svgsize,
-      diagramSVGName,
-      diagramPDFName,
-      printSVG,
-      printPDF,
+      diagramName,
+      printHMM,
       getComparisonsHighlightParameters,
       drawHMMComparison
     ) where
   
 import Diagrams.Prelude
-import Diagrams.Backend.SVG
+--import Diagrams.Backend.SVG
 import qualified Diagrams.Backend.Cairo as C
 import Data.Typeable.Internal
 import qualified Bio.HMMParser as HM
@@ -312,17 +310,21 @@ bar emission = (rect (4 * emission) 1 # lw 0 # fc black # translate (r2 (negate 
 svgsize :: SizeSpec V2 Double
 svgsize = mkSizeSpec2D Nothing Nothing
 
-diagramSVGName :: [Char]
-diagramSVGName = "./diagram.svg"
+-- | Check for available cairo output formats
+diagramName :: String -> String -> Either String String
+diagramName filename fileformat
+  | fileformat == "pdf" = Right (filename ++ "." ++ fileformat )
+  | fileformat == "svg" = Right (filename ++ "." ++ fileformat )
+  | fileformat == "png" = Right (filename ++ "." ++ fileformat )
+  | fileformat == "ps" = Right (filename ++ "." ++ fileformat )
+  | otherwise = Left "Unsupported output format requested (use svg, pdf, ps, png)"                        
 
-diagramPDFName :: [Char]
-diagramPDFName = "./diagram.pdf"
 
 -- | Print drawn diagram as svg, already curried with diagram name, svgsize and the drawing have to specified
-printSVG :: forall n. (RealFloat n, Show n, Data.Typeable.Internal.Typeable n) => SizeSpec V2 n -> QDiagram SVG V2 n Any -> IO ()
-printSVG = renderSVG diagramSVGName
+--printSVG :: forall n. (RealFloat n, Show n, Data.Typeable.Internal.Typeable n) => SizeSpec V2 n -> QDiagram SVG V2 n Any -> IO ()
+--printSVG = renderSVG diagramName
 
-printPDF = C.renderCairo diagramPDFName
+printHMM outputName = C.renderCairo outputName
 
 roundPos :: (RealFrac a) => Int -> a -> a
 roundPos positions number  = (fromInteger $ round $ number * (10^positions)) / (10.0^^positions)

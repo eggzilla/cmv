@@ -27,7 +27,8 @@ data Options = Options
     emissionLayout :: String,
     alignmentEntries :: Int,
     maxWidth :: Double,
-    comparisonAlignment :: String
+    comparisonAlignment :: String,
+    outputFormat :: String 
   } deriving (Show,Data,Typeable)
 
 options = Options
@@ -39,7 +40,8 @@ options = Options
     emissionLayout = "box" &= name "e" &= help "Set layout of drawn models: score, probability, box (Default: box)",
     alignmentEntries = (50 :: Int) &= name "n" &= help "Set cutoff for included stockholm alignment entries (Default: 50)",
     maxWidth = (100:: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)",
-    comparisonAlignment = "model" &= name "a" &= help "Set layout of drawn models: model, comparison"
+    comparisonAlignment = "model" &= name "a" &= help "Set layout of drawn models: model, comparison",
+    outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)"                      
   } &= summary "HMMCV devel version" &= help "Florian Eggenhofer - 2013-2016" &= verbosity
 
 main :: IO ()
@@ -64,7 +66,9 @@ main = do
               let comparisonModelNames = getModelsNames rightHMMCResultsParsed
               let comparisonsHighlightParameters = getComparisonsHighlightParameters rightModels rightHMMCResultsParsed
 	      -- modelDetail entryNumberCutoff emissiontype maxWidth hmms alns comparisonHighlights
-              printSVG svgsize (drawHMMComparison modelDetail alignmentEntries emissionLayout maxWidth rightModels rightAlns comparisonsHighlightParameters)
+              let outputName = diagramName "test" outputFormat
+              --let renderedHMM = drawHMMComparison modelDetail alignmentEntries emissionLayout maxWidth rightModels rightAlns comparisonsHighlightParameters
+              printHMM (E.fromRight outputName) svgsize (drawHMMComparison modelDetail alignmentEntries emissionLayout maxWidth rightModels rightAlns comparisonsHighlightParameters)
             else print (E.fromLeft hmmCResultParsed)
         else print (E.fromLeft models)
     else do
