@@ -9,14 +9,17 @@ module Bio.HMMDraw
       drawHMMMER3s,
       drawHMMER3,
       svgsize,
-      diagramName,
+      diagramSVGName,
+      diagramPDFName,
       printSVG,
+      printPDF,
       getComparisonsHighlightParameters,
       drawHMMComparison
     ) where
   
 import Diagrams.Prelude
 import Diagrams.Backend.SVG
+import qualified Diagrams.Backend.Cairo as C
 import Data.Typeable.Internal
 import qualified Bio.HMMParser as HM
 import Text.Printf
@@ -309,12 +312,17 @@ bar emission = (rect (4 * emission) 1 # lw 0 # fc black # translate (r2 (negate 
 svgsize :: SizeSpec V2 Double
 svgsize = mkSizeSpec2D Nothing Nothing
 
-diagramName :: [Char]
-diagramName = "./diagram.svg"
+diagramSVGName :: [Char]
+diagramSVGName = "./diagram.svg"
+
+diagramPDFName :: [Char]
+diagramPDFName = "./diagram.pdf"
 
 -- | Print drawn diagram as svg, already curried with diagram name, svgsize and the drawing have to specified
 printSVG :: forall n. (RealFloat n, Show n, Data.Typeable.Internal.Typeable n) => SizeSpec V2 n -> QDiagram SVG V2 n Any -> IO ()
-printSVG = renderSVG diagramName 
+printSVG = renderSVG diagramSVGName
+
+printPDF = C.renderCairo diagramPDFName
 
 roundPos :: (RealFrac a) => Int -> a -> a
 roundPos positions number  = (fromInteger $ round $ number * (10^positions)) / (10.0^^positions)
