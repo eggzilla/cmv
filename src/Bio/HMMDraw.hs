@@ -16,7 +16,6 @@ module Bio.HMMDraw
     ) where
   
 import Diagrams.Prelude
---import Diagrams.Backend.SVG
 import qualified Diagrams.Backend.Cairo as C
 import Data.Typeable.Internal
 import qualified Bio.HMMParser as HM
@@ -230,20 +229,6 @@ emissionEntry emissiontype (symbol,emission)
 --bar :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => Double -> QDiagram b V2 n Any
 bar emission = (rect (4 * emission) 1 # lw 0 # fc black # translate (r2 (negate (2 - (4 * emission/2)),0)) <> rect 4 1 # lw 0.03 )
 
-
--- | 
---drawHMMNodeVerbose :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => HM.HMMER3Node -> QDiagram b V2 n Any
---drawHMMNodeVerbose node =  text' label # translate (r2 (0,2)) <> text' number # translate (r2 (0,-2)) <> rect 10 10 # lw 0.5 # fc (labelToColor label)
-
-
--- | Render text as SVG
---text' :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => String -> QDiagram b V2 n Any
---text' t = stroke (textSVG t 1) # fc black # fillRule EvenOdd # lw 0.1
-          
---scaling
--- | Specifies the size of the diagram. Absolute adapts to overall size according to subdiagrams
---svgsize processedCMs = mkSizeSpec (svgwidth processedCMs) (svglength processedCMs)
- --svgsize = Absolute
 svgsize :: SizeSpec V2 Double
 svgsize = mkSizeSpec2D Nothing Nothing
 
@@ -255,11 +240,6 @@ diagramName filename fileformat
   | fileformat == "png" = Right (filename ++ "." ++ fileformat )
   | fileformat == "ps" = Right (filename ++ "." ++ fileformat )
   | otherwise = Left "Unsupported output format requested (use svg, pdf, ps, png)"                        
-
-
--- | Print drawn diagram as svg, already curried with diagram name, svgsize and the drawing have to specified
---printSVG :: forall n. (RealFloat n, Show n, Data.Typeable.Internal.Typeable n) => SizeSpec V2 n -> QDiagram SVG V2 n Any -> IO ()
---printSVG = renderSVG diagramName
 
 printHMM outputName = C.renderCairo outputName
 

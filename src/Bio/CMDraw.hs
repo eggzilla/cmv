@@ -35,8 +35,6 @@ module Bio.CMDraw
     ) where
   
 import Diagrams.Prelude
---import Diagrams.Backend.SVG
---import Graphics.SVGFonts
 import Data.Typeable.Internal
 import Bio.CMCompareResult
 import qualified Biobase.SElab.CM as CM
@@ -141,10 +139,6 @@ drawCMGuideNodeVerbose (number,label) = text' label # translate (r2 (0,2)) <> te
 drawCMGuideNodeSimple :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => (t, [Char]) -> b
 drawCMGuideNodeSimple (_,label) =  rect 2 2 # lw 0.1 # fc (labelToColor label)
 
--- | Render text as SVG
---text' :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => String -> QDiagram b V2 n Any
---text' t = stroke (textSVG t 4) # fc black # fillRule EvenOdd
---text2 :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => String -> QDiagram b V2 n Any
 text' t = alignedText 0.5 0.5 t # fontSize 4 <> rect 4 4 # lw 0.0
 
 -- | Transform covariance model node labels to colors
@@ -162,17 +156,8 @@ labelToColor _ = sRGB24 245 245 245
           
 --scaling
 -- | Specifies the size of the diagram. Absolute adapts to overall size according to subdiagrams
---svgsize processedCMs = mkSizeSpec (svgwidth processedCMs) (svglength processedCMs)
---svgsize = Absolute
 svgsize :: SizeSpec V2 Double
 svgsize = mkSizeSpec2D Nothing Nothing
-
--- diagramName :: [Char]
--- diagramName = "./diagram.svg"
-
--- -- | Print drawn diagram as svg, already curried with diagram name, svgsize and the drawing have to specified
--- printSVG :: forall n. (RealFloat n, Show n, Data.Typeable.Internal.Typeable n) => SizeSpec V2 n -> QDiagram SVG V2 n Any -> IO ()
--- printSVG = renderSVG diagramName
            
 -- | Check for available cairo output formats
 diagramName :: String -> String -> Either String String
