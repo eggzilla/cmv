@@ -28,15 +28,20 @@ import Data.Maybe
 import qualified Data.Vector as V
 import Bio.HMMCompareResult
 import Bio.StockholmDraw
+import Data.Colour.SRGB.Linear
 
-drawHMMComparison modelDetail entryNumberCutoff emissiontype maxWidth hmms alns comparisonHighlights
+drawHMMComparison modelDetail entryNumberCutoff emissiontype maxWidth hmms alns comparisons
   | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
   | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
   | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
   | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
-    where zippedInput = zip hmms alns
-          
-
+    where zippedInput = zip3 (hmms alns comparisonNodeLabels)
+          colorVector = makeColorVector modelNumber 
+	  modelNumber = length hmms
+	  modelNames = V.map HM.name hmms
+	  nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
+	  comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) models
+	            
 -- | 
 --drawHMMMER3s :: forall b. Renderable (Path V2 Double) b => String -> [HM.HMMER3] -> QDiagram b V2 Double Any
 drawHMMMER3s modelDetail entryNumberCutoff emissiontype maxWidth hmms alns
@@ -175,8 +180,9 @@ drawHMMNodeVerbose alphabetSymbols emissiontype boxlength rowStart rowEnd lastIn
         beginBox = rect 1 1 # lw 0.0 ||| (idBox nid === strutY 0.5 === emptyDeletions === strutY 1.5 === insertions nid === strutY 1.5 === beginState boxlength nid) ||| strutX 4
 	nodeBox = idBox nid === strutY 0.5 === deletions nid === strutY 1.5 === insertions nid  === strutY 1.5 === matches alphabetSymbols emissiontype boxlength node ||| strutX 4
 	endBox = emptyIdBox === strutY 0.5 === emptyDeletions === strutY 1.5 === emptyInsertions  === strutY 1.5 === endState boxlength idNumber ||| strutX 4
-	
-idBox nid = alignedText 0 0 nid # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nid))/2)), negate 1.25)) <> rect 1.5 3 # lw 0
+
+-- | idBox associates the node with its index and a tupel of  a list of modelidentifiers and the total model number
+idBox nid labelList= alignedText 0 0 nid # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nid))/2)), negate 1.25)) <> rect 1.5 3 # lw 0.1
 emptyIdBox = rect 1.5 1.5 # lw 0
 rowStartBox idNumber boxlength = rect 0.1 1.5 #lw 0.0 === rect 0.1 6 # lw 0.1 # named (nid ++ "d") === rect 0.1 6 # lw 0.1 #named (nid ++ "i") === rect 0.1 (boxlength + 2) # lw 0.1 # named (nid ++ "m") ||| strutX 2.5
   where nid = show (idNumber - 1)
@@ -245,7 +251,15 @@ printHMM outputName = C.renderCairo outputName
 
 roundPos :: (RealFrac a) => Int -> a -> a
 roundPos positions number  = (fromInteger $ round $ number * (10^positions)) / (10.0^^positions)
- 
+
+getComparisonNodeLabels :: [HMMCompareResult] -> V.Vector Color -> HM.HMMER3 -> [[Color,V.Vector]]
+getComparisonNodeLabels comparsionResults colorVector model =
+   where modelName = HM.name model 
+         relevantComparisons1 = (filter ((modelName==) . name1)) comparsionResults)
+	 modelcolorNodeInterval1 = relevantComparisons1
+	 relevantComparisons2 = (filter ((modelName==) . name2)) comparsionResults)
+	 
+
 getComparisonsHighlightParameters :: [HM.HMMER3] -> [HMMCompareResult] -> [(Int,Int,Int,Int,Int,Int,Int,Int)]
 getComparisonsHighlightParameters sortedmodels comp = map (getComparisonHighlightParameters sortedmodels) comp
 
@@ -257,3 +271,25 @@ getComparisonHighlightParameters sortedmodels comp = (a,b,c,d,a,f,c,e)
         d = head (model2matchednodes comp)
         e = last (model2matchednodes comp)
         f = last (model1matchednodes comp)
+
+-- | Colors from color list are selected according to in which of the compared trees the node is contained.
+--selectColors :: [Int] -> [GVA.Color] -> GVAC.ColorList
+--selectColors inTrees currentColorList = GVAC.toColorList (map (\i -> currentColorList !! i) inTrees)
+
+-- | A color list is sampled from the spectrum according to how many trees are compared.
+--makeColorList :: Int -> [GVA.Color]
+--makeColorList modelNumber = cList
+--  where cList = map (\i -> GVAC.HSV ((fromIntegral i/fromIntegral neededColors) * 0.708) 0.5 1.0) [0..neededColors]
+--        neededColors = treeNumber - 1
+
+makeColorVector modelNumber = V.map rgb modelRGBTupel
+   where indexVector = V.iterateN modelNumber (1+) 1
+         stepSize = (765 :: Double) / modelNumber
+	 modelRGBTupel = V.map makeRGBTupel stepSize indexVector
+
+makeRGBTupel stepSize modelNumber = (a,b,c)
+  where  totalSize = modelNumber * stepSize 
+         a = RGBboundries (totalSize - 255)
+	 b = RGBboundries (totalsize - a - 255)
+	 c = RGBboundries (totalsize - a - b)
+	 
