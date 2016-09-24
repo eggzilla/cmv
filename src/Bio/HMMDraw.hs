@@ -176,7 +176,7 @@ drawHMMNodeVerbose alphabetSymbols emissiontype boxlength rowStart rowEnd lastIn
 	nodeBox = idBox nid === strutY 0.5 === deletions nid === strutY 1.5 === insertions nid  === strutY 1.5 === matches alphabetSymbols emissiontype boxlength node ||| strutX 4
 	endBox = emptyIdBox === strutY 0.5 === emptyDeletions === strutY 1.5 === emptyInsertions  === strutY 1.5 === endState boxlength idNumber ||| strutX 4
 	
-idBox nid = alignedText 0 0 nid # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nid))/2)),negate 0.5)) <> rect 1.5 1.5 # lw 0
+idBox nid = alignedText 0 0 nid # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nid))/2)), negate 1.25)) <> rect 1.5 3 # lw 0
 emptyIdBox = rect 1.5 1.5 # lw 0
 rowStartBox idNumber boxlength = rect 0.1 1.5 #lw 0.0 === rect 0.1 6 # lw 0.1 # named (nid ++ "d") === rect 0.1 6 # lw 0.1 #named (nid ++ "i") === rect 0.1 (boxlength + 2) # lw 0.1 # named (nid ++ "m") ||| strutX 2.5
   where nid = show (idNumber - 1)
