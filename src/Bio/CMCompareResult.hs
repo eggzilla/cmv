@@ -33,12 +33,11 @@ data CmcompareResult = CmcompareResult
     linksequence  :: String,
     model1structure :: String,
     model2structure :: String,
-    model1matchednodes :: MatchedNodes,
-    model2matchednodes :: MatchedNodes
+    model1matchednodes :: [Int],
+    model2matchednodes :: [Int]
   } deriving (Show)
 
 -- | Type alias for matched nodes
-type MatchedNodes = [Int]
 
 readDouble :: String -> Double
 readDouble = read              

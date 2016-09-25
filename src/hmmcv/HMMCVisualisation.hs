@@ -63,12 +63,12 @@ main = do
           if (isRight hmmCResultParsed)
             then do
               let rightHMMCResultsParsed = E.fromRight hmmCResultParsed
-              let comparisonModelNames = getModelsNames rightHMMCResultsParsed
-              let comparisonsHighlightParameters = getComparisonsHighlightParameters rightModels rightHMMCResultsParsed
+              --let comparisonModelNames = getModelsNames rightHMMCResultsParsed
+              --let comparisonsHighlightParameters = getComparisonsHighlightParameters rightModels rightHMMCResultsParsed
 	      -- modelDetail entryNumberCutoff emissiontype maxWidth hmms alns comparisonHighlights
               let outputName = diagramName "test" outputFormat
               --let renderedHMM = drawHMMComparison modelDetail alignmentEntries emissionLayout maxWidth rightModels rightAlns comparisonsHighlightParameters
-              printHMM (E.fromRight outputName) svgsize (drawHMMComparison modelDetail alignmentEntries emissionLayout maxWidth rightModels rightAlns comparisonsHighlightParameters)
+              printHMM (E.fromRight outputName) svgsize (drawHMMComparison modelDetail alignmentEntries emissionLayout maxWidth rightModels rightAlns rightHMMCResultsParsed)
             else print (E.fromLeft hmmCResultParsed)
         else print (E.fromLeft models)
     else do

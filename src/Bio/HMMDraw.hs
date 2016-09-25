@@ -28,20 +28,23 @@ import Data.Maybe
 import qualified Data.Vector as V
 import Bio.HMMCompareResult
 import Bio.StockholmDraw
-import Data.Colour.SRGB.Linear
+import qualified Data.Colour.SRGB.Linear as R
+
+
 
 drawHMMComparison modelDetail entryNumberCutoff emissiontype maxWidth hmms alns comparisons
-  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
-  | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
-  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
-  | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
-    where zippedInput = zip3 (hmms alns comparisonNodeLabels)
-          colorVector = makeColorVector modelNumber 
-	  modelNumber = length hmms
-	  modelNames = V.map HM.name hmms
-	  nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
-	  comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) models
-	            
+   | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
+   | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
+   | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
+   | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
+     where zippedInput = zip hmms alns  --comparisonNodeLabels)
+           colorVector = makeColorVector modelNumber
+           modelNumber = length hmms
+ 	   modelNames = V.fromList (map HM.name hmms)
+ 	   nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
+ 	   comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) hmms
+
+                        
 -- | 
 --drawHMMMER3s :: forall b. Renderable (Path V2 Double) b => String -> [HM.HMMER3] -> QDiagram b V2 Double Any
 drawHMMMER3s modelDetail entryNumberCutoff emissiontype maxWidth hmms alns
@@ -53,11 +56,10 @@ drawHMMMER3s modelDetail entryNumberCutoff emissiontype maxWidth hmms alns
           
 
 -- |
---drawHMMER3 :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => String -> HM.HMMER3 -> QDiagram b V2 n Any
+--drawHMMER3 :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => String -> Int -> Double -> String -> (HM.HMMER3,Maybe S.StockholmAlignment) -> QDiagram b V2 Double Any
 drawHMMER3 modelDetail entriesNumberCutoff maxWidth emissiontype (model,aln)
    | modelDetail == "flat" = hcat $ V.toList (V.map drawHMMNodeFlat currentNodes)
    | modelDetail == "simple" = hcat $ V.toList (V.map drawHMMNodeSimple currentNodes)
---   | modelDetail == "detailed" = applyAll ([bg white] ++ arrowList ++ labelList) verboseNodesAlignment
    | modelDetail == "detailed" = applyAll ([bg white]) verboseNodesAlignment
    | otherwise = hcat $ V.toList (V.map drawHMMNodeSimple currentNodes)
      where nodeNumber = fromIntegral $ length currentNodes
@@ -87,20 +89,21 @@ setRowInterval nodeNumberPerRow nodeNumber index = (start,safeLength)
         length = nodeNumberPerRow 
 	safeLength = if start +length > nodeNumber then (nodeNumber - start) else length
 
-drawDetailedNodeRow alphabetSymbols emissiontype boxlength lastIndex allNodes (currentIndex,nodeSliceLength) = detailedRow
+--drawDetailedNodeRow :: [Char] -> String -> Double -> Int -> V.Vector HM.HMMER3Node -> (Int, Int) -> QDiagram b V2 Double Any
+drawDetailedNodeRow alphabetSymbols emissiontype boxLength lastIndex allNodes (currentIndex,nodeSliceLength) = detailedRow
   where currentNodes = V.slice currentIndex nodeSliceLength allNodes
         withLastRowNodes = V.slice (currentIndex -1) (nodeSliceLength +1) allNodes
         detailedRow = applyAll (lastRowList ++ arrowList ++ labelList) detailedNodes
 	nextIndex = currentIndex + nodeSliceLength
-        detailedNodes = hcat (V.toList (V.map (drawHMMNodeVerbose alphabetSymbols emissiontype boxlength currentIndex nextIndex lastIndex) currentNodes))
+        detailedNodes = hcat (V.toList (V.map (drawHMMNodeVerbose alphabetSymbols emissiontype boxLength currentIndex nextIndex lastIndex) currentNodes))
         arrowNodes = if currentIndex > 1 then currentNodes else currentNodes
-        connectedNodes = makeConnections boxlength arrowNodes
-        selfConnectedNodes = makeSelfConnections boxlength arrowNodes
+        connectedNodes = makeConnections boxLength arrowNodes
+        selfConnectedNodes = makeSelfConnections boxLength arrowNodes
         arrowList = V.toList (V.map makeArrow connectedNodes V.++ V.map makeSelfArrow selfConnectedNodes)
         labelList = V.toList (V.map makeLabel connectedNodes V.++ V.map makeSelfLabel selfConnectedNodes)
         --add arrows and labels for transitions from previous row
         lastNode = if currentIndex > 1 then V.slice (currentIndex -1) 1 allNodes else V.empty
-        lastRowConnections = makeLastRowConnections boxlength lastNode
+        lastRowConnections = makeLastRowConnections boxLength lastNode
         lastRowList = V.toList (V.map makeArrow lastRowConnections V.++ V.map makeLabel lastRowConnections)   
        
 setLetter echar = alignedText 0.5 0.5 [echar] # fontSize 2 <> rect 1.0 1.0 # lw 0 -- # translate (r2 (negate 0.5, 0))
@@ -168,7 +171,7 @@ drawHMMNodeFlat node = rect 2 2 # lw 0.1
 drawHMMNodeSimple node = rect 2 2 # lw 0.1
 
 -- | 
---drawHMMNodeVerbose :: String -> String -> Int -> Int -> Int -> HM.HMMER3Node -> QDiagram b V2 n Any
+--drawHMMNodeVerbose :: String -> String -> Double -> Int -> Int -> Int -> HM.HMMER3Node -> QDiagram b V2 n Any
 drawHMMNodeVerbose alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex node 
   | idNumber == 0 = beginBox
   | idNumber == (lastIndex - 1) = nodeBox ||| endBox
@@ -177,12 +180,12 @@ drawHMMNodeVerbose alphabetSymbols emissiontype boxlength rowStart rowEnd lastIn
   | otherwise = nodeBox 
   where idNumber = HM.nodeId node
         nid = show idNumber
-        beginBox = rect 1 1 # lw 0.0 ||| (idBox nid === strutY 0.5 === emptyDeletions === strutY 1.5 === insertions nid === strutY 1.5 === beginState boxlength nid) ||| strutX 4
-	nodeBox = idBox nid === strutY 0.5 === deletions nid === strutY 1.5 === insertions nid  === strutY 1.5 === matches alphabetSymbols emissiontype boxlength node ||| strutX 4
+        beginBox = rect 1 1 # lw 0.0 ||| (idBox nid === strutY 0.5 === emptyDeletions === strutY 1.5 === insertions nid === strutY 1.5 === beginState boxlength nid) ||| (strutX  4)
+	nodeBox = idBox nid === strutY 0.5 === deletions nid === strutY 1.5 === insertions nid  === strutY 1.5 === matches alphabetSymbols emissiontype boxlength node ||| (strutX 4)
 	endBox = emptyIdBox === strutY 0.5 === emptyDeletions === strutY 1.5 === emptyInsertions  === strutY 1.5 === endState boxlength idNumber ||| strutX 4
 
 -- | idBox associates the node with its index and a tupel of  a list of modelidentifiers and the total model number
-idBox nid labelList= alignedText 0 0 nid # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nid))/2)), negate 1.25)) <> rect 1.5 3 # lw 0.1
+idBox nid = alignedText 0 0 nid # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nid))/2)), negate 1.25)) <> rect 1.5 3 # lw 0.1
 emptyIdBox = rect 1.5 1.5 # lw 0
 rowStartBox idNumber boxlength = rect 0.1 1.5 #lw 0.0 === rect 0.1 6 # lw 0.1 # named (nid ++ "d") === rect 0.1 6 # lw 0.1 #named (nid ++ "i") === rect 0.1 (boxlength + 2) # lw 0.1 # named (nid ++ "m") ||| strutX 2.5
   where nid = show (idNumber - 1)
@@ -191,7 +194,8 @@ rowEndBox idNumber boxlength = rect 0.1 1.5 #lw 0.0 === rect 0.1 6 # lw 0.1 #nam
 deletions nid =  alignedText 0 0 "D" # translate (r2 (negate 0.25,0.25)) <> circle 3 # lw 0.1 # fc white # named (nid ++ "d")
 emptyDeletions = circle 3 # lw 0.0 # fc white 
 insertions nid = alignedText 0 0 "I" # translate (r2 (0,0.25)) <> rect 4.2426 4.2426 # lw 0.1 # rotateBy (1/8) # fc white # named (nid ++ "i")
-emptyInsertions = rect 4.2426 4.2426 # lw 0 # rotateBy (1/8) # fc white 
+emptyInsertions = rect 4.2426 4.2426 # lw 0 # rotateBy (1/8) # fc white
+--matches :: String -> String -> Double -> HM.HMMER3Node -> QDiagram b0 V2 Double Any
 matches alphabetSymbols emissiontype boxlength node = entries # translate (r2 (negate 2.5,boxlength/2 -1)) <> outerbox # named (nid ++ "m")
   where outerbox = rect 6 boxlength # lw 0.1 # fc white
         entries = vcat (map (emissionEntry emissiontype) symbolsAndEmissions)
@@ -245,21 +249,13 @@ diagramName filename fileformat
   | fileformat == "svg" = Right (filename ++ "." ++ fileformat )
   | fileformat == "png" = Right (filename ++ "." ++ fileformat )
   | fileformat == "ps" = Right (filename ++ "." ++ fileformat )
-  | otherwise = Left "Unsupported output format requested (use svg, pdf, ps, png)"                        
+  | otherwise = Left "Unsupported output format requested (use svg, pdf, ps, png)"                     
 
 printHMM outputName = C.renderCairo outputName
 
 roundPos :: (RealFrac a) => Int -> a -> a
 roundPos positions number  = (fromInteger $ round $ number * (10^positions)) / (10.0^^positions)
-
-getComparisonNodeLabels :: [HMMCompareResult] -> V.Vector Color -> HM.HMMER3 -> [[Color,V.Vector]]
-getComparisonNodeLabels comparsionResults colorVector model =
-   where modelName = HM.name model 
-         relevantComparisons1 = (filter ((modelName==) . name1)) comparsionResults)
-	 modelcolorNodeInterval1 = relevantComparisons1
-	 relevantComparisons2 = (filter ((modelName==) . name2)) comparsionResults)
-	 
-
+    	 
 getComparisonsHighlightParameters :: [HM.HMMER3] -> [HMMCompareResult] -> [(Int,Int,Int,Int,Int,Int,Int,Int)]
 getComparisonsHighlightParameters sortedmodels comp = map (getComparisonHighlightParameters sortedmodels) comp
 
@@ -272,24 +268,49 @@ getComparisonHighlightParameters sortedmodels comp = (a,b,c,d,a,f,c,e)
         e = last (model2matchednodes comp)
         f = last (model1matchednodes comp)
 
--- | Colors from color list are selected according to in which of the compared trees the node is contained.
---selectColors :: [Int] -> [GVA.Color] -> GVAC.ColorList
---selectColors inTrees currentColorList = GVAC.toColorList (map (\i -> currentColorList !! i) inTrees)
 
--- | A color list is sampled from the spectrum according to how many trees are compared.
---makeColorList :: Int -> [GVA.Color]
---makeColorList modelNumber = cList
---  where cList = map (\i -> GVAC.HSV ((fromIntegral i/fromIntegral neededColors) * 0.708) 0.5 1.0) [0..neededColors]
---        neededColors = treeNumber - 1
+getComparisonNodeLabels :: [HMMCompareResult] -> V.Vector (String, Colour Double) -> HM.HMMER3 -> V.Vector (Int, V.Vector (Colour Double))
+getComparisonNodeLabels comparsionResults colorVector model = comparisonNodeLabels
+   where modelName = HM.name model 
+         relevantComparisons1 = filter ((modelName==) . model1Name) comparsionResults
+	 modelNodeInterval1 = map (\a -> (model2Name a,model2matchednodes a))  relevantComparisons1 
+	 relevantComparisons2 = filter ((modelName==) . model2Name) comparsionResults
+         modelNodeInterval2 = map (\a -> (model1Name a,model1matchednodes a))  relevantComparisons2
+         modelNodeIntervals =  V.fromList (modelNodeInterval1 ++ modelNodeInterval2)
+         colorNodeIntervals = V.map (modelToColor colorVector) modelNodeIntervals
+         nodeNumber = length (HM.nodes model)
+         comparisonNodeLabels = V.generate nodeNumber (makeComparisonNodeLabel colorNodeIntervals)
+         --nodeColorLabels = map model colorNodeIntervals
+         
 
-makeColorVector modelNumber = V.map rgb modelRGBTupel
+modelToColor :: V.Vector (String,Colour Double) ->  (String,[Int]) -> (Colour Double,[Int])
+modelToColor colorVector (mName,nInterval) = nColorInterval
+  where nColorInterval = (snd (fromJust entry),nInterval)
+        --nColorInterval = maybe Nothing (\a -> Just (snd a,nInterval)) entry
+        entry = V.find (\(a,c)-> mName == a) colorVector
+
+makeComparisonNodeLabel :: V.Vector (Colour Double,[Int]) -> Int ->  (Int,(V.Vector (Colour Double)))
+makeComparisonNodeLabel colorNodeIntervals nodeNumber = comparisonNodeLabel
+  where relevantColorNodeIntervals = V.filter (\(_,b) -> elem nodeNumber b) colorNodeIntervals
+        modelColors = V.map fst relevantColorNodeIntervals
+        comparisonNodeLabel = if (null modelColors) then (nodeNumber,V.singleton white) else (nodeNumber,modelColors)
+        
+
+
+makeColorVector modelNumber = V.map (\(a,b,c) -> R.rgb a b c) modelRGBTupel
    where indexVector = V.iterateN modelNumber (1+) 1
-         stepSize = (765 :: Double) / modelNumber
-	 modelRGBTupel = V.map makeRGBTupel stepSize indexVector
+         stepSize = (765 :: Double) / (fromIntegral modelNumber)
+	 modelRGBTupel = V.map (makeRGBTupel stepSize) indexVector
 
+--makeRGBTupel :: Double -> Int -> (Double,Double,Double)
 makeRGBTupel stepSize modelNumber = (a,b,c)
-  where  totalSize = modelNumber * stepSize 
-         a = RGBboundries (totalSize - 255)
-	 b = RGBboundries (totalsize - a - 255)
-	 c = RGBboundries (totalsize - a - b)
-	 
+  where  totalSize = (fromIntegral modelNumber) * stepSize 
+         a = (rgbBoundries (totalSize - 255))/255
+	 b = (rgbBoundries (totalSize - a - 255))/255
+	 c = (rgbBoundries (totalSize - a - b))/255
+
+--rgbBoundries :: Double -> Double	     
+rgbBoundries rgbValue
+  | rgbValue>255 = 255
+  | rgbValue<0 = 0
+  | otherwise = rgbValue        
