@@ -65,7 +65,7 @@ main = do
               let rightHMMCResultsParsed = E.fromRight hmmCResultParsed
               --let comparisonModelNames = getModelsNames rightHMMCResultsParsed
               --let comparisonsHighlightParameters = getComparisonsHighlightParameters rightModels rightHMMCResultsParsed
-	      -- modelDetail entryNumberCutoff emissiontype maxWidth hmms alns comparisonHighlights
+              -- modelDetail entryNumberCutoff emissiontype maxWidth hmms alns comparisonHighlights
               let outputName = diagramName "test" outputFormat
               --let renderedHMM = drawHMMComparison modelDetail alignmentEntries emissionLayout maxWidth rightModels rightAlns comparisonsHighlightParameters
               printHMM (E.fromRight outputName) svgsize (drawHMMComparison modelDetail alignmentEntries emissionLayout maxWidth rightModels rightAlns rightHMMCResultsParsed)

@@ -46,30 +46,17 @@ main = do
   alnFileExists <- doesFileExist alignmentFile
   if modelFileExists
      then do
-       model <- HM.readHMMER3 modelFile
-       if isRight model
-          then do
-            alnInput <- readStockholm alignmentFile
-            let outputName = diagramName "test" outputFormat
-            let aln = if (isRight alnInput) then (Just (head (fromRight alnInput))) else Nothing
-            --if (isRight model) then printSVG svgsize (drawHMMER3 modelDetail alignmentEntries maxWidth emissionLayout (head (fromRight model),(Just (head (fromRight aln))))) else print (fromLeft model)
-	    printHMM (fromRight outputName) svgsize (drawHMMER3 modelDetail alignmentEntries maxWidth emissionLayout (head (fromRight model),aln))
-          else 
-            print (fromLeft model)
+       inputModels <- HM.readHMMER3 modelFile
+       if isRight inputModels
+         then do
+           alnInput <- readStockholm alignmentFile
+           let outputName = diagramName "test" outputFormat
+           let currentModels = fromRight inputModels
+           let modelNumber = length currentModels
+           let alns = if (isRight alnInput) then (map (\a -> Just a) (fromRight alnInput)) else (replicate modelNumber Nothing)
+           --if (isRight model) then printSVG svgsize (drawHMMER3 modelDetail alignmentEntries maxWidth emissionLayout (head (fromRight model),(Just (head (fromRight aln))))) else print (fromLeft model)
+           printHMM (fromRight outputName) svgsize (drawHMMER3s modelDetail alignmentEntries maxWidth emissionLayout currentModels alns)
+         else 
+           print (fromLeft inputModels)
      else do
        putStrLn "Input model file not found"
-
-
--- if modelFileExists
---     then do
---       model <- HM.readHMMER3 modelFile
---       if alnFileExists
---          then do
---            aln <- readStockholm alignmentFile
---            let outputName = diagramName "test" outputFormat
---            --if (isRight model) then printSVG svgsize (drawHMMER3 modelDetail alignmentEntries maxWidth emissionLayout (head (fromRight model),(Just (head (fromRight aln))))) else print (fromLeft model)
---	    if (isRight model) then printHMM (fromRight outputName) svgsize (drawHMMER3 modelDetail alignmentEntries maxWidth emissionLayout (head (fromRight model),(Just (head (fromRight aln))))) else print (fromLeft model)
---          else do     
---            if (isRight model) then printHMM (fromRight outputName) svgsize (drawHMMER3 modelDetail alignmentEntries maxWidth emissionLayout (head (fromRight model),Nothing)) else print (fromLeft model)
---     else do
---       putStrLn "Input model file not found"
