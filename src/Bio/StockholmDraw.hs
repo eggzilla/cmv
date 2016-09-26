@@ -37,17 +37,22 @@ drawStockholmLines entriesNumberCutoff maxWidth comparisonNodeLabels aln = align
         alignmentBlocks = vcat' with { _sep = 6.0 } (map (drawStockholmRowBlock maxIdLength vectorEntries) blocks)
 
 drawStockholmRowBlock maxIdLength vectorEntries ((startIndex,endIndex),letterIntervals) = blockSequences
-  where indices = [startIndex..endIndex]
+  where indices = [startIndex..(endIndex-1)]
         indexLine = drawStockholmIndexLine maxIdLength indices        
-        blockSequences = indexLine === vcat' with { _sep = 2.0 } (V.toList (V.map (drawStockholmEntryLine maxIdLength vectorEntries) letterIntervals))
+        blockSequences = indexLine === strutY 2.0 === vcat' with { _sep = 2.0 } (V.toList (V.map (drawStockholmEntryLine maxIdLength vectorEntries) letterIntervals))
 
 drawStockholmIndexLine maxIdLength indices = indexLine
-  where entryText = (spacer ++ indexLetters)      
+  where --entryText = (spacer ++ indexLetters)      
         spacerLength = (maxIdLength + 3) 
         spacer = replicate spacerLength ' '
-        indexLetters = concatMap show indices
-        indexLine = hcat (map setAlignmentLetter entryText) 
-                         
+        indexLetters = map show indices
+        indexPositions = maximum (map length indexLetters)
+        indexLine =  hcat (map setAlignmentLetter spacer) ||| hcat (map drawStockholmIndexLineCol indexLetters)
+
+drawStockholmIndexLineCol entryText = vcat (map setAlignmentLetter entryText) 
+
+
+                    
 drawStockholmEntryLine maxIdLength aln (seqIndex,start,safeLength) = entryDia
   where entry = aln V.! seqIndex
         entryText = (seqId ++ spacer ++ entrySeq)
@@ -69,7 +74,7 @@ drawStockholmEntry maxIdLength entry = entryDia
         spacer = T.replicate spacerLength (T.pack " ")
         entryDia = hcat (map setAlignmentLetter entryText)         
 
-setAlignmentLetter echar = alignedText 0.5 0.5 [echar] # fontSize 2.0 <> rect 1.5 1.0 # lw 0
+setAlignmentLetter echar = alignedText 0.5 0.5 [echar] # fontSize 2.0 <> rect 2 2.5 # lw 0
 
 -- LetterInterval (SeqNr,Start,Length)
 makeLetterIntervals :: Int -> Double -> Int -> [((Int,Int),V.Vector (Int,Int,Int))]
@@ -85,7 +90,7 @@ setAlignmentInterval letterNumberPerRow letterNumber seqNumber rowIndex = ((inde
   where seqVector = V.iterateN seqNumber (1+) 0
         seqLines = V.map (setAlignmentLineInterval letterNumberPerRow letterNumber rowIndex) seqVector
         indexStart = rowIndex * letterNumberPerRow
-        indexEnd = indexStart + letterNumber
+        indexEnd = indexStart + letterNumberPerRow
 setAlignmentLineInterval :: Int -> Int -> Int -> Int -> (Int,Int,Int)
 setAlignmentLineInterval letterNumberPerRow letterNumber rowIndex seqIndex = (seqIndex,currentStart,safeLength)
   where currentStart = rowIndex * letterNumberPerRow
