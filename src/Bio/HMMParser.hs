@@ -28,6 +28,7 @@ readHMMER3 filePath = do
 genParseHMMER3s :: GenParser Char st [HMMER3]
 genParseHMMER3s = do
   hmmers  <- many1 genParseHMMER3
+  eof
   return hmmers
 
 -- | Parse the input as HMMER3 datatype
@@ -48,7 +49,7 @@ genParseHMMER3 = do
   _cs <- parseSwitchAttribute "CS"
   _map <- parseSwitchAttribute "MAP"
   _date <- parseStringAttribute "DATE"
-  _com <- optionMaybe (try (parseStringAttribute "COM"))
+  _com <- many (try (parseStringAttribute "COM"))
   _nseq <- parseIntAttribute "NSEQ"
   _effn <- parseFloatAttribute "EFFN"
   _cksum <- parseIntAttribute "CKSUM"
@@ -70,8 +71,7 @@ genParseHMMER3 = do
   _nodes <- many1 (parseHMMER3Node _alph)
   string "//"
   newline
-  eof
-  return $ HMMER3 _version _name _acc _desc _leng _maxl _alph _rf _mm _cons _cs _map _date _com _nseq _effn _cksum _ga _tc _nc _bm _sm _localmsv _localviterbi _localforward _hmm _compo _begin (V.fromList _nodes)
+  return $ HMMER3 _version _name _acc _desc _leng _maxl _alph _rf _mm _cons _cs _map _date (if null _com then Nothing else Just (concat _com)) _nseq _effn _cksum _ga _tc _nc _bm _sm _localmsv _localviterbi _localforward _hmm _compo _begin (V.fromList _nodes)
 
 parseSwitchAttribute :: String -> GenParser Char st Bool
 parseSwitchAttribute fieldName = do

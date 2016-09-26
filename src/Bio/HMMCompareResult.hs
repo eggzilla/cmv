@@ -46,7 +46,8 @@ readHMMCompareResult filePath = do
 -- | Parse the input as HMMCompareResult datatype
 genParseHMMCompareResults :: GenParser Char st [HMMCompareResult]
 genParseHMMCompareResults = do
-  hmmcs  <- many1 genParseHMMCompareResult
+  hmmcs  <- many1 (try genParseHMMCompareResult)
+  eof
   return hmmcs
 
 readDouble :: String -> Double
@@ -82,6 +83,7 @@ genParseHMMCompareResult = do
     _ <- char '['
     nodes2 <- many1 parseMatchedNodes
     _ <- char ']'
+    newline
     return $ HMMCompareResult name1 name2 (readDouble score1) (readDouble score2) linkseq nodes1 nodes2
 
 -- | Parse indices of matched nodes between models as integers

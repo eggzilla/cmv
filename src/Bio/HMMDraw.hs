@@ -88,7 +88,7 @@ makeNodeIntervals nodeNumberPerRow nodeNumber = rowIntervals
 setRowInterval nodeNumberPerRow nodeNumber index = (start,safeLength)
   where start = index*nodeNumberPerRow
         length = nodeNumberPerRow 
-	safeLength = if start +length > nodeNumber then (nodeNumber - start) else length
+	safeLength = if start +length >= nodeNumber then (nodeNumber - start) else length
 
 --drawDetailedNodeRow :: [Char] -> String -> Double -> Int -> V.Vector HM.HMMER3Node -> (Int, Int) -> QDiagram b V2 Double Any
 drawDetailedNodeRow alphabetSymbols emissiontype boxLength lastIndex allNodes comparisonNodeLabels (currentIndex,nodeSliceLength) = detailedRow
@@ -177,21 +177,22 @@ drawHMMNodeVerbose alphabetSymbols emissiontype boxlength rowStart rowEnd lastIn
   | idNumber == 0 = beginBox
   | idNumber == (lastIndex - 1) = nodeBox ||| endBox
   | idNumber == rowStart = rowStartBox idNumber boxlength ||| nodeBox
-  | idNumber == rowEnd - 1 = nodeBox ||| rowEndBox idNumber boxlength
+  | idNumber == rowEnd - 1 = nodeBox ||| rowEndBox idNumber boxlength                    
   | otherwise = nodeBox 
   where idNumber = HM.nodeId node
-        nodeLabels = V.toList (snd (comparisonNodeLabels V.! (idNumber -1)))
+        nodeLabels = V.toList (snd (comparisonNodeLabels V.! idNumber))
         nid  = show idNumber
         beginBox = rect 1 1 # lw 0.0 ||| (idBox nid nodeLabels === strutY 0.5 === emptyDeletions === strutY 1.5 === insertions nid === strutY 1.5 === beginState boxlength nid) ||| (strutX  4)
 	nodeBox = idBox nid nodeLabels === strutY 0.5 === deletions nid === strutY 1.5 === insertions nid  === strutY 1.5 === matches alphabetSymbols emissiontype boxlength node ||| (strutX 4)
 	endBox = emptyIdBox === strutY 0.5 === emptyDeletions === strutY 1.5 === emptyInsertions  === strutY 1.5 === endState boxlength idNumber ||| strutX 4
 
 -- | idBox associates the node with its index and a tupel of  a list of modelidentifiers and the total model number
-idBox nid nodeLabels = alignedText 0 0 nid # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nid))/2)), negate 1.25)) <> rect 1.5 3 # lw 0.1 <> wheel nodeLabels
+--idBox nid nodeLabels = alignedText 0 0 nid # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nid))/2)), negate 1.25))<>  wheel nodeLabels <> rect 1.5 3 # lw 0
+idBox nid nodeLabels = alignedText 0 0 nid # fontSize 2  # translate (r2 ((negate ((fromIntegral (length nid))/2)), negate 1.25)) <>  wheel nodeLabels <> rect 1.5 3 # lw 0        
 emptyIdBox = rect 1.5 1.5 # lw 0
 rowStartBox idNumber boxlength = rect 0.1 1.5 #lw 0.0 === rect 0.1 6 # lw 0.1 # named (nid ++ "d") === rect 0.1 6 # lw 0.1 #named (nid ++ "i") === rect 0.1 (boxlength + 2) # lw 0.1 # named (nid ++ "m") ||| strutX 2.5
   where nid = show (idNumber - 1)
-rowEndBox idNumber boxlength = rect 0.1 1.5 #lw 0.0 === rect 0.1 6 # lw 0.1 #named (nid ++ "d") === rect 0.1 6 # lw 0.1 #named (nid ++ "i") === rect 0.1 (boxlength + 2) #lw 0.1 #named (nid ++ "m")
+rowEndBox idNumber boxlength = rect 0.1 1.5 #lw 0.0 === rect 0.1 6 # lw 0.1 # named (nid ++ "d") === rect 0.1 6 # lw 0.1 #named (nid ++ "i") === rect 0.1 (boxlength + 2) #lw 0.1 #named (nid ++ "m")
   where nid = show (idNumber + 1)
 deletions nid =  alignedText 0 0 "D" # translate (r2 (negate 0.25,0.25)) <> circle 3 # lw 0.1 # fc white # named (nid ++ "d")
 emptyDeletions = circle 3 # lw 0.0 # fc white 
@@ -210,7 +211,7 @@ wheel colors = wheel' # rotate r
      wheel' = mconcat $ zipWith fc colors (iterateN n (rotate a) w)
      n = length colors
      a = 1 / (fromIntegral n) @@ turn
-     w = wedge 1 xDir a # lwG 0
+     w = wedge 3 xDir a # lwG 0
      r = (1/4 @@ turn)  ^-^  (1/(2*(fromIntegral n)) @@ turn)
 
 -- B → M 1 , B → I 0 , B → D 1 ; I 0 → M 1 , I 0 → I 0
@@ -289,13 +290,13 @@ getComparisonNodeLabels comparsionResults colorVector model = comparisonNodeLabe
          modelNodeIntervals =  V.fromList (modelNodeInterval1 ++ modelNodeInterval2)
          colorNodeIntervals = V.map (modelToColor colorVector) modelNodeIntervals
          nodeNumber = length (HM.nodes model)
-         comparisonNodeLabels = V.generate nodeNumber (makeComparisonNodeLabel colorNodeIntervals)
+         comparisonNodeLabels = V.generate (nodeNumber +1) (makeComparisonNodeLabel colorNodeIntervals)
          --nodeColorLabels = map model colorNodeIntervals
 
 getBlankComparisonNodeLabels :: HM.HMMER3 -> V.Vector (Int, V.Vector (Colour Double))
 getBlankComparisonNodeLabels model = comparisonNodeLabels
-   where comparisonNodeLabels = V.generate nodeNumber makeBlankComparisonNodeLabel
-         nodeNumber = length (HM.nodes model)
+   where comparisonNodeLabels = V.generate (nodeNumber +1 )  makeBlankComparisonNodeLabel
+         nodeNumber = length (HM.nodes model) 
 
 modelToColor :: V.Vector (String,Colour Double) ->  (String,[Int]) -> (Colour Double,[Int])
 modelToColor colorVector (mName,nInterval) = nColorInterval
@@ -313,19 +314,19 @@ makeBlankComparisonNodeLabel :: Int ->  (Int,(V.Vector (Colour Double)))
 makeBlankComparisonNodeLabel nodeNumber = (nodeNumber,V.singleton white)
 
 makeColorVector modelNumber = V.map (\(a,b,c) -> R.rgb a b c) modelRGBTupel
-   where indexVector = V.iterateN modelNumber (1+) 1
+   where indexVector = V.iterateN (modelNumber +2) (1+) 0
          stepSize = (765 :: Double) / (fromIntegral modelNumber)
 	 modelRGBTupel = V.map (makeRGBTupel stepSize) indexVector
 
 --makeRGBTupel :: Double -> Int -> (Double,Double,Double)
 makeRGBTupel stepSize modelNumber = (a,b,c)
   where  totalSize = (fromIntegral modelNumber) * stepSize 
-         a = (rgbBoundries (totalSize - 255))/255
+         a = (rgbBoundries (totalSize  - 255))/255
 	 b = (rgbBoundries (totalSize - a - 255))/255
 	 c = (rgbBoundries (totalSize - a - b))/255
 
 --rgbBoundries :: Double -> Double	     
 rgbBoundries rgbValue
-  | rgbValue>255 = 255
-  | rgbValue<0 = 0
+  | rgbValue>210 = 210
+  | rgbValue<50 = 50
   | otherwise = rgbValue        
