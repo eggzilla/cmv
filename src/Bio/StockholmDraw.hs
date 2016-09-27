@@ -22,7 +22,7 @@ import qualified Data.Vector as V
 import Bio.HMMCompareResult
 
 
-drawStockholmLines entriesNumberCutoff maxWidth comparisonNodeLabels aln = alignmentBlocks
+drawStockholmLines entriesNumberCutoff maxWidth nodeAlignmentColIndices comparisonNodeLabels aln = alignmentBlocks
   where currentEntries = V.fromList (take entriesNumberCutoff (S.sequenceEntries aln))
         entryNumber = V.length currentEntries
         vectorEntries = V.map makeVectorEntries currentEntries
@@ -34,24 +34,48 @@ drawStockholmLines entriesNumberCutoff maxWidth comparisonNodeLabels aln = align
         rowNumber = floor (availableLettersPerRow / (fromIntegral maxEntryLength))
         blocks = makeLetterIntervals entryNumber availableLettersPerRow maxEntryLength
         --alignmentRows = vcat' with { _sep = 6.0 } (V.toList (V.map (drawStockholmEntryLine maxIdLength vectorEntries) letterIntervals))
-        alignmentBlocks = vcat' with { _sep = 6.0 } (map (drawStockholmRowBlock maxIdLength vectorEntries) blocks)
+        colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabels
+        sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
+        fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
+        alignmentBlocks = vcat' with { _sep = 6.0 } (map (drawStockholmRowBlock maxIdLength vectorEntries maxEntryLength fullComparisonColLabels) blocks)
 
-drawStockholmRowBlock maxIdLength vectorEntries ((startIndex,endIndex),letterIntervals) = blockSequences
-  where indices = [startIndex..(endIndex-1)]
-        indexLine = drawStockholmIndexLine maxIdLength indices        
+nodeToColIndices :: (Int,(Int,V.Vector (Colour Double))) -> (Int,V.Vector (Colour Double))
+nodeToColIndices (colIndex,(nodeIndex,colors)) = (colIndex,colors)
+
+fillComparisonColLabels :: Int ->  V.Vector (Int, V.Vector (Colour Double)) ->  V.Vector (Int, V.Vector (Colour Double))
+fillComparisonColLabels maxEntryLength sparseComparisonColLabels = fullComparisonColLabels
+   where fullComparisonColLabels = V.generate (maxEntryLength +1) (makeFullComparisonColLabel sparseComparisonColLabels)
+
+makeFullComparisonColLabel sparseComparisonColLabels colIndex = fullComparisonColLabel
+  where availableLabel = V.find (\(a,c)-> colIndex == a) sparseComparisonColLabels
+        fullComparisonColLabel = if isJust availableLabel then fromJust availableLabel else (colIndex,V.singleton white)
+
+--drawStockholmRowBlock :: Int ->  V.Vector (String, V.Vector Char) -> Int -> V.Vector (Int, V.Vector (Colour Double)) -> ((Int, Int), V.Vector (Int, Int, Int)) -> QDiagram b V2 n Any
+drawStockholmRowBlock maxIdLength vectorEntries maxEntryLength comparisonColLabels ((startIndex,endIndex),letterIntervals) = blockSequences
+  where indices = [startIndex..safeEndIndex]        
+        safeEndIndex = if (endIndex-1) > (maxEntryLength-1) then maxEntryLength-1 else endIndex-1
+        indexLine = drawStockholmIndexLine maxIdLength indices comparisonColLabels     
         blockSequences = indexLine === strutY 2.0 === vcat' with { _sep = 2.0 } (V.toList (V.map (drawStockholmEntryLine maxIdLength vectorEntries) letterIntervals))
 
-drawStockholmIndexLine maxIdLength indices = indexLine
+drawStockholmIndexLine maxIdLength indices comparisonColLabels = indexLine
   where --entryText = (spacer ++ indexLetters)      
         spacerLength = (maxIdLength + 3) 
         spacer = replicate spacerLength ' '
-        indexLetters = map show indices
-        indexPositions = maximum (map length indexLetters)
-        indexLine =  hcat (map setAlignmentLetter spacer) ||| hcat (map drawStockholmIndexLineCol indexLetters)
+        --indexLetters = map show indices
+        --indexPositions = maximum (map length indices)
+        indexLine = hcat (map setAlignmentLetter spacer) ||| hcat (map (drawStockholmIndexLineCol comparisonColLabels) indices)
 
-drawStockholmIndexLineCol entryText = vcat (map setAlignmentLetter entryText) 
+--drawStockholmIndexLineCol :: V.Vector (Int, V.Vector (Colour Double)) -> Int -> QDiagram b V2 n Any
+drawStockholmIndexLineCol comparisonColLabels entryIndex = vcat (map setAlignmentLetter entryText) <> colourBoxes
+  where comparisonColLabel = comparisonColLabels V.! entryIndex
+        totalBoxYlength = fromIntegral (length entryText) * 2.5
+        colColours = snd comparisonColLabel
+        boxNumber = fromIntegral $ V.length colColours
+        singleBoxYLength = totalBoxYlength / boxNumber
+        entryText = show entryIndex
+        colourBoxes = vcat (V.toList (V.map (colorBox singleBoxYLength) colColours))
 
-
+colorBox singleBoxYLength colColour = rect 2 singleBoxYLength # fc colColour # lw 0.1
                     
 drawStockholmEntryLine maxIdLength aln (seqIndex,start,safeLength) = entryDia
   where entry = aln V.! seqIndex
