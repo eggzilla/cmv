@@ -73,7 +73,7 @@ drawHMMER3 modelDetail entriesNumberCutoff maxWidth emissiontype (model,aln,comp
            nodesIntervals = makeNodeIntervals nodeNumberPerRow nodeNumber
            verboseNodes = vcat' with { _sep = 2 } (V.toList (V.map (drawDetailedNodeRow alphabetSymbols emissiontype boxlength nodeNumber currentNodes comparisonNodeLabels) nodesIntervals))
            verboseNodesAlignment = alignTL (vcat' with { _sep = 5 }  [verboseNodes,alignmentDiagram])
-           alignmentDiagram = if isJust aln then drawStockholmLines entriesNumberCutoff maxWidth (fromJust aln) else mempty
+           alignmentDiagram = if isJust aln then drawStockholmLines entriesNumberCutoff maxWidth comparisonNodeLabels (fromJust aln) else mempty
            --connectedNodes = makeConnections boxlength currentNodes
            --selfconnectedNodes = makeSelfConnections boxlength currentNodes
            --arrowList = map makeArrow connectedNodes ++ map makeSelfArrow selfconnectedNodes
