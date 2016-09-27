@@ -28,10 +28,10 @@ drawStockholmLines entriesNumberCutoff maxWidth nodeAlignmentColIndices comparis
         vectorEntries = V.map makeVectorEntries currentEntries
         maxEntryLength = V.maximum (V.map (V.length . snd) vectorEntries)
         maxIdLength = V.maximum (V.map (length . fst) vectorEntries)
-        headerLength =  (fromIntegral maxIdLength)  + 3 * letterWidth
+        headerLength =  (fromIntegral maxIdLength + 3*letterWidth) 
         letterWidth = (2.0 :: Double)
-        availableLettersPerRow = (maxWidth -  headerLength) / letterWidth
-        rowNumber = floor (availableLettersPerRow / (fromIntegral maxEntryLength))
+        availableLettersPerRow = maxWidth / letterWidth
+        rowNumber = floor (availableLettersPerRow / (headerLength + fromIntegral maxEntryLength))
         blocks = makeLetterIntervals entryNumber availableLettersPerRow maxEntryLength
         --alignmentRows = vcat' with { _sep = 6.0 } (V.toList (V.map (drawStockholmEntryLine maxIdLength vectorEntries) letterIntervals))
         colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabels
