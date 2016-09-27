@@ -63,12 +63,14 @@ drawStockholmIndexLine maxIdLength indices comparisonColLabels = indexLine
         spacer = replicate spacerLength ' '
         --indexLetters = map show indices
         --indexPositions = maximum (map length indices)
-        indexLine = hcat (map setAlignmentLetter spacer) ||| hcat (map (drawStockholmIndexLineCol comparisonColLabels) indices)
+        maxEntryIndex = maximum indices
+        maxEntryText = show maxEntryIndex
+        totalBoxYlength = fromIntegral (length  maxEntryText) * 2.5
+        indexLine = hcat (map setAlignmentLetter spacer) ||| hcat (map (drawStockholmIndexLineCol comparisonColLabels totalBoxYlength) indices)
 
 --drawStockholmIndexLineCol :: V.Vector (Int, V.Vector (Colour Double)) -> Int -> QDiagram b V2 n Any
-drawStockholmIndexLineCol comparisonColLabels entryIndex = vcat (map setAlignmentLetter entryText) <> colourBoxes
+drawStockholmIndexLineCol comparisonColLabels totalBoxYlength entryIndex = vcat (map setAlignmentLetter entryText) <> colourBoxes # translate (r2 (0, negate ((totalBoxYlength/2)-1.25)))
   where comparisonColLabel = comparisonColLabels V.! entryIndex
-        totalBoxYlength = fromIntegral (length entryText) * 2.5
         colColours = snd comparisonColLabel
         boxNumber = fromIntegral $ V.length colColours
         singleBoxYLength = totalBoxYlength / boxNumber
