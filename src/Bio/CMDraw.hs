@@ -121,11 +121,11 @@ drawCMGuideTrees detail cms  = map (drawCMGuideTree detail) cms
 
 -- | Draw the guide Tree of a single CM, utilizes drawCMGuideNode
 --drawCMGuideTree :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => [Char] -> [(String, [Char])] -> QDiagram b V2 n Any
-drawCMGuideTree modelDetail nodes 
-   | modelDetail == "flat" = hcat (drawCMNodesSimple (processCMGuideTree nodes))
-   | modelDetail == "simple" = hcat (drawCMNodesVerbose (processCMGuideTree nodes))
+drawCMGuideTree modelDetail cm
+   | modelDetail == "flat" = hcat (drawCMNodesSimple (processCMGuideTree cm))
+   | modelDetail == "simple" = hcat (drawCMNodesVerbose (processCMGuideTree cm))
    | modelDetail == "detailed" = hcat (drawCMNodesDetailed cm)                            
-   | otherwise = hcat (drawCMGuideNodesSimple (processCMGuideTree cm)
+   | otherwise = hcat (drawCMGuideNodesSimple (processCMGuideTree cm))
 
 -- | Draw the guide Tree of a single CM, utilizes drawCMGuideNode
 --drawCMGuideNodesVerbose :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => [(String, String)] -> [QDiagram b V2 n Any]
@@ -157,22 +157,43 @@ labelToColor label
    | label == "END"  = sRGB24 245 245 245 -- E
 labelToColor _ = sRGB24 245 245 245
 
-drawCMNodesDetailed cms = map drawCMGuideNodeVerbose nodes
+drawCMNodesDetailed cm = map (drawCMNodeDetailed alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber  nodeNumber V.empty states) nodes
+  where nodes = _nodes cm
+        nodeNumber = V.length nodes
+        states = _states cm
 
 drawCMNodeDetailed alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex comparisonNodeLabels states node 
-  | idNumber == 0 = beginBox
-  | idNumber == (lastIndex - 1) = nodeBox ||| endBox
-  | idNumber == rowStart = rowStartBox idNumber boxlength ||| nodeBox
-  | idNumber == rowEnd - 1 = nodeBox ||| rowEndBox idNumber boxlength                    
-  | otherwise = nodeBox 
-  where idNumber = HM.nodeId node
-        nodeLabels = V.toList (snd (comparisonNodeLabels V.! idNumber))
+  -- | idNumber == 0 = beginBox
+  -- | idNumber == (lastIndex - 1) = nodeBox ||| endBox
+  -- | idNumber == rowStart = rowStartBox idNumber boxlength ||| nodeBox
+  -- | idNumber == rowEnd - 1 = nodeBox ||| rowEndBox idNumber boxlength                    
+  | otherwise = nodeBox alphabetSymbols emissiontype boxlength node
+  where idNumber = _nid node
         nid  = show idNumber
-        beginBox = strutX 7 ||| (idBox nid nodeLabels === strutY 0.5 === emptyDeletions === strutY 1.5 === insertions nid === strutY 1.5 === beginState boxlength nid) ||| (strutX  4)
-	nodeBox = idBox nid nodeLabels === strutY 0.5 === deletions nid === strutY 1.5 === insertions nid  === strutY 1.5 === matches alphabetSymbols emissiontype boxlength node ||| (strutX 4)
-	endBox = emptyIdBox === strutY 0.5 === emptyDeletions === strutY 1.5 === emptyInsertions  === strutY 1.5 === endState boxlength idNumber ||| strutX 4
+	nodeBox = drawCMNodeBox alphabetSymbols emissiontype boxlength states node
 
-                 
+drawCMNodeBox alphabetSymbols emissiontype boxlength states node
+  | type == 0 = matchBox
+  | type == 1 = matchBox
+  | type == 2 = matchBox
+  | type == 3 = matchBox
+  | type == 4 = matchBox
+  | type == 5 = matchBox
+  | type == 6 = matchBox
+  | type == 7 = matchBox
+  | otherwise = matchBox
+    where matchBox = rect 1 1 
+          type = _ntype node 
+
+ --    "BIF"  -> Bif
+ --     "MATP" -> MatP
+ --     "MATL" -> MatL
+ --     "MATR" -> MatR
+ --     "BEGL" -> BegL
+ --     "BEGR" -> BegR
+ --     "ROOT" -> Root
+ --     "END"  -> End
+
 --scaling
 -- | Specifies the size of the diagram. Absolute adapts to overall size according to subdiagrams
 svgsize :: SizeSpec V2 Double
