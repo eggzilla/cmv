@@ -39,7 +39,7 @@ options = Options
     alignmentEntries = (50 :: Int) &= name "n" &= help "Set cutoff for included stockholm alignment entries (Default: 50)",
     maxWidth = (180:: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)",
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
-    oneOutputFile = False  &= name "f" &= help "Merge all output into one file (Default: False)"
+    oneOutputFile = False  &= name "o" &= help "Merge all output into one file (Default: False)"
   } &= summary "HMMvisualisation devel version" &= help "Florian Eggenhofer - 2016" &= verbosity
 
 main :: IO ()
@@ -61,7 +61,7 @@ main = do
               then do
                 printHMM (fromRight outputName) svgsize (drawHMMER3s modelDetail alignmentEntries maxWidth emissionLayout currentModels alns)
               else do
-                let modelNames = map HM.name currentModels
+                let modelNames = map ((++"."++outputFormat) .  HM.name) currentModels
                 let modelVis = drawSingleHMMER3s modelDetail alignmentEntries maxWidth emissionLayout currentModels alns
                 mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelNames modelVis)
          else 

@@ -2,6 +2,7 @@
 {-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 -- | Visualize detailed comparsions of HMMER3 models
 --   For more information on Infernal consult <http://hmmer.org/>
@@ -28,7 +29,8 @@ data Options = Options
     alignmentEntries :: Int,
     maxWidth :: Double,
     comparisonAlignment :: String,
-    outputFormat :: String 
+    outputFormat :: String,
+    oneOutputFile :: Bool
   } deriving (Show,Data,Typeable)
 
 options = Options
@@ -39,9 +41,10 @@ options = Options
     modelLayout = "flat" &= name "l" &= help "Set layout of drawn models: flat, tree",
     emissionLayout = "box" &= name "e" &= help "Set layout of drawn models: score, probability, box (Default: box)",
     alignmentEntries = (50 :: Int) &= name "n" &= help "Set cutoff for included stockholm alignment entries (Default: 50)",
-    maxWidth = (100:: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)",
+    maxWidth = (180:: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)",
     comparisonAlignment = "model" &= name "a" &= help "Set layout of drawn models: model, comparison",
-    outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)"                      
+    outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
+    oneOutputFile = False  &= name "o" &= help "Merge all output into one file (Default: False)"
   } &= summary "HMMCV devel version" &= help "Florian Eggenhofer - 2013-2016" &= verbosity
 
 main :: IO ()
@@ -53,24 +56,26 @@ main = do
   alnFileExists <- doesFileExist alignmentFile
   if (modelFileExists && hmmCFileExists && alnFileExists)
     then do
-      models <- HM.readHMMER3 modelsFile
+      inputModels <- HM.readHMMER3 modelsFile
       alns <- readStockholm alignmentFile
       let rightAlns = map Just (E.fromRight alns)
-      if (isRight models)
+      if (isRight inputModels)
         then do
-          let rightModels = E.fromRight models
+          let currentModels = E.fromRight inputModels
           hmmCResultParsed <- readHMMCompareResult hmmCompareResultFile
           if (isRight hmmCResultParsed)
             then do
               let rightHMMCResultsParsed = E.fromRight hmmCResultParsed
-              --let comparisonModelNames = getModelsNames rightHMMCResultsParsed
-              --let comparisonsHighlightParameters = getComparisonsHighlightParameters rightModels rightHMMCResultsParsed
-              -- modelDetail entryNumberCutoff emissiontype maxWidth hmms alns comparisonHighlights
-              let outputName = diagramName "test" outputFormat
-              --let renderedHMM = drawHMMComparison modelDetail alignmentEntries emissionLayout maxWidth rightModels rightAlns comparisonsHighlightParameters
-              printHMM (E.fromRight outputName) svgsize (drawHMMComparison modelDetail alignmentEntries emissionLayout maxWidth rightModels rightAlns rightHMMCResultsParsed)
+              let outputName = diagramName "hmmcv" outputFormat
+              if oneOutputFile
+                then do
+                  printHMM (E.fromRight outputName) svgsize (drawHMMComparison modelDetail alignmentEntries emissionLayout maxWidth currentModels rightAlns rightHMMCResultsParsed)
+                else do
+                  let modelNames = map ((++"."++outputFormat) .  HM.name) currentModels
+                  let modelVis = drawSingleHMMComparison  modelDetail alignmentEntries emissionLayout maxWidth currentModels rightAlns rightHMMCResultsParsed
+                  mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelNames modelVis)
             else print (E.fromLeft hmmCResultParsed)
-        else print (E.fromLeft models)
+        else print (E.fromLeft inputModels)
     else do
       if modelFileExists then return () else putStrLn "Model file not found"
       if hmmCFileExists then return () else putStrLn "Comparison file not found"

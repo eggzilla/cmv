@@ -13,7 +13,8 @@ module Bio.HMMDraw
       diagramName,
       printHMM,
       getComparisonsHighlightParameters,
-      drawHMMComparison
+      drawHMMComparison,
+      drawSingleHMMComparison
     ) where
   
 import Diagrams.Prelude
@@ -46,6 +47,17 @@ drawHMMComparison modelDetail entryNumberCutoff emissiontype maxWidth hmms alns 
  	   nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
  	   comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) hmms
 
+drawSingleHMMComparison modelDetail entryNumberCutoff emissiontype maxWidth hmms alns comparisons
+   | modelDetail == "flat" = map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput
+   | modelDetail == "simple" = map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput
+   | modelDetail == "detailed" = map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput
+   | otherwise = map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput
+     where zippedInput = zip4 hmms alns comparisonNodeLabels (V.toList colorVector)
+           colorVector = makeColorVector modelNumber
+           modelNumber = length hmms
+ 	   modelNames = V.fromList (map HM.name hmms)
+ 	   nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
+ 	   comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) hmms
                         
 -- | 
 --drawHMMMER3s :: forall b. Renderable (Path V2 Double) b => String -> [HM.HMMER3] -> QDiagram b V2 Double Any
