@@ -75,8 +75,8 @@ main = do
        let comparisonsHighlightParameters = getComparisonsHighlightParameters models rightcmcResultsParsed
        print comparisonsHighlightParameters
        --printSVG svgsize (drawCMGuideForestComparison modelDetail (processCMs (models)) (comparisonsHighlightParameters))
-       let outputName = diagramName "test" outputFormat
-       printCM (E.fromRight outputName) svgsize (drawCMGuideForestComparison modelDetail (processCMs (models)) (comparisonsHighlightParameters))     
+       let outputName = diagramName "test" outputFormat           
+       printCM (E.fromRight outputName) svgsize (drawCMGuideForestComparison modelDetail models) (comparisonsHighlightParameters))     
      else do
        if modelFileExists then return () else putStrLn "Model file not found"
        if cmcFileExists then return () else putStrLn "Comparison file not found"

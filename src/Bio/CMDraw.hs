@@ -48,14 +48,16 @@ import qualified Diagrams.Backend.Cairo as C
 -- | Draw one or more CM guide trees and concatenate them vertically
 --drawCMGuideForestComparison :: forall b. Renderable (Path V2 Double) b => [Char] -> [[(String, [Char])]] -> [(Int, Int, Int, Int, Int, Int, Int, Int)] -> QDiagram b V2 Double Any
 drawCMGuideForestComparison modelDetail cms comparisonshighlightparameter 
-  | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (drawCMGuideTrees modelDetail  cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
-  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
+  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (drawCMGuideTrees modelDetail  cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
+  | modelDetail == "simple" = alignTL (vcat' with { _sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
+  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))                            
   | otherwise = alignTL (vcat' with { _sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
 
 -- | Draw one or more CM guide trees and concatenate them vertically
 --drawCMGuideForest :: forall b. Renderable (Path V2 Double) b => [Char] -> [[(String, [Char])]] -> QDiagram b V2 Double Any
-drawCMGuideForest modelDetail cms 
-  | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (drawCMGuideTrees modelDetail  cms))
+drawCMGuideForest modelDetail cms
+  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (drawCMGuideTrees modelDetail cms))
+  | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (drawCMGuideTrees modelDetail cms))
   | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (drawCMGuideTrees modelDetail cms))
   | otherwise = alignTL (vcat' with { _sep = 40 } (drawCMGuideTrees modelDetail cms))
 
@@ -77,8 +79,8 @@ highlightComparisonTrail modelDetail (a,b,c,d,e,f,g,h) = connectionTrail (getNod
 -- | Returns the center coordinates for an Covariance model guide tree node
 getNodeCoordinates :: String -> Int -> Int -> P2 Double
 getNodeCoordinates modelDetail modelindex nodeindex 
-   | modelDetail == "detailed" = p2 (fromIntegral x, fromIntegral y)
-   | modelDetail == "simple" = p2 (fromIntegral a, fromIntegral b)
+   | modelDetail == "simple" = p2 (fromIntegral x, fromIntegral y)
+   | modelDetail == "flat" = p2 (fromIntegral a, fromIntegral b)
    | otherwise = p2 (fromIntegral x, fromIntegral y)
       where y = (getYCoordinateDetailed modelindex 0) * (-1)
             x = (5 + (10 * (nodeindex - 1 )))
@@ -120,24 +122,25 @@ drawCMGuideTrees detail cms  = map (drawCMGuideTree detail) cms
 -- | Draw the guide Tree of a single CM, utilizes drawCMGuideNode
 --drawCMGuideTree :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => [Char] -> [(String, [Char])] -> QDiagram b V2 n Any
 drawCMGuideTree modelDetail nodes 
-   | modelDetail == "simple" = hcat (drawCMGuideNodesSimple nodes)
-   | modelDetail == "detailed" = hcat (drawCMGuideNodesVerbose nodes)
-   | otherwise = hcat (drawCMGuideNodesSimple nodes)
+   | modelDetail == "flat" = hcat (drawCMNodesSimple (processCMGuideTree nodes))
+   | modelDetail == "simple" = hcat (drawCMNodesVerbose (processCMGuideTree nodes))
+   | modelDetail == "detailed" = hcat (drawCMNodesDetailed cm)                            
+   | otherwise = hcat (drawCMGuideNodesSimple (processCMGuideTree cm)
 
 -- | Draw the guide Tree of a single CM, utilizes drawCMGuideNode
 --drawCMGuideNodesVerbose :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => [(String, String)] -> [QDiagram b V2 n Any]
-drawCMGuideNodesVerbose nodes = map drawCMGuideNodeVerbose nodes
+drawCMNodesVerbose nodes = map drawCMGuideNodeVerbose nodes
 
-drawCMGuideNodesSimple :: forall b t. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => [(t, [Char])] -> [b]
-drawCMGuideNodesSimple nodes = map drawCMGuideNodeSimple nodes
+drawCMNodesSimple :: forall b t. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => [(t, [Char])] -> [b]
+drawCMNodesSimple nodes = map drawCMGuideNodeSimple nodes
 
 -- | Draws the guide tree nodes of a CM, verbose with label and index
 --drawCMGuideNodeVerbose :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => (String, String) -> QDiagram b V2 n Any
-drawCMGuideNodeVerbose (number,label) = text' label # translate (r2 (0,2)) <> text' number # translate (r2 (0,negate 2)) <> rect 10 10 # lw 0.5 # fc (labelToColor label)
+drawCMNodeVerbose (number,label) = text' label # translate (r2 (0,2)) <> text' number # translate (r2 (0,negate 2)) <> rect 10 10 # lw 0.5 # fc (labelToColor label)
 
 -- | Draws the guide tree nodes of a CM, simplified
-drawCMGuideNodeSimple :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => (t, [Char]) -> b
-drawCMGuideNodeSimple (_,label) =  rect 2 2 # lw 0.1 # fc (labelToColor label)
+drawCMNodeSimple :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => (t, [Char]) -> b
+drawCMNodeSimple (_,label) =  rect 2 2 # lw 0.1 # fc (labelToColor label)
 
 text' t = alignedText 0.5 0.5 t # fontSize 4 <> rect 4 4 # lw 0.0
 
@@ -153,7 +156,23 @@ labelToColor label
    | label == "BEGR" = sRGB24 211 211 211 -- S 
    | label == "END"  = sRGB24 245 245 245 -- E
 labelToColor _ = sRGB24 245 245 245
-          
+
+drawCMNodesDetailed cms = map drawCMGuideNodeVerbose nodes
+
+drawCMNodeDetailed alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex comparisonNodeLabels states node 
+  | idNumber == 0 = beginBox
+  | idNumber == (lastIndex - 1) = nodeBox ||| endBox
+  | idNumber == rowStart = rowStartBox idNumber boxlength ||| nodeBox
+  | idNumber == rowEnd - 1 = nodeBox ||| rowEndBox idNumber boxlength                    
+  | otherwise = nodeBox 
+  where idNumber = HM.nodeId node
+        nodeLabels = V.toList (snd (comparisonNodeLabels V.! idNumber))
+        nid  = show idNumber
+        beginBox = strutX 7 ||| (idBox nid nodeLabels === strutY 0.5 === emptyDeletions === strutY 1.5 === insertions nid === strutY 1.5 === beginState boxlength nid) ||| (strutX  4)
+	nodeBox = idBox nid nodeLabels === strutY 0.5 === deletions nid === strutY 1.5 === insertions nid  === strutY 1.5 === matches alphabetSymbols emissiontype boxlength node ||| (strutX 4)
+	endBox = emptyIdBox === strutY 0.5 === emptyDeletions === strutY 1.5 === emptyInsertions  === strutY 1.5 === endState boxlength idNumber ||| strutX 4
+
+                 
 --scaling
 -- | Specifies the size of the diagram. Absolute adapts to overall size according to subdiagrams
 svgsize :: SizeSpec V2 Double

@@ -138,7 +138,7 @@ parseHMMER3Composite alphabet = do
   _bd2m <- parseOptionalFloatParameter
   _bd2d <- parseOptionalFloatParameter
   newline
-  return (HMMER3Composite (V.fromList _matchEmissions),HMMER3Node (0 :: Int) V.empty Nothing Nothing Nothing False Nothing (V.fromList _insertEmissions) _bm2m _bm2i _bm2d _bi2m _bi2i _bd2m _bd2d)
+  return (HMMER3Composite (V.fromList _matchEmissions),HMMER3Node (0 :: Int) V.empty (Just (0::Int)) Nothing Nothing False Nothing (V.fromList _insertEmissions) _bm2m _bm2i _bm2d _bi2m _bi2i _bd2m _bd2d)
 
 -- | Parse HMMER3 node
 parseHMMER3Node :: String -> GenParser Char st HMMER3Node
