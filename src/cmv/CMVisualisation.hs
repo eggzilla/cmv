@@ -51,7 +51,7 @@ main = do
         then do
           alnInput <- readStockholm alignmentFile
           let aln = if (isRight alnInput) then (Just (head (fromRight alnInput))) else Nothing
-          let outputName = diagramName "test" outputFormat       
+          let outputName = diagramName "cmv" outputFormat       
           printCM (fromRight outputName) svgsize (drawCMGuideForest modelDetail models)    
         else do
           print "Could not read covariance models from input file"

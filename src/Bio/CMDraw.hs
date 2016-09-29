@@ -44,7 +44,8 @@ import qualified Data.Text as T
 import qualified Data.Vector as V
 import Bio.StockholmDraw
 import qualified Diagrams.Backend.Cairo as C
-    
+import qualified Data.Vector.Unboxed as VU
+
 -- | Draw one or more CM guide trees and concatenate them vertically
 --drawCMGuideForestComparison :: forall b. Renderable (Path V2 Double) b => [Char] -> [[(String, [Char])]] -> [(Int, Int, Int, Int, Int, Int, Int, Int)] -> QDiagram b V2 Double Any
 drawCMGuideForestComparison modelDetail cms comparisonshighlightparameter 
@@ -142,7 +143,7 @@ drawCMNodeFlat (_,label) =  rect 2 2 # lw 0.1 # fc (labelToColor label)
 --drawCMGuideNodeVerbose :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => (String, String) -> QDiagram b V2 n Any
 drawCMNodeSimple (number,label) = text' label # translate (r2 (0,2)) <> text' number # translate (r2 (0,negate 2)) <> rect 10 10 # lw 0.5 # fc (labelToColor label)
 
-text' t = alignedText 0.5 0.5 t # fontSize 4 <> rect 4 4 # lw 0.0
+text' t = alignedText 0.5 0.5 t # fontSize 2 <> rect 2 2 # lw 0.0
 
 -- | Transform covariance model node labels to colors
 labelToColor :: forall b. (Floating b, Ord b) => [Char] -> Colour b
@@ -178,16 +179,64 @@ drawCMNodeBox alphabetSymbols emissiontype boxlength states node
   | ntype == CM.NodeType 6 = rootNode <> outerBox
   | ntype == CM.NodeType 7 = endNode <> outerBox
   | otherwise = endNode <> outerBox
-    where outerBox = rect 8 8 # lw 0.1
+    where outerBox = rect 12 12 # lw 0.1
           ntype = CM._ntype node
-          bifNode = text' "BIF"
-          matPNode = text' "BIF"
-          matLNode = text' "BIF"
-          matRNode = text' "BIF"
-          begLNode = text' "BIF"
-          begRNode = text' "BIF"
-          rootNode = text' "BIF"
-          endNode = text' "BIF"
+          stateIndices = CM._nstates node
+          states = V.map (states VU.!) stateIndices
+          statesbox = hcat VU.toList (VU.map drawCMStateBox states)
+          -- bif b
+          bifNode = text' "BIF" === statesbox
+          -- matP mp ml mr d il ir
+          matPNode = text' "MATP" === statesbox
+          -- matL ml d il
+          matLNode = text' "MATL" === statesbox
+          -- matR mr d ir
+          matRNode = text' "MATR" === statesbox
+          -- begL s
+          begLNode = text' "BEGL" === statesbox
+          -- begR s il
+          begRNode = text' "BEGR" === statesbox
+          -- root s il ir
+          rootNode = text' "ROOT" === statesbox
+          -- end e
+          endNode = text' "END" === statesbox
+
+drawCMStateBox alphabetSymbols emissiontype boxlength state
+  | stype == CM.StateType 0 = dState <> outerBox
+  | stype == CM.StateType 1 = mpState <> outerBox
+  | stype == CM.StateType 2 = mlState <> outerBox
+  | stype == CM.StateType 3 = mrState <> outerBox
+  | stype == CM.StateType 4 = ilState <> outerBox
+  | stype == CM.StateType 5 = irState <> outerBox
+  | stype == CM.StateType 6 = sState <> outerBox
+  | stype == CM.StateType 7 = eState <> outerBox
+  | stype == CM.StateType 8 = bState <> outerBox
+  | stype == CM.StateType 9 = elState <> outerBox                            
+  | otherwise = eState <> outerBox
+    where outerBox = circle 2 # 0.1
+          stype = CM._sType state
+          dState = text' "D"
+          mpState = text' "MP"
+          mlState = text' "ML"
+          mrState = text' "MR"
+          ilState = text' "IL"
+          irState = text' "IR"
+          sState = text' "S"
+          eState = text' "e"
+          bState = text' "b"
+          elState = text' "el"   
+
+-- pattern D  = StateType 0
+-- pattern MP = StateType 1
+-- pattern ML = StateType 2
+-- pattern MR = StateType 3
+-- pattern IL = StateType 4
+-- pattern IR = StateType 5
+-- pattern S  = StateType 6
+-- pattern E  = StateType 7
+-- pattern B  = StateType 8
+-- pattern EL = StateType 9
+
 
 -- pattern Bif  = NodeType 0
 -- pattern MatP = NodeType 1
