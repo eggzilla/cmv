@@ -169,26 +169,34 @@ drawCMNodeDetailed alphabetSymbols emissiontype boxlength rowStart rowEnd lastIn
 	nodeBox = drawCMNodeBox alphabetSymbols emissiontype boxlength states node
 
 drawCMNodeBox alphabetSymbols emissiontype boxlength states node
-  | ntype == CM.NodeType 0 = matchBox
-  | ntype == CM.NodeType 1 = matchBox
-  | ntype == CM.NodeType 2 = matchBox
-  | ntype == CM.NodeType 3 = matchBox
-  | ntype == CM.NodeType 4 = matchBox
-  | ntype == CM.NodeType 5 = matchBox
-  | ntype == CM.NodeType 6 = matchBox
-  | ntype == CM.NodeType 7 = matchBox
-  | otherwise = matchBox
-    where matchBox = rect 1 1 
-          ntype = CM._ntype node 
+  | ntype == CM.NodeType 0 = bifNode <> outerBox
+  | ntype == CM.NodeType 1 = matPNode <> outerBox
+  | ntype == CM.NodeType 2 = matLNode <> outerBox
+  | ntype == CM.NodeType 3 = matRNode <> outerBox
+  | ntype == CM.NodeType 4 = begLNode <> outerBox
+  | ntype == CM.NodeType 5 = begRNode <> outerBox
+  | ntype == CM.NodeType 6 = rootNode <> outerBox
+  | ntype == CM.NodeType 7 = endNode <> outerBox
+  | otherwise = endNode <> outerBox
+    where outerBox = rect 8 8 # lw 0.1
+          ntype = CM._ntype node
+          bifNode = text' "BIF"
+          matPNode = text' "BIF"
+          matLNode = text' "BIF"
+          matRNode = text' "BIF"
+          begLNode = text' "BIF"
+          begRNode = text' "BIF"
+          rootNode = text' "BIF"
+          endNode = text' "BIF"
 
- --    "BIF"  -> Bif
- --     "MATP" -> MatP
- --     "MATL" -> MatL
- --     "MATR" -> MatR
- --     "BEGL" -> BegL
- --     "BEGR" -> BegR
- --     "ROOT" -> Root
- --     "END"  -> End
+-- pattern Bif  = NodeType 0
+-- pattern MatP = NodeType 1
+-- pattern MatL = NodeType 2
+-- pattern MatR = NodeType 3
+-- pattern BegL = NodeType 4
+-- pattern BegR = NodeType 5
+-- pattern Root = NodeType 6
+-- pattern End  = NodeType 7         
 
 --scaling
 -- | Specifies the size of the diagram. Absolute adapts to overall size according to subdiagrams
