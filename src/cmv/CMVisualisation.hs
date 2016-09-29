@@ -45,18 +45,18 @@ main = do
   modelFileExists <- doesFileExist modelFile
   alnFileExists <- doesFileExist alignmentFile
   if modelFileExists
-     then do
-       model <- fromFile modelFile
-       if not (null model)
-          then do
-            alnInput <- readStockholm alignmentFile
-            let aln = if (isRight alnInput) then (Just (head (fromRight alnInput))) else Nothing
-            let outputName = diagramName "test" outputFormat       
-            printCM (fromRight outputName) svgsize (drawCMGuideForest modelDetail (processCMs (model)))    
-          else 
-            print "Could not read covariance models from input file"
-     else do
-       putStrLn "Input model file not found"
+    then do
+      models <- fromFile modelFile
+      if (not (null models))
+        then do
+          alnInput <- readStockholm alignmentFile
+          let aln = if (isRight alnInput) then (Just (head (fromRight alnInput))) else Nothing
+          let outputName = diagramName "test" outputFormat       
+          printCM (fromRight outputName) svgsize (drawCMGuideForest modelDetail models)    
+        else do
+          print "Could not read covariance models from input file"
+    else do
+      putStrLn "Input model file not found"
 
 
 
