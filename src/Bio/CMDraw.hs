@@ -45,6 +45,8 @@ import qualified Data.Vector as V
 import Bio.StockholmDraw
 import qualified Diagrams.Backend.Cairo as C
 import qualified Data.Vector.Unboxed as VU
+import qualified Data.PrimitiveArray.Index.PhantomInt as PI
+import qualified Data.PrimitiveArray.Class as PA
 
 -- | Draw one or more CM guide trees and concatenate them vertically
 --drawCMGuideForestComparison :: forall b. Renderable (Path V2 Double) b => [Char] -> [[(String, [Char])]] -> [(Int, Int, Int, Int, Int, Int, Int, Int)] -> QDiagram b V2 Double Any
@@ -125,12 +127,12 @@ drawCMGuideTrees detail cms  = map (drawCMGuideTree detail) cms
 drawCMGuideTree modelDetail cm
    | modelDetail == "flat" = hcat (map drawCMNodeFlat nodes1)
    | modelDetail == "simple" = hcat (map drawCMNodeSimple nodes1)
-   | modelDetail == "detailed" = hcat (V.toList (V.map (drawCMNodeDetailed alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber  nodeNumber V.empty states) nodes))                                  
-   | otherwise = hcat (V.toList (V.map (drawCMNodeDetailed alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber  nodeNumber V.empty states) nodes))
+   | modelDetail == "detailed" = hcat (V.toList (V.map (drawCMNodeDetailed alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber  nodeNumber V.empty allStates) nodes))                                  
+   | otherwise = hcat (V.toList (V.map (drawCMNodeDetailed alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber  nodeNumber V.empty allStates) nodes))
    where nodes1 = (processCMGuideTree cm)
          nodes = CM._nodes cm
          nodeNumber = V.length nodes
-         states = CM._states cm
+         allStates = CM._states cm
          boxlength = fromIntegral (length alphabetSymbols) + 2
          alphabetSymbols = ['A','U','C','G']
          emissiontype = "box"
@@ -169,21 +171,21 @@ drawCMNodeDetailed alphabetSymbols emissiontype boxlength rowStart rowEnd lastIn
         nid = show idNumber
 	nodeBox = drawCMNodeBox alphabetSymbols emissiontype boxlength states node
 
-drawCMNodeBox alphabetSymbols emissiontype boxlength states node
-  | ntype == CM.NodeType 0 = bifNode <> outerBox
-  | ntype == CM.NodeType 1 = matPNode <> outerBox
-  | ntype == CM.NodeType 2 = matLNode <> outerBox
-  | ntype == CM.NodeType 3 = matRNode <> outerBox
-  | ntype == CM.NodeType 4 = begLNode <> outerBox
-  | ntype == CM.NodeType 5 = begRNode <> outerBox
-  | ntype == CM.NodeType 6 = rootNode <> outerBox
-  | ntype == CM.NodeType 7 = endNode <> outerBox
-  | otherwise = endNode <> outerBox
-    where outerBox = rect 12 12 # lw 0.1
-          ntype = CM._ntype node
-          stateIndices = CM._nstates node
-          states = V.map (states VU.!) stateIndices
-          statesbox = hcat VU.toList (VU.map drawCMStateBox states)
+drawCMNodeBox alphabetSymbols emissiontype boxlength currentStates node
+  | ntype == CM.NodeType 0 = bifNode <> nodeBox
+  | ntype == CM.NodeType 1 = matPNode <> nodeBox
+  | ntype == CM.NodeType 2 = matLNode <> nodeBox
+  | ntype == CM.NodeType 3 = matRNode <> nodeBox
+  | ntype == CM.NodeType 4 = begLNode <> nodeBox
+  | ntype == CM.NodeType 5 = begRNode <> nodeBox
+  | ntype == CM.NodeType 6 = rootNode <> nodeBox
+  | ntype == CM.NodeType 7 = endNode <> nodeBox
+  | otherwise = endNode <> nodeBox
+    where ntype = CM._ntype node
+          --stateIndices = VU.toList (VU.map PI.getPInt (CM._nstates node))
+          stateIndices = VU.toList (CM._nstates node)               
+          --cmStates = (VU.map ((currentStates VU.!) .PI.getPInt) stateIndices)                
+          statesbox = hcat (map (drawCMStateBox alphabetSymbols emissiontype boxlength currentStates) stateIndices)
           -- bif b
           bifNode = text' "BIF" === statesbox
           -- matP mp ml mr d il ir
@@ -200,53 +202,37 @@ drawCMNodeBox alphabetSymbols emissiontype boxlength states node
           rootNode = text' "ROOT" === statesbox
           -- end e
           endNode = text' "END" === statesbox
+                    
+nodeBox = rect 12 12 # lw 0.1
 
-drawCMStateBox alphabetSymbols emissiontype boxlength state
-  | stype == CM.StateType 0 = dState <> outerBox
-  | stype == CM.StateType 1 = mpState <> outerBox
-  | stype == CM.StateType 2 = mlState <> outerBox
-  | stype == CM.StateType 3 = mrState <> outerBox
-  | stype == CM.StateType 4 = ilState <> outerBox
-  | stype == CM.StateType 5 = irState <> outerBox
-  | stype == CM.StateType 6 = sState <> outerBox
-  | stype == CM.StateType 7 = eState <> outerBox
-  | stype == CM.StateType 8 = bState <> outerBox
-  | stype == CM.StateType 9 = elState <> outerBox                            
-  | otherwise = eState <> outerBox
-    where outerBox = circle 2 # 0.1
-          stype = CM._sType state
-          dState = text' "D"
+                    
+--drawCMStateBox :: [Char]  -> String -> Double -> CM.States -> PI.PInt () CM.StateIndex -> QDiagram NullBackend V2 n Any
+drawCMStateBox alphabetSymbols emissiontype boxlength currentStates sIndex
+  | stype == CM.StateType 0 = dState <> statebox
+  | stype == CM.StateType 1 = mpState <> statebox
+  | stype == CM.StateType 2 = mlState <> statebox
+  | stype == CM.StateType 3 = mrState <> statebox
+  | stype == CM.StateType 4 = ilState <> statebox
+  | stype == CM.StateType 5 = irState <> statebox
+  | stype == CM.StateType 6 = sState <> statebox
+  | stype == CM.StateType 7 = eState <> statebox
+  | stype == CM.StateType 8 = bState <> statebox
+  | stype == CM.StateType 9 = elState <> statebox                                                
+  | otherwise = eState <> statebox
+    where stype = (CM._sStateType currentStates) PA.! sIndex
+          dState = text' ("D" ++ show stype)
           mpState = text' "MP"
           mlState = text' "ML"
           mrState = text' "MR"
           ilState = text' "IL"
           irState = text' "IR"
           sState = text' "S"
-          eState = text' "e"
-          bState = text' "b"
-          elState = text' "el"   
-
--- pattern D  = StateType 0
--- pattern MP = StateType 1
--- pattern ML = StateType 2
--- pattern MR = StateType 3
--- pattern IL = StateType 4
--- pattern IR = StateType 5
--- pattern S  = StateType 6
--- pattern E  = StateType 7
--- pattern B  = StateType 8
--- pattern EL = StateType 9
-
-
--- pattern Bif  = NodeType 0
--- pattern MatP = NodeType 1
--- pattern MatL = NodeType 2
--- pattern MatR = NodeType 3
--- pattern BegL = NodeType 4
--- pattern BegR = NodeType 5
--- pattern Root = NodeType 6
--- pattern End  = NodeType 7         
-
+          eState = text' "E"
+          bState = text' "B"
+          elState = text' "EL"
+                     
+statebox = circle 2.0 # lw 0.1
+       
 --scaling
 -- | Specifies the size of the diagram. Absolute adapts to overall size according to subdiagrams
 svgsize :: SizeSpec V2 Double
