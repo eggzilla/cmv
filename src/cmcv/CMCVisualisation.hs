@@ -12,7 +12,7 @@ module Main where
 
 import Bio.CMCompareResult
 import Bio.CMDraw
-import qualified Biobase.SElab.CM as CM
+--import qualified Biobase.SElab.CM as CM
 import Biobase.SElab.CM.Import     
 import System.Console.CmdArgs
 import Data.Either
@@ -75,8 +75,8 @@ main = do
        let comparisonsHighlightParameters = getComparisonsHighlightParameters models rightcmcResultsParsed
        print comparisonsHighlightParameters
        --printSVG svgsize (drawCMGuideForestComparison modelDetail (processCMs (models)) (comparisonsHighlightParameters))
-       let outputName = diagramName "test" outputFormat           
-       printCM (E.fromRight outputName) svgsize (drawCMGuideForestComparison modelDetail models) (comparisonsHighlightParameters))     
+       let outputName = diagramName "cmcv" outputFormat           
+       printCM (E.fromRight outputName) svgsize (drawCMGuideForestComparison modelDetail models comparisonsHighlightParameters)
      else do
        if modelFileExists then return () else putStrLn "Model file not found"
        if cmcFileExists then return () else putStrLn "Comparison file not found"

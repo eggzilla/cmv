@@ -122,25 +122,25 @@ drawCMGuideTrees detail cms  = map (drawCMGuideTree detail) cms
 -- | Draw the guide Tree of a single CM, utilizes drawCMGuideNode
 --drawCMGuideTree :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => [Char] -> [(String, [Char])] -> QDiagram b V2 n Any
 drawCMGuideTree modelDetail cm
-   | modelDetail == "flat" = hcat (drawCMNodesSimple (processCMGuideTree cm))
-   | modelDetail == "simple" = hcat (drawCMNodesVerbose (processCMGuideTree cm))
-   | modelDetail == "detailed" = hcat (drawCMNodesDetailed cm)                            
-   | otherwise = hcat (drawCMGuideNodesSimple (processCMGuideTree cm))
+   | modelDetail == "flat" = hcat (map drawCMNodeFlat nodes1)
+   | modelDetail == "simple" = hcat (map drawCMNodeSimple nodes1)
+   | modelDetail == "detailed" = hcat (V.toList (V.map (drawCMNodeDetailed alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber  nodeNumber V.empty states) nodes))                                  
+   | otherwise = hcat (V.toList (V.map (drawCMNodeDetailed alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber  nodeNumber V.empty states) nodes))
+   where nodes1 = (processCMGuideTree cm)
+         nodes = CM._nodes cm
+         nodeNumber = V.length nodes
+         states = CM._states cm
+         boxlength = fromIntegral (length alphabetSymbols) + 2
+         alphabetSymbols = ['A','U','C','G']
+         emissiontype = "box"
 
--- | Draw the guide Tree of a single CM, utilizes drawCMGuideNode
---drawCMGuideNodesVerbose :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => [(String, String)] -> [QDiagram b V2 n Any]
-drawCMNodesVerbose nodes = map drawCMGuideNodeVerbose nodes
-
-drawCMNodesSimple :: forall b t. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => [(t, [Char])] -> [b]
-drawCMNodesSimple nodes = map drawCMGuideNodeSimple nodes
+-- | Draws the guide tree nodes of a CM, simplified
+--drawCMNodeSimple :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => (t, [Char]) -> b
+drawCMNodeFlat (_,label) =  rect 2 2 # lw 0.1 # fc (labelToColor label)
 
 -- | Draws the guide tree nodes of a CM, verbose with label and index
 --drawCMGuideNodeVerbose :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => (String, String) -> QDiagram b V2 n Any
-drawCMNodeVerbose (number,label) = text' label # translate (r2 (0,2)) <> text' number # translate (r2 (0,negate 2)) <> rect 10 10 # lw 0.5 # fc (labelToColor label)
-
--- | Draws the guide tree nodes of a CM, simplified
-drawCMNodeSimple :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => (t, [Char]) -> b
-drawCMNodeSimple (_,label) =  rect 2 2 # lw 0.1 # fc (labelToColor label)
+drawCMNodeSimple (number,label) = text' label # translate (r2 (0,2)) <> text' number # translate (r2 (0,negate 2)) <> rect 10 10 # lw 0.5 # fc (labelToColor label)
 
 text' t = alignedText 0.5 0.5 t # fontSize 4 <> rect 4 4 # lw 0.0
 
@@ -157,33 +157,29 @@ labelToColor label
    | label == "END"  = sRGB24 245 245 245 -- E
 labelToColor _ = sRGB24 245 245 245
 
-drawCMNodesDetailed cm = map (drawCMNodeDetailed alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber  nodeNumber V.empty states) nodes
-  where nodes = _nodes cm
-        nodeNumber = V.length nodes
-        states = _states cm
-
+--drawCMNodeDetailed :: [Char] -> String -> Double -> Int -> Int -> Int -> V.Vector (Int, V.Vector (Colour Double)) -> CM.States -> CM.Node -> QDiagram b V2 n Any
 drawCMNodeDetailed alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex comparisonNodeLabels states node 
   -- | idNumber == 0 = beginBox
   -- | idNumber == (lastIndex - 1) = nodeBox ||| endBox
   -- | idNumber == rowStart = rowStartBox idNumber boxlength ||| nodeBox
   -- | idNumber == rowEnd - 1 = nodeBox ||| rowEndBox idNumber boxlength                    
-  | otherwise = nodeBox alphabetSymbols emissiontype boxlength node
-  where idNumber = _nid node
-        nid  = show idNumber
+  | otherwise = nodeBox 
+  where idNumber = CM._nid node
+        nid = show idNumber
 	nodeBox = drawCMNodeBox alphabetSymbols emissiontype boxlength states node
 
 drawCMNodeBox alphabetSymbols emissiontype boxlength states node
-  | type == 0 = matchBox
-  | type == 1 = matchBox
-  | type == 2 = matchBox
-  | type == 3 = matchBox
-  | type == 4 = matchBox
-  | type == 5 = matchBox
-  | type == 6 = matchBox
-  | type == 7 = matchBox
+  | ntype == CM.NodeType 0 = matchBox
+  | ntype == CM.NodeType 1 = matchBox
+  | ntype == CM.NodeType 2 = matchBox
+  | ntype == CM.NodeType 3 = matchBox
+  | ntype == CM.NodeType 4 = matchBox
+  | ntype == CM.NodeType 5 = matchBox
+  | ntype == CM.NodeType 6 = matchBox
+  | ntype == CM.NodeType 7 = matchBox
   | otherwise = matchBox
     where matchBox = rect 1 1 
-          type = _ntype node 
+          ntype = CM._ntype node 
 
  --    "BIF"  -> Bif
  --     "MATP" -> MatP
