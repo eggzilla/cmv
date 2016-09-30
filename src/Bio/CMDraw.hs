@@ -172,66 +172,73 @@ drawCMNodeDetailed alphabetSymbols emissiontype boxlength rowStart rowEnd lastIn
 	nodeBox = drawCMNodeBox alphabetSymbols emissiontype boxlength states node
 
 drawCMNodeBox alphabetSymbols emissiontype boxlength currentStates node
-  | ntype == CM.NodeType 0 = bifNode <> nodeBox
-  | ntype == CM.NodeType 1 = matPNode <> nodeBox
-  | ntype == CM.NodeType 2 = matLNode <> nodeBox
-  | ntype == CM.NodeType 3 = matRNode <> nodeBox
-  | ntype == CM.NodeType 4 = begLNode <> nodeBox
-  | ntype == CM.NodeType 5 = begRNode <> nodeBox
-  | ntype == CM.NodeType 6 = rootNode <> nodeBox
-  | ntype == CM.NodeType 7 = endNode <> nodeBox
+  | ntype == CM.NodeType 0 = bifNode # translate (r2 (negate 12.5,0)) <> nodeBox
+  | ntype == CM.NodeType 1 = matPNode # translate (r2 (negate 12.5,0)) <> nodeBox
+  | ntype == CM.NodeType 2 = matLNode # translate (r2 (negate 12.5,0)) <> nodeBox
+  | ntype == CM.NodeType 3 = matRNode # translate (r2 (negate 12.5,0)) <> nodeBox
+  | ntype == CM.NodeType 4 = begLNode # translate (r2 (negate 12.5,0)) <> nodeBox
+  | ntype == CM.NodeType 5 = begRNode # translate (r2 (negate 12.5,0)) <> nodeBox
+  | ntype == CM.NodeType 6 = rootNode # translate (r2 (negate 12.5,0)) <> nodeBox
+  | ntype == CM.NodeType 7 = endNode # translate (r2 (negate 12.5,0)) <> nodeBox
   | otherwise = endNode <> nodeBox
     where ntype = CM._ntype node
+          --idNumber = PI.getPInt (CM._nid node)
+          nid = show 1 --idNumber
           --stateIndices = VU.toList (VU.map PI.getPInt (CM._nstates node))
           stateIndices = VU.toList (CM._nstates node)               
           --cmStates = (VU.map ((currentStates VU.!) .PI.getPInt) stateIndices)                
-          statesbox = hcat (map (drawCMStateBox alphabetSymbols emissiontype boxlength currentStates) stateIndices)
+          splitStatesBox = hcat (map (drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates) stateIndices)
+          insertStatesBox = hcat (map (drawCMInsertStateBox nid alphabetSymbols emissiontype boxlength currentStates) stateIndices)
           -- bif b
-          bifNode = text' "BIF" === statesbox
+          bifNode = text' "BIF" # rotate (1/4 @@ turn) ||| strutX 2.0 ||| (splitStatesBox === strutY 4.0 === insertStatesBox)
           -- matP mp ml mr d il ir
-          matPNode = text' "MATP" === statesbox
+          matPNode = text' "MATP" # rotate (1/4 @@ turn) ||| strutX 2.0 ||| (splitStatesBox === strutY 4.0 === insertStatesBox)
           -- matL ml d il
-          matLNode = text' "MATL" === statesbox
+          matLNode = text' "MATL" # rotate (1/4 @@ turn) ||| strutX 2.0 ||| (splitStatesBox === strutY 4.0 === insertStatesBox)
           -- matR mr d ir
-          matRNode = text' "MATR" === statesbox
+          matRNode = text' "MATR" # rotate (1/4 @@ turn) ||| strutX 2.0 ||| (splitStatesBox === strutY 4.0 === insertStatesBox)
           -- begL s
-          begLNode = text' "BEGL" === statesbox
+          begLNode = text' "BEGL" # rotate (1/4 @@ turn) ||| strutX 2.0 ||| (splitStatesBox === strutY 4.0 === insertStatesBox)
           -- begR s il
-          begRNode = text' "BEGR" === statesbox
+          begRNode = text' "BEGR" # rotate (1/4 @@ turn) ||| strutX 2.0 ||| (splitStatesBox === strutY 4.0 === insertStatesBox)
           -- root s il ir
-          rootNode = text' "ROOT" === statesbox
+          rootNode = text' "ROOT" # rotate (1/4 @@ turn) ||| strutX 2.0 ||| (splitStatesBox === strutY 4.0 === insertStatesBox)
           -- end e
-          endNode = text' "END" === statesbox
+          endNode = text' "END" # rotate (1/4 @@ turn) ||| strutX 2.0 ||| (splitStatesBox === strutY 4.0 === insertStatesBox)
                     
-nodeBox = rect 12 12 # lw 0.1
+nodeBox = rect 30 30 # lw 0.1
 
                     
 --drawCMStateBox :: [Char]  -> String -> Double -> CM.States -> PI.PInt () CM.StateIndex -> QDiagram NullBackend V2 n Any
-drawCMStateBox alphabetSymbols emissiontype boxlength currentStates sIndex
-  | stype == CM.StateType 0 = dState <> statebox
-  | stype == CM.StateType 1 = mpState <> statebox
-  | stype == CM.StateType 2 = mlState <> statebox
-  | stype == CM.StateType 3 = mrState <> statebox
-  | stype == CM.StateType 4 = ilState <> statebox
-  | stype == CM.StateType 5 = irState <> statebox
-  | stype == CM.StateType 6 = sState <> statebox
-  | stype == CM.StateType 7 = eState <> statebox
-  | stype == CM.StateType 8 = bState <> statebox
-  | stype == CM.StateType 9 = elState <> statebox                                                
-  | otherwise = eState <> statebox
+drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIndex
+  | stype == CM.StateType 0 = dState <> statebox # named (nid ++"d")
+  | stype == CM.StateType 1 = mpState <> statebox # named (nid ++"mp")
+  | stype == CM.StateType 2 = mlState <> statebox # named (nid ++"ml")
+  | stype == CM.StateType 3 = mrState <> statebox # named (nid ++"mr")
+  | stype == CM.StateType 6 = sState <> statebox # named (nid ++"s")
+  | stype == CM.StateType 7 = eState <> statebox # named (nid ++"e")
+  | stype == CM.StateType 8 = bState <> statebox # named (nid ++"b")
+  | stype == CM.StateType 9 = elState <> statebox # named (nid ++"el")                                               
+  | otherwise = mempty
     where stype = (CM._sStateType currentStates) PA.! sIndex
-          dState = text' ("D" ++ show stype)
+          dState = text' "D" -- ++ show stype
           mpState = text' "MP"
           mlState = text' "ML"
           mrState = text' "MR"
-          ilState = text' "IL"
-          irState = text' "IR"
           sState = text' "S"
           eState = text' "E"
           bState = text' "B"
           elState = text' "EL"
-                     
-statebox = circle 2.0 # lw 0.1
+          
+drawCMInsertStateBox nid alphabetSymbols emissiontype boxlength currentStates sIndex
+  | stype == CM.StateType 4 = ilState <> statebox # named (nid ++"il")
+  | stype == CM.StateType 5 = irState <> statebox # named (nid ++"ir")                                      
+  | otherwise = mempty
+    where stype = (CM._sStateType currentStates) PA.! sIndex
+          ilState = text' "IL" 
+          irState = text' "IR"
+
+statebox = circle 3.0 # lw 0.1
        
 --scaling
 -- | Specifies the size of the diagram. Absolute adapts to overall size according to subdiagrams
