@@ -47,6 +47,11 @@ import qualified Diagrams.Backend.Cairo as C
 import qualified Data.Vector.Unboxed as VU
 import qualified Data.PrimitiveArray.Index.PhantomInt as PI
 import qualified Data.PrimitiveArray.Class as PA
+import Biobase.SElab.Bitscore
+import Biobase.Primary.Nuc.RNA
+import qualified Data.PrimitiveArray.Index.Class as PAI
+--import qualified Data.Array.Repa as AR
+--import Control.Lens
 
 -- | Draw one or more CM guide trees and concatenate them vertically
 --drawCMGuideForestComparison :: forall b. Renderable (Path V2 Double) b => [Char] -> [[(String, [Char])]] -> [(Int, Int, Int, Int, Int, Int, Int, Int)] -> QDiagram b V2 Double Any
@@ -186,7 +191,7 @@ drawCMNodeBox alphabetSymbols emissiontype boxlength currentStates node
           nid = show 1 --idNumber
           --stateIndices = VU.toList (VU.map PI.getPInt (CM._nstates node))
           stateIndices = VU.toList (CM._nstates node)               
-          --cmStates = (VU.map ((currentStates VU.!) .PI.getPInt) stateIndices)                
+          --cmStates = (VU.map ((currentStates VU.!) .PI.getPInt) stateIndices)
           splitStatesBox = hcat (map (drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates) stateIndices)
           insertStatesBox = hcat (map (drawCMInsertStateBox nid alphabetSymbols emissiontype boxlength currentStates) stateIndices)
           -- bif b
@@ -221,6 +226,8 @@ drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIn
   | stype == CM.StateType 9 = elState <> statebox # named (nid ++"el")                                               
   | otherwise = mempty
     where stype = (CM._sStateType currentStates) PA.! sIndex
+          --singleEmissions = (CM._sSingleEmissions currentStates) PA.! sIndex
+          --pairEmissions = (CM._sPairEmissions currentStates) PA.! sIndex 
           dState = text' "D" -- ++ show stype
           mpState = text' "MP"
           mlState = text' "ML"
@@ -235,8 +242,15 @@ drawCMInsertStateBox nid alphabetSymbols emissiontype boxlength currentStates sI
   | stype == CM.StateType 5 = irState <> statebox # named (nid ++"ir")                                      
   | otherwise = mempty
     where stype = (CM._sStateType currentStates) PA.! sIndex
-          ilState = text' "IL" 
+          --{getPInt= 0}) :. A --{getPInt= 226}) :. U
+          singleEmissionsInd = snd (PA.bounds (CM._sSingleEmissions currentStates))   --sIndex
+          --singleEmissions = getBitscore ((CM._sSingleEmissions currentStates) PA.! PAI.Z  PAI.:. 10 PAI.:. A)  --singleEmissionsInd)
+          --singleEmissions = (CM._sSingleEmissions currentStates) PA.! (PAI.Z  PAI.:. 10 PAI.:. A)
+          singleEmissions = map (getBitscore . ((CM._sSingleEmissions currentStates) PA.!)) (makeSingleEmissionIndices 10 )
+          ilState = text' (show singleEmissions) -- ("IL" ++  show singleEmissions)
           irState = text' "IR"
+
+makeSingleEmissionIndices index = [(PAI.Z  PAI.:. index PAI.:. A),(PAI.Z  PAI.:. index PAI.:. U),(PAI.Z  PAI.:. index PAI.:. G),(PAI.Z  PAI.:. index PAI.:. C)]
 
 statebox = circle 3.0 # lw 0.1
        

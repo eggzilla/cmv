@@ -42,7 +42,7 @@ library
   ghc-options:         -Wall -O2 -fno-warn-unused-do-bind
 
   -- Other library packages from which modules are imported.
-  build-depends:       base >=4.5 && <5, parsec>=3.1.9, diagrams-lib, BiobaseInfernal, text, vector, ParsecTools, diagrams-cairo, filepath, colour, PrimitiveArray
+  build-depends:       base >=4.5 && <5, parsec>=3.1.9, diagrams-lib, BiobaseInfernal, text, vector, ParsecTools, diagrams-cairo, filepath, colour, PrimitiveArray, BiobaseXNA
   
   -- Directories containing source files.
   hs-source-dirs:      src
