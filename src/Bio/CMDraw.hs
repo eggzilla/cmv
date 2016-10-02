@@ -50,7 +50,8 @@ import qualified Data.PrimitiveArray.Class as PA
 import Biobase.SElab.Bitscore
 import Biobase.Primary.Nuc.RNA
 import qualified Data.PrimitiveArray.Index.Class as PAI
-import Text.Printf    
+import Text.Printf
+import Biobase.SElab.Types
 --import qualified Data.Array.Repa as AR
 --import Control.Lens
 
@@ -133,7 +134,7 @@ drawCMGuideTrees detail cms  = map (drawCMGuideTree detail) cms
 drawCMGuideTree modelDetail cm
    | modelDetail == "flat" = hcat (map drawCMNodeFlat nodes1)
    | modelDetail == "simple" = hcat (map drawCMNodeSimple nodes1)
-   | modelDetail == "detailed" = hcat (V.toList (V.map (drawCMNodeDetailed alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber  nodeNumber V.empty allStates) nodes))                                  
+   | modelDetail == "detailed" = text' (T.unpack modelName) === (hcat (V.toList (V.map (drawCMNodeDetailed alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber  nodeNumber V.empty allStates) nodes)))
    | otherwise = hcat (V.toList (V.map (drawCMNodeDetailed alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber  nodeNumber V.empty allStates) nodes))
    where nodes1 = (processCMGuideTree cm)
          nodes = CM._nodes cm
@@ -141,7 +142,13 @@ drawCMGuideTree modelDetail cm
          allStates = CM._states cm
          boxlength = fromIntegral (length alphabetSymbols) + 2
          alphabetSymbols = ['A','U','C','G']
-         emissiontype = "box"
+         emissiontype = "bar"
+	 --nullModel = CM._nullModel cm
+	 --nullModelBitscores = VU.toList (VU.map (getBitscore) nullModel)
+	 --dummyLetters = replicate (length nullModelBitscores) "I"
+	 --dummyNullModelBitscores = zip dummyLetters nullModelBitscores
+	 --nullModelBox = vcat (map (emissionEntry "score") dummyNullModelBitscores)
+	 modelName = CM._name cm
 
 -- | Draws the guide tree nodes of a CM, simplified
 --drawCMNodeSimple :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => (t, [Char]) -> b
@@ -151,7 +158,8 @@ drawCMNodeFlat (_,label) =  rect 2 2 # lw 0.1 # fc (labelToColor label)
 --drawCMGuideNodeVerbose :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => (String, String) -> QDiagram b V2 n Any
 drawCMNodeSimple (number,label) = text' label # translate (r2 (0,2)) <> text' number # translate (r2 (0,negate 2)) <> rect 10 10 # lw 0.5 # fc (labelToColor label)
 
-text' t = alignedText 0.5 0.5 t # fontSize 2 <> rect 2 2 # lw 0.0
+text' t = alignedText 0.5 0.5 t # fontSize 2 <> rect 2 textLength # lw 0.0
+  where textLength = fromIntegral (length t) * 2
 
 -- | Transform covariance model node labels to colors
 labelToColor :: forall b. (Floating b, Ord b) => [Char] -> Colour b
@@ -178,14 +186,14 @@ drawCMNodeDetailed alphabetSymbols emissiontype boxlength rowStart rowEnd lastIn
 	nodeBox = drawCMNodeBox alphabetSymbols emissiontype boxlength states node
 
 drawCMNodeBox alphabetSymbols emissiontype boxlength currentStates node
-  | ntype == CM.NodeType 0 = bifNode # translate (r2 (negate 12.5,0)) <> nodeBox
-  | ntype == CM.NodeType 1 = matPNode # translate (r2 (negate 12.5,0)) <> nodeBox
-  | ntype == CM.NodeType 2 = matLNode # translate (r2 (negate 12.5,0)) <> nodeBox
-  | ntype == CM.NodeType 3 = matRNode # translate (r2 (negate 12.5,0)) <> nodeBox
-  | ntype == CM.NodeType 4 = begLNode # translate (r2 (negate 12.5,0)) <> nodeBox
-  | ntype == CM.NodeType 5 = begRNode # translate (r2 (negate 12.5,0)) <> nodeBox
-  | ntype == CM.NodeType 6 = rootNode # translate (r2 (negate 12.5,0)) <> nodeBox
-  | ntype == CM.NodeType 7 = endNode # translate (r2 (negate 12.5,0)) <> nodeBox
+  | ntype == CM.NodeType 0 = bifNode # translate (r2 (negate 23,0)) <> nodeBox
+  | ntype == CM.NodeType 1 = matPNode # translate (r2 (negate 23,0)) <> nodeBox
+  | ntype == CM.NodeType 2 = matLNode # translate (r2 (negate 23,0)) <> nodeBox
+  | ntype == CM.NodeType 3 = matRNode # translate (r2 (negate 23,0)) <> nodeBox
+  | ntype == CM.NodeType 4 = begLNode # translate (r2 (negate 23,0)) <> nodeBox
+  | ntype == CM.NodeType 5 = begRNode # translate (r2 (negate 23,0)) <> nodeBox
+  | ntype == CM.NodeType 6 = rootNode # translate (r2 (negate 23,0)) <> nodeBox
+  | ntype == CM.NodeType 7 = endNode # translate (r2 (negate 23,0)) <> nodeBox
   | otherwise = endNode <> nodeBox
     where ntype = CM._ntype node
           --idNumber = PI.getPInt (CM._nid node)
@@ -212,56 +220,50 @@ drawCMNodeBox alphabetSymbols emissiontype boxlength currentStates node
           -- end e
           endNode = text' "END" # rotate (1/4 @@ turn) ||| strutX 2.0 ||| (splitStatesBox === strutY 4.0 === insertStatesBox)
                     
-nodeBox = rect 30 50 # lw 0.1
+nodeBox = rect 50 50 # lw 0.1
 
                     
 --drawCMStateBox :: [Char]  -> String -> Double -> CM.States -> PI.PInt () CM.StateIndex -> QDiagram NullBackend V2 n Any
 drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIndex
-  | stype == CM.StateType 0 = dState <> statebox # named (nid ++"d")
-  | stype == CM.StateType 1 = mpState <> statebox # named (nid ++"mp")
-  | stype == CM.StateType 2 = mlState <> statebox # named (nid ++"ml")
-  | stype == CM.StateType 3 = mrState <> statebox # named (nid ++"mr")
-  | stype == CM.StateType 6 = sState <> statebox # named (nid ++"s")
-  | stype == CM.StateType 7 = eState <> statebox # named (nid ++"e")
-  | stype == CM.StateType 8 = bState <> statebox # named (nid ++"b")
-  | stype == CM.StateType 9 = elState <> statebox # named (nid ++"el")                                               
+  | stype == CM.StateType 0 = dState # translate (r2 (negate 4,11.5)) <> statebox # named (nid ++"d")
+  | stype == CM.StateType 1 = mpState # translate (r2 (negate 4,11.5)) <> statebox # named (nid ++"mp")
+  | stype == CM.StateType 2 = mlState # translate (r2 (negate 4,11.5)) <> statebox # named (nid ++"ml")
+  | stype == CM.StateType 3 = mrState # translate (r2 (negate 4,11.5)) <> statebox # named (nid ++"mr")
+  | stype == CM.StateType 6 = sState # translate (r2 (negate 4,11.5)) <> statebox # named (nid ++"s")
+  | stype == CM.StateType 7 = eState # translate (r2 (negate 4,11.5)) <> statebox # named (nid ++"e")
+  | stype == CM.StateType 8 = bState # translate (r2 (negate 4,11.5)) <> statebox # named (nid ++"b")
+  | stype == CM.StateType 9 = elState # translate (r2 (negate 4,11.5)) <> statebox # named (nid ++"el")                                               
   | otherwise = mempty
-    where --singleEmissions = (CM._sSingleEmissions currentStates) PA.! sIndex
-          --pairEmissions = (CM._sPairEmissions currentStates) PA.! sIndex
-	  stype = (CM._sStateType currentStates) PA.! sIndex
-          --{getPInt= 0}) :. A --{getPInt= 226}) :. U
-          --singleEmissionsInd = snd (PA.bounds (CM._sSingleEmissions currentStates))   --sIndex
-          --singleEmissions = getBitscore ((CM._sSingleEmissions currentStates) PA.! PAI.Z  PAI.:. 10 PAI.:. A)  --singleEmissionsInd)
-          --singleEmissions = (CM._sSingleEmissions currentStates) PA.! (PAI.Z  PAI.:. 10 PAI.:. A)
-          singleEmissionBitscores = V.map (getBitscore . ((CM._sSingleEmissions currentStates) PA.!)) (makeSingleEmissionIndices sIndex)
+    where stype = (CM._sStateType currentStates) PA.! sIndex
+          singleEmissionBitscores = V.map ((score2Prob 0.0) . ((CM._sSingleEmissions currentStates) PA.!)) (makeSingleEmissionIndices sIndex)
           singleEmissionEntries = setEmissions emissiontype singleEmissionBitscores
           singleSymbolsAndEmissions = zip ["A","U","G","C"] (V.toList singleEmissionEntries)
-	  pairEmissionBitscores = V.map (getBitscore . ((CM._sPairEmissions currentStates) PA.!)) (makePairEmissionIndices sIndex)
-          pairEmissionEntries = setEmissions emissiontype singleEmissionBitscores
+	  pairEmissionBitscores = V.map ((score2Prob 0.0). ((CM._sPairEmissions currentStates) PA.!)) (makePairEmissionIndices sIndex)
+          pairEmissionEntries = setEmissions emissiontype pairEmissionBitscores
 	  pairSymbolsAndEmissions = zip ["AA","AU","AG","AC","UU","UA","UG","UC","GG","GA","GU","GC","CC","CA","CU","CG"] (V.toList pairEmissionEntries)
-          dState = vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) -- text' "D" -- ++ show stype
-          mpState = vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions) -- text' "MP"
-          mlState = vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) -- text' "ML"
-          mrState = vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) -- text' "MR"
-          sState = vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) -- text' "S"
-          eState = vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) -- text' "E"
-          bState = vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) -- text' "B"
-          elState = vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) -- text' "EL"
+          dState = text' "D" === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          mpState = text' "MP" === vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions) 
+          mlState = text' "ML" === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          mrState = text' "MR" === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          sState = text' "S" === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions)
+          eState = text' "E" === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          bState = text' "B" ===  vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          elState =  text' "EL" === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
           
 drawCMInsertStateBox nid alphabetSymbols emissiontype boxlength currentStates sIndex
-  | stype == CM.StateType 4 = ilState <> statebox # named (nid ++"il")
-  | stype == CM.StateType 5 = irState <> statebox # named (nid ++"ir")                                      
+  | stype == CM.StateType 4 = ilState # translate (r2 (negate 4,11.5)) <> statebox # named (nid ++"il")
+  | stype == CM.StateType 5 = irState # translate (r2 (negate 4,11.5)) <> statebox # named (nid ++"ir")                                      
   | otherwise = mempty
     where stype = (CM._sStateType currentStates) PA.! sIndex
           --{getPInt= 0}) :. A --{getPInt= 226}) :. U
           --singleEmissionsInd = snd (PA.bounds (CM._sSingleEmissions currentStates))   --sIndex
           --singleEmissions = getBitscore ((CM._sSingleEmissions currentStates) PA.! PAI.Z  PAI.:. 10 PAI.:. A)  --singleEmissionsInd)
           --singleEmissions = (CM._sSingleEmissions currentStates) PA.! (PAI.Z  PAI.:. 10 PAI.:. A)
-          singleEmissionBitscores = V.map (getBitscore . ((CM._sSingleEmissions currentStates) PA.!)) (makeSingleEmissionIndices sIndex)
+          singleEmissionBitscores = V.map ((score2Prob 0.0) . ((CM._sSingleEmissions currentStates) PA.!)) (makeSingleEmissionIndices sIndex)
           singleEmissionEntries = setEmissions emissiontype singleEmissionBitscores
           singleSymbolsAndEmissions = zip ["A","U","G","C"] (V.toList singleEmissionEntries)
-          ilState = vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) --text' "IL" --(show singleEmissions) -- ("IL" ++  show singleEmissions)
-          irState = vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) --text' (show singleEmissions)
+          ilState = text' "IL" === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          irState = text' "IR" === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
 
 setEmissions :: String -> V.Vector Double -> V.Vector Double
 setEmissions emissiontype emissions
@@ -277,7 +279,7 @@ wrap x = [x]
          
 --emissionEntry :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => String -> (String,Double) -> QDiagram b V2 n Any
 emissionEntry emissiontype (symbol,emission) 
-  | emissiontype == "probability" = textentry
+  | emissiontype == "propability" = textentry
   | emissiontype == "score" = textentry
   | emissiontype == "bar" = barentry
   | otherwise = barentry
@@ -293,7 +295,7 @@ makeSingleEmissionIndices index = V.fromList [(PAI.Z  PAI.:. index PAI.:. A),(PA
 makePairEmissionIndices index = V.fromList [(PAI.Z  PAI.:. index PAI.:. A PAI.:. A),(PAI.Z  PAI.:. index PAI.:. A PAI.:. U),(PAI.Z  PAI.:. index PAI.:. A PAI.:. G),(PAI.Z  PAI.:. index PAI.:. A PAI.:. C),(PAI.Z  PAI.:. index PAI.:. U PAI.:. U),(PAI.Z  PAI.:. index PAI.:. U PAI.:. A),(PAI.Z  PAI.:. index PAI.:. U PAI.:. G),(PAI.Z  PAI.:. index PAI.:. U PAI.:. C),(PAI.Z  PAI.:. index PAI.:. G PAI.:. G),(PAI.Z  PAI.:. index PAI.:. G PAI.:. A),(PAI.Z  PAI.:. index PAI.:. G PAI.:. U),(PAI.Z  PAI.:. index PAI.:. G PAI.:. C),(PAI.Z  PAI.:. index PAI.:. C PAI.:. C),(PAI.Z  PAI.:. index PAI.:. C PAI.:. A),(PAI.Z  PAI.:. index PAI.:. C PAI.:. U),(PAI.Z  PAI.:. index PAI.:. C PAI.:.G)]
 
 
-statebox = rect 4.0 30.0  # lw 0.1
+statebox = rect 8.0 23.0  # lw 0.1
        
 --scaling
 -- | Specifies the size of the diagram. Absolute adapts to overall size according to subdiagrams
