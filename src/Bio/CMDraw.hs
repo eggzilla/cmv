@@ -53,38 +53,49 @@ import qualified Data.PrimitiveArray.Index.Class as PAI
 import Text.Printf
 import Biobase.SElab.Types
 import Data.Colour
+import qualified Data.Colour.SRGB.Linear as R
 
 -- | Draw one or more CM guide trees and concatenate them vertically
-drawCMComparisons modelDetail cms comparisonshighlightparameter 
-  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail) cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
-  | modelDetail == "simple" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail) cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
-  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail) cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))                            
-  | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail) cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
+drawCMComparisons modelDetail cms alns comparisons
+  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail) zippedInput)) <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
+  | modelDetail == "simple" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail) zippedInput)) <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
+  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail) zippedInput))   
+  | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail) zippedInput))
+  where zippedInput = zip4 cms alns blankComparisonNodeLabels colorList
+        blankComparisonNodeLabels = map getBlankComparisonNodeLabels cms
+        colorList = replicate (length cms) white
+	comparisonsHighlightParameter = getComparisonsHighlightParameters cms comparisons
 
 -- | Draw one or more CM 
---drawSingleCMComparisons modelDetail cms comparisonshighlightparameter 
---  | modelDetail == "flat" = map (drawCM modelDetail) cms <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
---  | modelDetail == "simple" = map (drawCM modelDetail) cms <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
---  | modelDetail == "detailed" = map (drawCM modelDetail) cms) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
---  | otherwise = (map (drawCM modelDetail) cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
+--drawSingleCMComparisons modelDetail cms  alns comparisonshighlightparameter 
+--  | modelDetail == "flat" = map (drawCM modelDetail) zippedInput <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
+--  | modelDetail == "simple" = map (drawCM modelDetail) zippedInput <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
+--  | modelDetail == "detailed" = map (drawCM modelDetail) zippedInput <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
+--  | otherwise = map (drawCM modelDetail) zippedInput <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
 
 -- | Draw one or more CM and concatenate them vertically
-drawCMs modelDetail cms
-  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail) cms))
-  | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail) cms))
-  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail) cms))
-  | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail) cms))
+drawCMs modelDetail cms alns
+  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail) zippedInput))
+  | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail) zippedInput))
+  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail) zippedInput))
+  | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail) zippedInput))
+    where zippedInput = zip4 cms alns blankComparisonNodeLabels colorList
+          blankComparisonNodeLabels = map getBlankComparisonNodeLabels cms
+          colorList = replicate (length cms) white
 
 -- | Draw one or more CM 
-drawSingleCMs modelDetail cms
-  | modelDetail == "flat" = map (drawCM modelDetail) cms
-  | modelDetail == "simple" = map (drawCM modelDetail) cms
-  | modelDetail == "detailed" = map (drawCM modelDetail) cms
-  | otherwise = map (drawCM modelDetail) cms
+drawSingleCMs modelDetail cms alns
+  | modelDetail == "flat" = map (drawCM modelDetail) zippedInput
+  | modelDetail == "simple" = map (drawCM modelDetail) zippedInput
+  | modelDetail == "detailed" = map (drawCM modelDetail) zippedInput
+  | otherwise = map (drawCM modelDetail) zippedInput
+    where zippedInput = zip4 cms alns blankComparisonNodeLabels colorList
+          blankComparisonNodeLabels = map getBlankComparisonNodeLabels cms
+          colorList = replicate (length cms) white
 
 -- | Draw the guide Tree of a single CM
 --drawCM :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => [Char] -> [(String, [Char])] -> QDiagram b V2 n Any
-drawCM modelDetail cm
+drawCM modelDetail (cm,aln,blankComparisonNodeLabels,modelColor)
    | modelDetail == "flat" = hcat (map drawCMNodeFlat nodes1)
    | modelDetail == "simple" = hcat (map drawCMNodeSimple nodes1)
    | modelDetail == "detailed" = detailedModelAlignment
@@ -103,7 +114,7 @@ drawCM modelDetail cm
 	 --nullModelBox = vcat (map (emissionEntry "score") dummyNullModelBitscores)
 	 modelName = CM._name cm
 	 detailedModelAlignment = alignTL (vcat' with { _sep = 5 }  [modelHeader,detailedModel]) -- ,alignmentDiagram])
-	 modelHeader = makeModelHeader (T.unpack modelName) white -- modelColor
+	 modelHeader = makeModelHeader (T.unpack modelName) modelColor
 	 detailedModel = (hcat (V.toList (V.map (drawCMNodeDetailed alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber  nodeNumber V.empty allStates) nodes)))
 
 makeModelHeader mName modelColor = strutX 2 ||| hcat (map setTitelLetter mName) ||| strutX 1 ||| rect 4 4 # lw 0.1 # fc modelColor
@@ -385,3 +396,29 @@ mkPath a b c d = position [a,b,c,d,a]
               
 paralellogram :: forall (v :: * -> *) n. (Floating n, Ord n, Metric v) => Point v n -> Point v n -> Point v n -> Point v n -> Path v n
 paralellogram a b c d = pathFromTrailAt (closeTrail (trailFromVertices [a,b,d,c,a])) a
+
+getBlankComparisonNodeLabels :: CM.CM -> V.Vector (Int, V.Vector (Colour Double))
+getBlankComparisonNodeLabels model = comparisonNodeLabels
+   where comparisonNodeLabels = V.generate (nodeNumber +1 ) makeBlankComparisonNodeLabel
+         nodeNumber = CM._nodesInModel model
+
+makeBlankComparisonNodeLabel :: Int ->  (Int,(V.Vector (Colour Double)))
+makeBlankComparisonNodeLabel nodeNumber = (nodeNumber,V.singleton white)
+
+makeColorVector modelNumber = V.map (\(a,b,c) -> R.rgb a b c) modelRGBTupel
+   where indexVector = V.iterateN (modelNumber) (1+) 0
+         stepSize = (765 :: Double) / (fromIntegral modelNumber)
+	 modelRGBTupel = V.map (makeRGBTupel stepSize) indexVector
+
+--makeRGBTupel :: Double -> Int -> (Double,Double,Double)
+makeRGBTupel stepSize modelNumber = (a,b,c)
+  where  totalSize = (fromIntegral modelNumber) * stepSize 
+         a = (rgbBoundries (totalSize  - 255))/255
+	 b = (rgbBoundries (totalSize - a - 255))/255
+	 c = (rgbBoundries (totalSize - a - b))/255
+
+--rgbBoundries :: Double -> Double	     
+rgbBoundries rgbValue
+  | rgbValue>210 = 210
+  | rgbValue<50 = 50
+  | otherwise = rgbValue   

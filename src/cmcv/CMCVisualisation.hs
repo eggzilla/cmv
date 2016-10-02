@@ -56,14 +56,18 @@ main = do
      then do
        models <- fromFile modelsFile
        cmcResultParsed <- getCmcompareResults cmcompareResultFile
-       checkCMCResultsParsed (lefts cmcResultParsed)
-       let rightcmcResultsParsed = rights cmcResultParsed
-       let comparisonModelNames = getModelsNames rightcmcResultsParsed
-       print comparisonModelNames
-       let comparisonsHighlightParameters = getComparisonsHighlightParameters models rightcmcResultsParsed
-       print comparisonsHighlightParameters
-       let outputName = diagramName "cmcv" outputFormat           
-       printCM (E.fromRight outputName) svgsize (drawCMComparisons modelDetail models comparisonsHighlightParameters)
+       let comparisons = rights cmcResultParsed
+       alnInput <- readStockholm alignmentFile
+       let outputName = diagramName "cmcv" outputFormat
+       let modelNumber = length models
+       let alns = if (isRight alnInput) then (map (\a -> Just a) (fromRight alnInput)) else (replicate modelNumber Nothing)
+       if oneOutputFile
+              then do
+                printCM (E.fromRight outputName) svgsize (drawCMComparisons modelDetail models alns comparisons)
+	      else do
+	        let modelNames = map ((++"."++outputFormat) . T.unpack . CM._name) models alns
+		let modelVis = drawSingleCMComparisons modelDetail models alns comparisonsHighlightParameters
+                mapM_ (\(a,b) -> printCM a svgsize b) (zip modelNames modelVis)
      else do
        if modelFileExists then return () else putStrLn "Model file not found"
        if cmcFileExists then return () else putStrLn "Comparison file not found"
