@@ -50,6 +50,7 @@ import qualified Data.PrimitiveArray.Class as PA
 import Biobase.SElab.Bitscore
 import Biobase.Primary.Nuc.RNA
 import qualified Data.PrimitiveArray.Index.Class as PAI
+import Text.Printf    
 --import qualified Data.Array.Repa as AR
 --import Control.Lens
 
@@ -246,11 +247,38 @@ drawCMInsertStateBox nid alphabetSymbols emissiontype boxlength currentStates sI
           singleEmissionsInd = snd (PA.bounds (CM._sSingleEmissions currentStates))   --sIndex
           --singleEmissions = getBitscore ((CM._sSingleEmissions currentStates) PA.! PAI.Z  PAI.:. 10 PAI.:. A)  --singleEmissionsInd)
           --singleEmissions = (CM._sSingleEmissions currentStates) PA.! (PAI.Z  PAI.:. 10 PAI.:. A)
-          singleEmissions = map (getBitscore . ((CM._sSingleEmissions currentStates) PA.!)) (makeSingleEmissionIndices 10 )
-          ilState = text' (show singleEmissions) -- ("IL" ++  show singleEmissions)
-          irState = text' "IR"
+          singleEmissionBitscores = V.map (getBitscore . ((CM._sSingleEmissions currentStates) PA.!)) (makeSingleEmissionIndices sIndex)
+          emissionEntries = setEmissions emissiontype singleEmissionBitscores
+          singleSymbolsAndEmissions = zip ["A","U","G","C"] (V.toList emissionEntries)
+          ilState = vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) --text' "IL" --(show singleEmissions) -- ("IL" ++  show singleEmissions)
+          irState = vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) --text' (show singleEmissions)
 
-makeSingleEmissionIndices index = [(PAI.Z  PAI.:. index PAI.:. A),(PAI.Z  PAI.:. index PAI.:. U),(PAI.Z  PAI.:. index PAI.:. G),(PAI.Z  PAI.:. index PAI.:. C)]
+setEmissions :: String -> V.Vector Double -> V.Vector Double
+setEmissions emissiontype emissions
+  | emissiontype == "score" = scoreentries
+  | emissiontype == "probability" = propentries
+  | emissiontype == "bar" = barentries
+  | otherwise = barentries
+    where scoreentries = emissions      
+          propentries = V.map (exp . negate) emissions
+          barentries = V.map (exp . negate) emissions
+
+wrap x = [x]
+         
+--emissionEntry :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => String -> (String,Double) -> QDiagram b V2 n Any
+emissionEntry emissiontype (symbol,emission) 
+  | emissiontype == "probability" = textentry
+  | emissiontype == "score" = textentry
+  | emissiontype == "bar" = barentry
+  | otherwise = barentry
+    where textentry = alignedText 0 0.1 (symbol ++ " " ++ printf "%.3f" emission) # translate (r2 (negate 0.5,0)) <> (rect 2 1 # lw 0 ) 
+          --barentry =  stroke (textSVG symbol 2) ||| bar emission
+          barentry = (alignedText 0 0.01 symbol  # translate (r2 (negate 0.25,negate 0.3)) <> (rect 2 1 # lw 0 )) ||| bar emission
+
+--bar :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => Double -> QDiagram b V2 n Any
+bar emission = (rect (4 * emission) 1 # lw 0 # fc black # translate (r2 (negate (2 - (4 * emission/2)),0)) <> rect 4 1 # lw 0.03 )
+                    
+makeSingleEmissionIndices index = V.fromList [(PAI.Z  PAI.:. index PAI.:. A),(PAI.Z  PAI.:. index PAI.:. U),(PAI.Z  PAI.:. index PAI.:. G),(PAI.Z  PAI.:. index PAI.:. C)]
 
 statebox = circle 3.0 # lw 0.1
        
