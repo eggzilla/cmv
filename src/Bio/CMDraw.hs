@@ -212,7 +212,7 @@ drawCMNodeBox alphabetSymbols emissiontype boxlength currentStates node
           -- end e
           endNode = text' "END" # rotate (1/4 @@ turn) ||| strutX 2.0 ||| (splitStatesBox === strutY 4.0 === insertStatesBox)
                     
-nodeBox = rect 30 30 # lw 0.1
+nodeBox = rect 30 50 # lw 0.1
 
                     
 --drawCMStateBox :: [Char]  -> String -> Double -> CM.States -> PI.PInt () CM.StateIndex -> QDiagram NullBackend V2 n Any
@@ -226,17 +226,27 @@ drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIn
   | stype == CM.StateType 8 = bState <> statebox # named (nid ++"b")
   | stype == CM.StateType 9 = elState <> statebox # named (nid ++"el")                                               
   | otherwise = mempty
-    where stype = (CM._sStateType currentStates) PA.! sIndex
-          --singleEmissions = (CM._sSingleEmissions currentStates) PA.! sIndex
-          --pairEmissions = (CM._sPairEmissions currentStates) PA.! sIndex 
-          dState = text' "D" -- ++ show stype
-          mpState = text' "MP"
-          mlState = text' "ML"
-          mrState = text' "MR"
-          sState = text' "S"
-          eState = text' "E"
-          bState = text' "B"
-          elState = text' "EL"
+    where --singleEmissions = (CM._sSingleEmissions currentStates) PA.! sIndex
+          --pairEmissions = (CM._sPairEmissions currentStates) PA.! sIndex
+	  stype = (CM._sStateType currentStates) PA.! sIndex
+          --{getPInt= 0}) :. A --{getPInt= 226}) :. U
+          --singleEmissionsInd = snd (PA.bounds (CM._sSingleEmissions currentStates))   --sIndex
+          --singleEmissions = getBitscore ((CM._sSingleEmissions currentStates) PA.! PAI.Z  PAI.:. 10 PAI.:. A)  --singleEmissionsInd)
+          --singleEmissions = (CM._sSingleEmissions currentStates) PA.! (PAI.Z  PAI.:. 10 PAI.:. A)
+          singleEmissionBitscores = V.map (getBitscore . ((CM._sSingleEmissions currentStates) PA.!)) (makeSingleEmissionIndices sIndex)
+          singleEmissionEntries = setEmissions emissiontype singleEmissionBitscores
+          singleSymbolsAndEmissions = zip ["A","U","G","C"] (V.toList singleEmissionEntries)
+	  pairEmissionBitscores = V.map (getBitscore . ((CM._sPairEmissions currentStates) PA.!)) (makePairEmissionIndices sIndex)
+          pairEmissionEntries = setEmissions emissiontype singleEmissionBitscores
+	  pairSymbolsAndEmissions = zip ["AA","AU","AG","AC","UU","UA","UG","UC","GG","GA","GU","GC","CC","CA","CU","CG"] (V.toList pairEmissionEntries)
+          dState = vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) -- text' "D" -- ++ show stype
+          mpState = vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions) -- text' "MP"
+          mlState = vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) -- text' "ML"
+          mrState = vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) -- text' "MR"
+          sState = vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) -- text' "S"
+          eState = vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) -- text' "E"
+          bState = vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) -- text' "B"
+          elState = vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) -- text' "EL"
           
 drawCMInsertStateBox nid alphabetSymbols emissiontype boxlength currentStates sIndex
   | stype == CM.StateType 4 = ilState <> statebox # named (nid ++"il")
@@ -244,12 +254,12 @@ drawCMInsertStateBox nid alphabetSymbols emissiontype boxlength currentStates sI
   | otherwise = mempty
     where stype = (CM._sStateType currentStates) PA.! sIndex
           --{getPInt= 0}) :. A --{getPInt= 226}) :. U
-          singleEmissionsInd = snd (PA.bounds (CM._sSingleEmissions currentStates))   --sIndex
+          --singleEmissionsInd = snd (PA.bounds (CM._sSingleEmissions currentStates))   --sIndex
           --singleEmissions = getBitscore ((CM._sSingleEmissions currentStates) PA.! PAI.Z  PAI.:. 10 PAI.:. A)  --singleEmissionsInd)
           --singleEmissions = (CM._sSingleEmissions currentStates) PA.! (PAI.Z  PAI.:. 10 PAI.:. A)
           singleEmissionBitscores = V.map (getBitscore . ((CM._sSingleEmissions currentStates) PA.!)) (makeSingleEmissionIndices sIndex)
-          emissionEntries = setEmissions emissiontype singleEmissionBitscores
-          singleSymbolsAndEmissions = zip ["A","U","G","C"] (V.toList emissionEntries)
+          singleEmissionEntries = setEmissions emissiontype singleEmissionBitscores
+          singleSymbolsAndEmissions = zip ["A","U","G","C"] (V.toList singleEmissionEntries)
           ilState = vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) --text' "IL" --(show singleEmissions) -- ("IL" ++  show singleEmissions)
           irState = vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) --text' (show singleEmissions)
 
@@ -279,8 +289,11 @@ emissionEntry emissiontype (symbol,emission)
 bar emission = (rect (4 * emission) 1 # lw 0 # fc black # translate (r2 (negate (2 - (4 * emission/2)),0)) <> rect 4 1 # lw 0.03 )
                     
 makeSingleEmissionIndices index = V.fromList [(PAI.Z  PAI.:. index PAI.:. A),(PAI.Z  PAI.:. index PAI.:. U),(PAI.Z  PAI.:. index PAI.:. G),(PAI.Z  PAI.:. index PAI.:. C)]
+-- AA AU AG AC UU UA UG UC GG GA GU GC CC CA CU CG
+makePairEmissionIndices index = V.fromList [(PAI.Z  PAI.:. index PAI.:. A PAI.:. A),(PAI.Z  PAI.:. index PAI.:. A PAI.:. U),(PAI.Z  PAI.:. index PAI.:. A PAI.:. G),(PAI.Z  PAI.:. index PAI.:. A PAI.:. C),(PAI.Z  PAI.:. index PAI.:. U PAI.:. U),(PAI.Z  PAI.:. index PAI.:. U PAI.:. A),(PAI.Z  PAI.:. index PAI.:. U PAI.:. G),(PAI.Z  PAI.:. index PAI.:. U PAI.:. C),(PAI.Z  PAI.:. index PAI.:. G PAI.:. G),(PAI.Z  PAI.:. index PAI.:. G PAI.:. A),(PAI.Z  PAI.:. index PAI.:. G PAI.:. U),(PAI.Z  PAI.:. index PAI.:. G PAI.:. C),(PAI.Z  PAI.:. index PAI.:. C PAI.:. C),(PAI.Z  PAI.:. index PAI.:. C PAI.:. A),(PAI.Z  PAI.:. index PAI.:. C PAI.:. U),(PAI.Z  PAI.:. index PAI.:. C PAI.:.G)]
 
-statebox = circle 3.0 # lw 0.1
+
+statebox = rect 4.0 30.0  # lw 0.1
        
 --scaling
 -- | Specifies the size of the diagram. Absolute adapts to overall size according to subdiagrams
