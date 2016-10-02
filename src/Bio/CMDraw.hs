@@ -7,10 +7,10 @@
 
 module Bio.CMDraw
     (
-     drawCMGuideForestComparison, 
-     drawCMGuideForest,
-     drawCMGuideTrees,
-     drawCMGuideTree,
+     drawCMComparisons, 
+     drawCMs,
+     drawSingleCMs,
+     drawCM,
      text',
      svgsize,
      diagramName,
@@ -52,89 +52,42 @@ import Biobase.Primary.Nuc.RNA
 import qualified Data.PrimitiveArray.Index.Class as PAI
 import Text.Printf
 import Biobase.SElab.Types
---import qualified Data.Array.Repa as AR
---import Control.Lens
+import Data.Colour
 
 -- | Draw one or more CM guide trees and concatenate them vertically
---drawCMGuideForestComparison :: forall b. Renderable (Path V2 Double) b => [Char] -> [[(String, [Char])]] -> [(Int, Int, Int, Int, Int, Int, Int, Int)] -> QDiagram b V2 Double Any
-drawCMGuideForestComparison modelDetail cms comparisonshighlightparameter 
-  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (drawCMGuideTrees modelDetail  cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
-  | modelDetail == "simple" = alignTL (vcat' with { _sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
-  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))                            
-  | otherwise = alignTL (vcat' with { _sep = 40 } (drawCMGuideTrees modelDetail cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
+drawCMComparisons modelDetail cms comparisonshighlightparameter 
+  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail) cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
+  | modelDetail == "simple" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail) cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
+  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail) cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))                            
+  | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail) cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
 
--- | Draw one or more CM guide trees and concatenate them vertically
---drawCMGuideForest :: forall b. Renderable (Path V2 Double) b => [Char] -> [[(String, [Char])]] -> QDiagram b V2 Double Any
-drawCMGuideForest modelDetail cms
-  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (drawCMGuideTrees modelDetail cms))
-  | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (drawCMGuideTrees modelDetail cms))
-  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (drawCMGuideTrees modelDetail cms))
-  | otherwise = alignTL (vcat' with { _sep = 40 } (drawCMGuideTrees modelDetail cms))
+-- | Draw one or more CM 
+--drawSingleCMComparisons modelDetail cms comparisonshighlightparameter 
+--  | modelDetail == "flat" = map (drawCM modelDetail) cms <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
+--  | modelDetail == "simple" = map (drawCM modelDetail) cms <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
+--  | modelDetail == "detailed" = map (drawCM modelDetail) cms) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
+--  | otherwise = (map (drawCM modelDetail) cms)) <> (mconcat (highlightComparisonTrails modelDetail comparisonshighlightparameter))
 
--- | Highlight comparison by connecting the delimiting nodes of the aligned nodes of both models
--- takes the model identifier of both models and the starting and ending nodes of both models as arguments.
---highlightComparisonLines a b c d e f g h = highlightComparisonIntervalBoundry a b c d <> highlightComparisonIntervalBoundry e f g h
+-- | Draw one or more CM and concatenate them vertically
+drawCMs modelDetail cms
+  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail) cms))
+  | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail) cms))
+  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail) cms))
+  | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail) cms))
 
+-- | Draw one or more CM 
+drawSingleCMs modelDetail cms
+  | modelDetail == "flat" = map (drawCM modelDetail) cms
+  | modelDetail == "simple" = map (drawCM modelDetail) cms
+  | modelDetail == "detailed" = map (drawCM modelDetail) cms
+  | otherwise = map (drawCM modelDetail) cms
 
-highlightComparisonIntervalBoundry :: forall b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2, N b ~ Double) => Int -> Int -> Int -> Int -> b
-highlightComparisonIntervalBoundry model1index node1index model2index node2index = connectionLine (getNodeCoordinates "detailed" model1index node1index) (getNodeCoordinates "detailed" model2index node2index)
-
-highlightComparisonTrails :: forall b. Renderable (Path V2 Double) b => String -> [(Int, Int, Int, Int, Int, Int, Int, Int)] -> [QDiagram b V2 Double Any]
-highlightComparisonTrails modelDetail trails  = map (highlightComparisonTrail modelDetail) trails
-
--- | Highlight comparison by connecting the all of the aligned nodes of both models
-highlightComparisonTrail :: forall b. Renderable (Path V2 Double) b => String -> (Int, Int, Int, Int, Int, Int, Int, Int) -> QDiagram b V2 Double Any
-highlightComparisonTrail modelDetail (a,b,c,d,e,f,g,h) = connectionTrail (getNodeCoordinates modelDetail a b) (getNodeCoordinates modelDetail c d) (getNodeCoordinates  modelDetail e f) (getNodeCoordinates modelDetail g h)
-
--- | Returns the center coordinates for an Covariance model guide tree node
-getNodeCoordinates :: String -> Int -> Int -> P2 Double
-getNodeCoordinates modelDetail modelindex nodeindex 
-   | modelDetail == "simple" = p2 (fromIntegral x, fromIntegral y)
-   | modelDetail == "flat" = p2 (fromIntegral a, fromIntegral b)
-   | otherwise = p2 (fromIntegral x, fromIntegral y)
-      where y = (getYCoordinateDetailed modelindex 0) * (-1)
-            x = (5 + (10 * (nodeindex - 1 )))
-            a = (1 + (2 * (nodeindex - 1 )))
-            b = (getYCoordinateSimple modelindex 0) * (-1)
-
-
--- |  Computes the y coodinate for comparison highlighting, so that the
--- line or area starts at the lower edge of the cm representation and ends right above it
-getYCoordinateDetailed :: Int -> Int -> Int 
-getYCoordinateDetailed modelindex ycoordinate
-    | modelindex == 0 = ycoordinate 
-    | even modelindex = getYCoordinateDetailed (modelindex - 1) (ycoordinate + 40) 
-    | otherwise = getYCoordinateDetailed (modelindex - 1) (ycoordinate + 10)
-    
-
-getYCoordinateSimple :: Int -> Int -> Int 
-getYCoordinateSimple modelindex ycoordinate
-    | modelindex == 0 = ycoordinate 
-    | even modelindex = getYCoordinateSimple (modelindex - 1) (ycoordinate + 8) 
-    | otherwise = getYCoordinateSimple (modelindex - 1) (ycoordinate + 2) 
-
-connectionLine :: forall b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => Point (V b) (N b) -> Point (V b) (N b) -> b
-connectionLine a b = fromVertices [a,b] # lw 0.5 # lc green
-
-connectionTrail :: forall b n. (RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => Point V2 n -> Point V2 n -> Point V2 n -> Point V2 n -> QDiagram b V2 n Any
-connectionTrail a b c d = stroke (paralellogram a b c d ) # fc aqua # fillRule EvenOdd # lc black # lw 0.1
-
-mkPath :: forall a. (Num (N a), Monoid a, Semigroup a, Additive (V a), HasOrigin a) => (Point (V a) (N a), a) -> (Point (V a) (N a), a) -> (Point (V a) (N a), a) -> (Point (V a) (N a), a) -> a
-mkPath a b c d = position [a,b,c,d,a]
-              
-paralellogram :: forall (v :: * -> *) n. (Floating n, Ord n, Metric v) => Point v n -> Point v n -> Point v n -> Point v n -> Path v n
-paralellogram a b c d = pathFromTrailAt (closeTrail (trailFromVertices [a,b,d,c,a])) a
-
--- | Draw the Guide Trees of multiple CMs, utilizes drawCMGuideNode
---drawCMGuideTrees :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => [Char] -> [[(String, [Char])]] -> [QDiagram b V2 n Any]
-drawCMGuideTrees detail cms  = map (drawCMGuideTree detail) cms
-
--- | Draw the guide Tree of a single CM, utilizes drawCMGuideNode
---drawCMGuideTree :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => [Char] -> [(String, [Char])] -> QDiagram b V2 n Any
-drawCMGuideTree modelDetail cm
+-- | Draw the guide Tree of a single CM
+--drawCM :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => [Char] -> [(String, [Char])] -> QDiagram b V2 n Any
+drawCM modelDetail cm
    | modelDetail == "flat" = hcat (map drawCMNodeFlat nodes1)
    | modelDetail == "simple" = hcat (map drawCMNodeSimple nodes1)
-   | modelDetail == "detailed" = text' (T.unpack modelName) === (hcat (V.toList (V.map (drawCMNodeDetailed alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber  nodeNumber V.empty allStates) nodes)))
+   | modelDetail == "detailed" = detailedModelAlignment
    | otherwise = hcat (V.toList (V.map (drawCMNodeDetailed alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber  nodeNumber V.empty allStates) nodes))
    where nodes1 = (processCMGuideTree cm)
          nodes = CM._nodes cm
@@ -149,6 +102,9 @@ drawCMGuideTree modelDetail cm
 	 --dummyNullModelBitscores = zip dummyLetters nullModelBitscores
 	 --nullModelBox = vcat (map (emissionEntry "score") dummyNullModelBitscores)
 	 modelName = CM._name cm
+	 detailedModelAlignment = alignTL (vcat' with { _sep = 5 }  [modelHeader,detailedModel]) -- ,alignmentDiagram])
+	 modelHeader = makeModelHeader (T.unpack modelName) white -- modelColor
+	 detailedModel = (hcat (V.toList (V.map (drawCMNodeDetailed alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber  nodeNumber V.empty allStates) nodes)))
 
 makeModelHeader mName modelColor = strutX 2 ||| hcat (map setTitelLetter mName) ||| strutX 1 ||| rect 4 4 # lw 0.1 # fc modelColor
 setTitelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 4.0 <> rect 4.0 4.0 # lw 0
@@ -377,3 +333,55 @@ getComparisonHighlightParameters sortedmodels comp = (a,b,c,d,a,f,c,e)
         d = head (model2matchednodes comp)
         e = last (model2matchednodes comp)
         f = last (model1matchednodes comp)
+
+-- | Highlight comparison by connecting the delimiting nodes of the aligned nodes of both models
+-- takes the model identifier of both models and the starting and ending nodes of both models as arguments.
+--highlightComparisonLines a b c d e f g h = highlightComparisonIntervalBoundry a b c d <> highlightComparisonIntervalBoundry e f g h
+highlightComparisonIntervalBoundry :: forall b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2, N b ~ Double) => Int -> Int -> Int -> Int -> b
+highlightComparisonIntervalBoundry model1index node1index model2index node2index = connectionLine (getNodeCoordinates "detailed" model1index node1index) (getNodeCoordinates "detailed" model2index node2index)
+
+highlightComparisonTrails :: forall b. Renderable (Path V2 Double) b => String -> [(Int, Int, Int, Int, Int, Int, Int, Int)] -> [QDiagram b V2 Double Any]
+highlightComparisonTrails modelDetail trails  = map (highlightComparisonTrail modelDetail) trails
+
+-- | Highlight comparison by connecting the all of the aligned nodes of both models
+highlightComparisonTrail :: forall b. Renderable (Path V2 Double) b => String -> (Int, Int, Int, Int, Int, Int, Int, Int) -> QDiagram b V2 Double Any
+highlightComparisonTrail modelDetail (a,b,c,d,e,f,g,h) = connectionTrail (getNodeCoordinates modelDetail a b) (getNodeCoordinates modelDetail c d) (getNodeCoordinates  modelDetail e f) (getNodeCoordinates modelDetail g h)
+
+-- | Returns the center coordinates for an Covariance model guide tree node
+getNodeCoordinates :: String -> Int -> Int -> P2 Double
+getNodeCoordinates modelDetail modelindex nodeindex 
+   | modelDetail == "simple" = p2 (fromIntegral x, fromIntegral y)
+   | modelDetail == "flat" = p2 (fromIntegral a, fromIntegral b)
+   | otherwise = p2 (fromIntegral x, fromIntegral y)
+      where y = (getYCoordinateDetailed modelindex 0) * (-1)
+            x = (5 + (10 * (nodeindex - 1 )))
+            a = (1 + (2 * (nodeindex - 1 )))
+            b = (getYCoordinateSimple modelindex 0) * (-1)
+
+
+-- |  Computes the y coodinate for comparison highlighting, so that the
+-- line or area starts at the lower edge of the cm representation and ends right above it
+getYCoordinateDetailed :: Int -> Int -> Int 
+getYCoordinateDetailed modelindex ycoordinate
+    | modelindex == 0 = ycoordinate 
+    | even modelindex = getYCoordinateDetailed (modelindex - 1) (ycoordinate + 40) 
+    | otherwise = getYCoordinateDetailed (modelindex - 1) (ycoordinate + 10)
+    
+
+getYCoordinateSimple :: Int -> Int -> Int 
+getYCoordinateSimple modelindex ycoordinate
+    | modelindex == 0 = ycoordinate 
+    | even modelindex = getYCoordinateSimple (modelindex - 1) (ycoordinate + 8) 
+    | otherwise = getYCoordinateSimple (modelindex - 1) (ycoordinate + 2) 
+
+connectionLine :: forall b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => Point (V b) (N b) -> Point (V b) (N b) -> b
+connectionLine a b = fromVertices [a,b] # lw 0.5 # lc green
+
+connectionTrail :: forall b n. (RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => Point V2 n -> Point V2 n -> Point V2 n -> Point V2 n -> QDiagram b V2 n Any
+connectionTrail a b c d = stroke (paralellogram a b c d ) # fc aqua # fillRule EvenOdd # lc black # lw 0.1
+
+mkPath :: forall a. (Num (N a), Monoid a, Semigroup a, Additive (V a), HasOrigin a) => (Point (V a) (N a), a) -> (Point (V a) (N a), a) -> (Point (V a) (N a), a) -> (Point (V a) (N a), a) -> a
+mkPath a b c d = position [a,b,c,d,a]
+              
+paralellogram :: forall (v :: * -> *) n. (Floating n, Ord n, Metric v) => Point v n -> Point v n -> Point v n -> Point v n -> Path v n
+paralellogram a b c d = pathFromTrailAt (closeTrail (trailFromVertices [a,b,d,c,a])) a

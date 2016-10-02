@@ -2,6 +2,7 @@
 {-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 -- | Visualize Infernal Covariance Models
 --   Datastructures and parsing of covariance models is provided by Biobase
@@ -18,6 +19,7 @@ import System.Console.CmdArgs
 import System.Directory
 import Data.Either.Unwrap
 import Bio.StockholmParser
+import qualified Data.Text as T
 
 options :: Options
 data Options = Options            
@@ -26,7 +28,8 @@ data Options = Options
     modelDetail :: String,
     modelLayout :: String,
     maxWidth :: Double,
-    outputFormat :: String               
+    outputFormat :: String,
+    oneOutputFile :: Bool
   } deriving (Show,Data,Typeable)
 
 
@@ -36,7 +39,8 @@ options = Options
     modelDetail = "detailed" &= name "d" &= help "Set verbosity of drawn models: simple, detailed",
     modelLayout = "flat" &= name "l" &= help "Set layout of drawn models: flat, tree",
     maxWidth = (100:: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)",
-    outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)" 
+    outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
+    oneOutputFile = False  &= name "o" &= help "Merge all output into one file (Default: False)"
   } &= summary "CMV devel version" &= help "Florian Eggenhofer - 2013-2016" &= verbosity
 
 main :: IO ()
@@ -50,9 +54,17 @@ main = do
       if (not (null models))
         then do
           alnInput <- readStockholm alignmentFile
-          let aln = if (isRight alnInput) then (Just (head (fromRight alnInput))) else Nothing
-          let outputName = diagramName "cmv" outputFormat       
-          printCM (fromRight outputName) svgsize (drawCMGuideForest modelDetail models)    
+          let outputName = diagramName "cmv" outputFormat
+	  let modelNumber = length models
+          let alns = if (isRight alnInput) then (map (\a -> Just a) (fromRight alnInput)) else (replicate modelNumber Nothing)
+	  if oneOutputFile
+              then do
+                --printCM (fromRight outputName) svgsize (drawCMGuideForest modelDetail models)
+		printCM (fromRight outputName) svgsize (drawCMs modelDetail models)
+	      else do
+	        let modelNames = map ((++"."++outputFormat) . T.unpack . CM._name) models
+		let modelVis = drawSingleCMs modelDetail models
+                mapM_ (\(a,b) -> printCM a svgsize b) (zip modelNames modelVis)
         else do
           print "Could not read covariance models from input file"
     else do

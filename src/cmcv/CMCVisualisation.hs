@@ -59,24 +59,11 @@ main = do
        checkCMCResultsParsed (lefts cmcResultParsed)
        let rightcmcResultsParsed = rights cmcResultParsed
        let comparisonModelNames = getModelsNames rightcmcResultsParsed
-       --print (T.unpack (CM._name (models !!0)))
-       --print (T.unpack (CM._name (models !!1)))
-       --print rightcmcResultsParsed
        print comparisonModelNames
-       --let findbtest = findModel "d" models
-       --print findbtest
-       --print models 
-       --let sortedModels = sortModelsByComparisonResults comparisonModelNames models
-       --print "Begin sorted Models:\n"
-       --checkSortedModels (lefts sortedModels)
-       --let rightSortedModels = (rights sortedModels)
-       --print sortedModels
-       --printSVG svgsize (drawCMGuideForest c (processCMs (rightSortedModels)) (getComparisonsHighlightParameters rightSortedModels rightcmcResultsParsed))
        let comparisonsHighlightParameters = getComparisonsHighlightParameters models rightcmcResultsParsed
        print comparisonsHighlightParameters
-       --printSVG svgsize (drawCMGuideForestComparison modelDetail (processCMs (models)) (comparisonsHighlightParameters))
        let outputName = diagramName "cmcv" outputFormat           
-       printCM (E.fromRight outputName) svgsize (drawCMGuideForestComparison modelDetail models comparisonsHighlightParameters)
+       printCM (E.fromRight outputName) svgsize (drawCMComparisons modelDetail models comparisonsHighlightParameters)
      else do
        if modelFileExists then return () else putStrLn "Model file not found"
        if cmcFileExists then return () else putStrLn "Comparison file not found"
