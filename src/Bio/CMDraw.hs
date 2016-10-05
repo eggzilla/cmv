@@ -131,9 +131,6 @@ drawCM modelDetail (cm,aln,blankComparisonNodeLabels,modelColor)
          connectedStates = V.map (\((a,b),c) -> (a,b,c,(0,0))) (V.fromList (zip transitionIndexTuple transitionBitscores))
 	 arrowList = V.toList (V.map makeArrow connectedStates) -- connectedNodes V.++ V.map makeSelfArrow selfConnectedNodes)
          labelList = V.toList (V.map makeLabel connectedStates) -- connectedNodes V.++ V.map makeSelfLabel selfConnectedNodes)
-         --print transitionArrows
-	 --arrowList = 
-	 --labelList =
 
 --getTransitions states nodes nodeIndex = nodeTransitions
 --  where node = nodes V.! nodeIndex
@@ -457,7 +454,7 @@ deConstr (PAI.Z PAI.:. a PAI.:. b) = PI.getPInt a
 makeTransitionIndices n = concatMap makeTransitionSubIndices indexes
   where indexes = [1..n]
 
-makeTransitionSubIndices n = map  (\a -> (("s" ++ show n,"s" ++ show (n+a)),(PAI.Z PAI.:. (PI.PInt n) PAI.:. a ))) subIndices
+makeTransitionSubIndices n = map  (\a -> (("s" ++ show (n-1),"s" ++ show (n+a)),(PAI.Z PAI.:. (PI.PInt n) PAI.:. a ))) subIndices
   where subIndices = [1..5]
 
 makeArrow (lab1,lab2,weight,_) = connectOutside' arrowStyle1 lab1 lab2 
