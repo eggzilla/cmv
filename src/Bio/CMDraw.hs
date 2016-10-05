@@ -215,14 +215,14 @@ nodeBox = rect 60 60 # lw 0.1
 
 --drawCMStateBox :: [Char]  -> String -> Double -> CM.States -> PI.PInt () CM.StateIndex -> QDiagram NullBackend V2 n Any
 drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIndex
-  | stype == CM.StateType 0 = dState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named ("s" ++ stateIndx)
-  | stype == CM.StateType 1 = mpState # translate (r2 (negate 7,8)) <> statebox 16.0 20.0 # named ("s" ++ stateIndx)
-  | stype == CM.StateType 2 = mlState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named ("s" ++ stateIndx)
-  | stype == CM.StateType 3 = mrState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named ("s" ++ stateIndx)
-  | stype == CM.StateType 6 = sState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named ("s" ++ stateIndx)
-  | stype == CM.StateType 7 = eState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named ("s" ++ stateIndx)
-  | stype == CM.StateType 8 = bState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named ("s" ++ stateIndx)
-  | stype == CM.StateType 9 = elState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named ("s" ++ stateIndx)                                               
+  | stype == CM.StateType 0 = dState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 stateIndx -- # named ("s" ++ stateIndx)
+  | stype == CM.StateType 1 = mpState # translate (r2 (negate 7,8)) <> statebox 16.0 20.0 stateIndx -- # named ("s" ++ stateIndx)
+  | stype == CM.StateType 2 = mlState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 stateIndx -- # named ("s" ++ stateIndx)
+  | stype == CM.StateType 3 = mrState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 stateIndx -- # named ("s" ++ stateIndx)
+  | stype == CM.StateType 6 = sState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 stateIndx -- # named ("s" ++ stateIndx)
+  | stype == CM.StateType 7 = eState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 stateIndx -- # named ("s" ++ stateIndx)
+  | stype == CM.StateType 8 = bState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 stateIndx -- # named ("s" ++ stateIndx)
+  | stype == CM.StateType 9 = elState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 stateIndx -- # named ("s" ++ stateIndx)                                               
   | otherwise = mempty
     where stype = (CM._sStateType currentStates) PA.! sIndex
           stateIndx = show (PI.getPInt sIndex)
@@ -244,8 +244,8 @@ drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIn
           elState =  text' ("EL" ++ stateIndx) # translate (r2 (3,0.5)) === strutX 2 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
           
 drawCMInsertStateBox nid alphabetSymbols emissiontype boxlength currentStates sIndex
-  | stype == CM.StateType 4 = (ilState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named ("s" ++ stateIndx)) ||| strutX 40
-  | stype == CM.StateType 5 = (irState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named ("s" ++ stateIndx)) 
+  | stype == CM.StateType 4 = ((ilState # translate (r2 (negate 3,8))) <> statebox 8.0 20.0 stateIndx) ||| strutX 40
+  | stype == CM.StateType 5 = (irState # translate (r2 (negate 3,8))) <> statebox 8.0 20.0 stateIndx   
   | otherwise = mempty
     where stype = (CM._sStateType currentStates) PA.! sIndex
           stateIndx = show (PI.getPInt sIndex)
@@ -284,7 +284,7 @@ makeSingleEmissionIndices index = V.fromList [(PAI.Z  PAI.:. index PAI.:. A),(PA
 -- AA AU AG AC UU UA UG UC GG GA GU GC CC CA CU CG
 makePairEmissionIndices index = V.fromList [(PAI.Z  PAI.:. index PAI.:. A PAI.:. A),(PAI.Z  PAI.:. index PAI.:. A PAI.:. U),(PAI.Z  PAI.:. index PAI.:. A PAI.:. G),(PAI.Z  PAI.:. index PAI.:. A PAI.:. C),(PAI.Z  PAI.:. index PAI.:. U PAI.:. U),(PAI.Z  PAI.:. index PAI.:. U PAI.:. A),(PAI.Z  PAI.:. index PAI.:. U PAI.:. G),(PAI.Z  PAI.:. index PAI.:. U PAI.:. C),(PAI.Z  PAI.:. index PAI.:. G PAI.:. G),(PAI.Z  PAI.:. index PAI.:. G PAI.:. A),(PAI.Z  PAI.:. index PAI.:. G PAI.:. U),(PAI.Z  PAI.:. index PAI.:. G PAI.:. C),(PAI.Z  PAI.:. index PAI.:. C PAI.:. C),(PAI.Z  PAI.:. index PAI.:. C PAI.:. A),(PAI.Z  PAI.:. index PAI.:. C PAI.:. U),(PAI.Z  PAI.:. index PAI.:. C PAI.:.G)]
 
-statebox x y = rect x y  # lw 0.1
+statebox x y si = rect x 0 # lw 0 # named ("a" ++ si) === rect x y  # lw 0.1 === rect x 0 # lw 0 # named ("e" ++ si)
        
 --scaling
 -- | Specifies the size of the diagram. Absolute adapts to overall size according to subdiagrams
@@ -454,7 +454,7 @@ deConstr (PAI.Z PAI.:. a PAI.:. b) = PI.getPInt a
 makeTransitionIndices n = concatMap makeTransitionSubIndices indexes
   where indexes = [1..n]
 
-makeTransitionSubIndices n = map  (\a -> (("s" ++ show (n-1),"s" ++ show (n+a)),(PAI.Z PAI.:. (PI.PInt n) PAI.:. a ))) subIndices
+makeTransitionSubIndices n = map  (\a -> (("e" ++ show (n-1),"a" ++ show (n+a)),(PAI.Z PAI.:. (PI.PInt n) PAI.:. a ))) subIndices
   where subIndices = [1..5]
 
 makeArrow (lab1,lab2,weight,_) = connectOutside' arrowStyle1 lab1 lab2 
