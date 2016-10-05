@@ -55,70 +55,71 @@ import Text.Printf
 import Biobase.SElab.Types
 import Data.Colour
 import qualified Data.Colour.SRGB.Linear as R
+import Data.Maybe
 
 -- | Draw one or more CM guide trees and concatenate them vertically
-drawCMComparisons modelDetail cms alns comparisons
-  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail) zippedInput)) <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
-  | modelDetail == "simple" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail) zippedInput)) <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
-  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail) zippedInput))   
-  | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail) zippedInput))
-  where zippedInput = zip4 cms alns blankComparisonNodeLabels colorList
-        blankComparisonNodeLabels = map getBlankComparisonNodeLabels cms
+drawCMComparisons modelDetail entryNumberCutoff emissiontype maxWidth cms alns comparisons
+  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput)) <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
+  | modelDetail == "simple" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput)) <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
+  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput)) 
+  | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput))
+  where zippedInput = zip4 cms alns comparisonNodeLabels colorList
+        comparisonNodeLabels = map getBlankComparisonNodeLabels cms
         colorList = replicate (length cms) white
 	comparisonsHighlightParameter = getComparisonsHighlightParameters cms comparisons
 
 -- | Draw one or more CM 
-drawSingleCMComparisons modelDetail cms alns comparisons
-  | modelDetail == "flat" = map (drawCM modelDetail) zippedInput -- <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
-  | modelDetail == "simple" = map (drawCM modelDetail) zippedInput -- <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
-  | modelDetail == "detailed" = map (drawCM modelDetail) zippedInput
-  | otherwise = map (drawCM modelDetail) zippedInput -- <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
-  where zippedInput = zip4 cms alns blankComparisonNodeLabels colorList
-        blankComparisonNodeLabels = map getBlankComparisonNodeLabels cms
+drawSingleCMComparisons modelDetail entryNumberCutoff emissiontype maxWidth cms alns comparisons
+  | modelDetail == "flat" = map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput -- <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
+  | modelDetail == "simple" = map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput -- <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
+  | modelDetail == "detailed" = map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput
+  | otherwise = map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput -- <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
+  where zippedInput = zip4 cms alns comparisonNodeLabels colorList
+        comparisonNodeLabels = map getBlankComparisonNodeLabels cms
         colorList = replicate (length cms) white
 	comparisonsHighlightParameter = getComparisonsHighlightParameters cms comparisons
 
 -- | Draw one or more CM and concatenate them vertically
-drawCMs modelDetail cms alns
-  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail) zippedInput))
-  | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail) zippedInput))
-  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail) zippedInput))
-  | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail) zippedInput))
-    where zippedInput = zip4 cms alns blankComparisonNodeLabels colorList
-          blankComparisonNodeLabels = map getBlankComparisonNodeLabels cms
+drawCMs modelDetail entryNumberCutoff emissiontype maxWidth cms alns
+  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput))
+  | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput))
+  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput))
+  | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput))
+    where zippedInput = zip4 cms alns comparisonNodeLabels colorList
+          comparisonNodeLabels = map getBlankComparisonNodeLabels cms
           colorList = replicate (length cms) white
 
 -- | Draw one or more CM 
-drawSingleCMs modelDetail cms alns
-  | modelDetail == "flat" = map (drawCM modelDetail) zippedInput
-  | modelDetail == "simple" = map (drawCM modelDetail) zippedInput
-  | modelDetail == "detailed" = map (drawCM modelDetail) zippedInput
-  | otherwise = map (drawCM modelDetail) zippedInput
-    where zippedInput = zip4 cms alns blankComparisonNodeLabels colorList
-          blankComparisonNodeLabels = map getBlankComparisonNodeLabels cms
+drawSingleCMs modelDetail entryNumberCutoff emissiontype maxWidth cms alns
+  | modelDetail == "flat" = map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput
+  | modelDetail == "simple" = map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput
+  | modelDetail == "detailed" = map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput
+  | otherwise = map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput
+    where zippedInput = zip4 cms alns comparisonNodeLabels colorList
+          comparisonNodeLabels = map getBlankComparisonNodeLabels cms
           colorList = replicate (length cms) white
 
 -- | Draw the guide Tree of a single CM
 --drawCM :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => [Char] -> [(String, [Char])] -> QDiagram b V2 n Any
-drawCM modelDetail (cm,aln,blankComparisonNodeLabels,modelColor)
-   | modelDetail == "flat" = vcat (map drawCMNodeFlat nodes1)
-   | modelDetail == "simple" = vcat (map drawCMNodeSimple nodes1)
+drawCM modelDetail entryNumberCutoff emissiontype maxWidth (cm,aln,comparisonNodeLabels,modelColor)
+   | modelDetail == "flat" = vcat (map drawCMNodeFlat simpleNodes)
+   | modelDetail == "simple" = vcat (map drawCMNodeSimple simpleNodes)
    | modelDetail == "detailed" = detailedModelAlignment
    | otherwise = detailedModelAlignment
-   where nodes1 = (processCMGuideTree cm)
+   where simpleNodes = (processCMGuideTree cm)
          nodes = CM._nodes cm
          nodeNumber = V.length nodes
          allStates = CM._states cm
          boxlength = fromIntegral (length alphabetSymbols) + 2
          alphabetSymbols = ['A','U','C','G']
-         emissiontype = "bar"
+	 nodeAlignmentColIndices = V.map (CM._nColL) nodes
 	 --nullModel = CM._nullModel cm
 	 --nullModelBitscores = VU.toList (VU.map (getBitscore) nullModel)
 	 --dummyLetters = replicate (length nullModelBitscores) "I"
 	 --dummyNullModelBitscores = zip dummyLetters nullModelBitscores
 	 --nullModelBox = vcat (map (emissionEntry "score") dummyNullModelBitscores)
 	 modelName = CM._name cm
-	 detailedModelAlignment = alignTL (vcat' with { _sep = 5 }  [modelHeader,detailedNodeTransitions]) -- ,alignmentDiagram])
+	 detailedModelAlignment = alignTL (vcat' with { _sep = 5 }  [modelHeader,detailedNodeTransitions,alignmentDiagram])
 	 modelHeader = makeModelHeader (T.unpack modelName) modelColor
 	 nodeIndices = V.iterateN nodeNumber (1+) 0
 	 detailedNodeTransitions = applyAll (arrowList ++ labelList) detailedNodes
@@ -127,10 +128,10 @@ drawCM modelDetail (cm,aln,blankComparisonNodeLabels,modelColor)
          (lo,up) = PA.bounds trans
          (transitionIndexTuple,transitionPAIndices) = unzip $ makeTransitionIndices (deConstr up)
          transitionBitscores = map ((score2Prob 1) . snd . (trans PA.!)) transitionPAIndices
-         --print transitionBitscores
          connectedStates = V.map (\((a,b),c) -> (a,b,c,(0,0))) (V.fromList (zip transitionIndexTuple transitionBitscores))
 	 arrowList = V.toList (V.map makeArrow connectedStates) -- connectedNodes V.++ V.map makeSelfArrow selfConnectedNodes)
          labelList = V.toList (V.map makeLabel connectedStates) -- connectedNodes V.++ V.map makeSelfLabel selfConnectedNodes)
+	 alignmentDiagram = if isJust aln then drawStockholmLines entryNumberCutoff maxWidth nodeAlignmentColIndices comparisonNodeLabels (fromJust aln) else mempty
 
 --getTransitions states nodes nodeIndex = nodeTransitions
 --  where node = nodes V.! nodeIndex
@@ -139,6 +140,7 @@ drawCM modelDetail (cm,aln,blankComparisonNodeLabels,modelColor)
 
 makeModelHeader mName modelColor = strutX 2 ||| hcat (map setTitelLetter mName) ||| strutX 1 ||| rect 4 4 # lw 0.1 # fc modelColor
 setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0.5 # lw 0
+setStateLetter echar = alignedText 1 1 [echar] # fontSize 2.0 <> rect 2.0 2.0 # lw 0
 setTitelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 4.0 <> rect 4.0 4.0 # lw 0
 
 -- | Draws the guide tree nodes of a CM, simplified
@@ -178,14 +180,14 @@ drawCMNodeDetailed alphabetSymbols emissiontype boxlength rowStart rowEnd lastIn
 	nodeBox = drawCMNodeBox alphabetSymbols emissiontype boxlength states node
 
 drawCMNodeBox alphabetSymbols emissiontype boxlength currentStates node
-  | ntype == CM.NodeType 0 = bifNode # translate (r2 (negate 23,12.5)) <> nodeBox
-  | ntype == CM.NodeType 1 = matPNode # translate (r2 (negate 23,12.5)) <> nodeBox
-  | ntype == CM.NodeType 2 = matLNode # translate (r2 (negate 23,12.5)) <> nodeBox
-  | ntype == CM.NodeType 3 = matRNode # translate (r2 (negate 23,12.5)) <> nodeBox
-  | ntype == CM.NodeType 4 = begLNode # translate (r2 (negate 23,12.5)) <> nodeBox
-  | ntype == CM.NodeType 5 = begRNode # translate (r2 (negate 23,12.5)) <> nodeBox
-  | ntype == CM.NodeType 6 = rootNode # translate (r2 (negate 23,12.5)) <> nodeBox
-  | ntype == CM.NodeType 7 = endNode # translate (r2 (negate 23,12.5)) <> nodeBox
+  | ntype == CM.NodeType 0 = bifNode # translate (r2 (negate 25,25)) <> nodeBox
+  | ntype == CM.NodeType 1 = matPNode # translate (r2 (negate 25,25)) <> nodeBox
+  | ntype == CM.NodeType 2 = matLNode # translate (r2 (negate 25,25)) <> nodeBox
+  | ntype == CM.NodeType 3 = matRNode # translate (r2 (negate 25,25)) <> nodeBox
+  | ntype == CM.NodeType 4 = begLNode # translate (r2 (negate 25,25)) <> nodeBox
+  | ntype == CM.NodeType 5 = begRNode # translate (r2 (negate 25,25)) <> nodeBox
+  | ntype == CM.NodeType 6 = rootNode # translate (r2 (negate 25,25)) <> nodeBox
+  | ntype == CM.NodeType 7 = endNode # translate (r2 (negate 25,25)) <> nodeBox
   | otherwise = endNode <> nodeBox
     where ntype = CM._ntype node
           idNumber = PI.getPInt (CM._nid node)
@@ -195,7 +197,7 @@ drawCMNodeBox alphabetSymbols emissiontype boxlength currentStates node
 	  insertStatesBox = hcat (map (drawCMInsertStateBox nid alphabetSymbols emissiontype boxlength currentStates) stateIndices)
           --insertStatesBox = if (length insertStates) == 2 then hcat [(insertStates !! 0),(strutX (0)),(insertStates !! 1)] else hcat [(insertStates !! 0),(strutX (0))] 
           -- bif b
-          bifNode = (text' "BIF" # rotate (1/4 @@ turn) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          bifNode = (text' "BIF" # rotate (1/4 @@ turn)   ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- matP mp ml mr d il ir
           matPNode = (text' "MATP" # rotate (1/4 @@ turn) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- matL ml d il
@@ -215,14 +217,14 @@ nodeBox = rect 60 60 # lw 0.1
 
 --drawCMStateBox :: [Char]  -> String -> Double -> CM.States -> PI.PInt () CM.StateIndex -> QDiagram NullBackend V2 n Any
 drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIndex
-  | stype == CM.StateType 0 = dState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 stateIndx -- # named ("s" ++ stateIndx)
-  | stype == CM.StateType 1 = mpState # translate (r2 (negate 7,8)) <> statebox 16.0 20.0 stateIndx -- # named ("s" ++ stateIndx)
-  | stype == CM.StateType 2 = mlState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 stateIndx -- # named ("s" ++ stateIndx)
-  | stype == CM.StateType 3 = mrState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 stateIndx -- # named ("s" ++ stateIndx)
-  | stype == CM.StateType 6 = sState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 stateIndx -- # named ("s" ++ stateIndx)
-  | stype == CM.StateType 7 = eState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 stateIndx -- # named ("s" ++ stateIndx)
-  | stype == CM.StateType 8 = bState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 stateIndx -- # named ("s" ++ stateIndx)
-  | stype == CM.StateType 9 = elState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 stateIndx -- # named ("s" ++ stateIndx)                                               
+  | stype == CM.StateType 0 = dState # translate (r2 (negate 3,negate 3)) <> statebox 8.0 20.0 stateIndx 
+  | stype == CM.StateType 1 = mpState # translate (r2 (negate 7,negate 3)) <> statebox 16.0 20.0 stateIndx
+  | stype == CM.StateType 2 = mlState # translate (r2 (negate 3,negate 3)) <> statebox 8.0 20.0 stateIndx
+  | stype == CM.StateType 3 = mrState # translate (r2 (negate 3,negate 3)) <> statebox 8.0 20.0 stateIndx
+  | stype == CM.StateType 6 = sState # translate (r2 (negate 3,negate 3)) <> statebox 8.0 20.0 stateIndx
+  | stype == CM.StateType 7 = eState # translate (r2 (negate 3,negate 3)) <> statebox 8.0 20.0 stateIndx
+  | stype == CM.StateType 8 = bState # translate (r2 (negate 3,negate 3)) <> statebox 8.0 20.0 stateIndx
+  | stype == CM.StateType 9 = elState # translate (r2 (negate 3,negate 3)) <> statebox 8.0 20.0 stateIndx
   | otherwise = mempty
     where stype = (CM._sStateType currentStates) PA.! sIndex
           stateIndx = show (PI.getPInt sIndex)
@@ -244,8 +246,8 @@ drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIn
           elState =  text' ("EL" ++ stateIndx) # translate (r2 (3,0.5)) === strutX 2 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
           
 drawCMInsertStateBox nid alphabetSymbols emissiontype boxlength currentStates sIndex
-  | stype == CM.StateType 4 = ((ilState # translate (r2 (negate 3,8))) <> statebox 8.0 20.0 stateIndx) ||| strutX 40
-  | stype == CM.StateType 5 = (irState # translate (r2 (negate 3,8))) <> statebox 8.0 20.0 stateIndx   
+  | stype == CM.StateType 4 = ((ilState # translate (r2 (negate 3,negate 2))) <> statebox 8.0 20.0 stateIndx) ||| strutX 40
+  | stype == CM.StateType 5 = (irState # translate (r2 (negate 3,negate 2))) <> statebox 8.0 20.0 stateIndx   
   | otherwise = mempty
     where stype = (CM._sStateType currentStates) PA.! sIndex
           stateIndx = show (PI.getPInt sIndex)
@@ -274,17 +276,16 @@ emissionEntry emissiontype (symbol,emission)
   | emissiontype == "bar" = barentry
   | otherwise = barentry
     where textentry = alignedText 0 0.1 (symbol ++ " " ++ printf "%.3f" emission) # translate (r2 (negate 0.5,0)) <> (rect 3 2 # lw 0 ) 
-          --barentry =  stroke (textSVG symbol 2) ||| bar emission
           barentry = (alignedText 0 0.01 symbol  # translate (r2 (negate 0.5,negate 0.3)) <> (rect 3 2 # lw 0)) ||| bar emission
 
 --bar :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => Double -> QDiagram b V2 n Any
 bar emission = (rect (4 * emission) 1 # lw 0 # fc black # translate (r2 (negate (2 - (4 * emission/2)),0)) <> rect 4 1 # lw 0.03 )
                     
 makeSingleEmissionIndices index = V.fromList [(PAI.Z  PAI.:. index PAI.:. A),(PAI.Z  PAI.:. index PAI.:. U),(PAI.Z  PAI.:. index PAI.:. G),(PAI.Z  PAI.:. index PAI.:. C)]
--- AA AU AG AC UU UA UG UC GG GA GU GC CC CA CU CG
+
 makePairEmissionIndices index = V.fromList [(PAI.Z  PAI.:. index PAI.:. A PAI.:. A),(PAI.Z  PAI.:. index PAI.:. A PAI.:. U),(PAI.Z  PAI.:. index PAI.:. A PAI.:. G),(PAI.Z  PAI.:. index PAI.:. A PAI.:. C),(PAI.Z  PAI.:. index PAI.:. U PAI.:. U),(PAI.Z  PAI.:. index PAI.:. U PAI.:. A),(PAI.Z  PAI.:. index PAI.:. U PAI.:. G),(PAI.Z  PAI.:. index PAI.:. U PAI.:. C),(PAI.Z  PAI.:. index PAI.:. G PAI.:. G),(PAI.Z  PAI.:. index PAI.:. G PAI.:. A),(PAI.Z  PAI.:. index PAI.:. G PAI.:. U),(PAI.Z  PAI.:. index PAI.:. G PAI.:. C),(PAI.Z  PAI.:. index PAI.:. C PAI.:. C),(PAI.Z  PAI.:. index PAI.:. C PAI.:. A),(PAI.Z  PAI.:. index PAI.:. C PAI.:. U),(PAI.Z  PAI.:. index PAI.:. C PAI.:.G)]
 
-statebox x y si = rect x 0 # lw 0 # named ("a" ++ si) === rect x y  # lw 0.1 === rect x 0 # lw 0 # named ("e" ++ si)
+statebox x y si = (rect 1 0 # lw 0 # named ("a" ++ si)) === rect x y  # lw 0.1 === rect 1 0 # lw 0 # named ("e" ++ si)
        
 --scaling
 -- | Specifies the size of the diagram. Absolute adapts to overall size according to subdiagrams

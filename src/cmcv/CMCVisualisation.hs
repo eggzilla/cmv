@@ -23,22 +23,18 @@ import Bio.StockholmParser
 
 options :: Options
 data Options = Options            
-  { cmcompareResultFile :: CmcompareResultFile,
-    modelsFile :: ModelsFile,
+  { cmcompareResultFile :: String,
+    modelsFile :: String,
     alignmentFile :: String, 
-    modelDetail :: ModelDetail,
-    modelLayout :: ModelLayout,
+    modelDetail :: String,
+    modelLayout :: String,
+    emissionLayout :: String,
+    alignmentEntries :: Int,
     maxWidth :: Double,              
-    comparisonAlignment :: ComparisonAlignment,
+    comparisonAlignment :: String,
     outputFormat :: String,
     oneOutputFile :: Bool
   } deriving (Show,Data,Typeable)
-
-type CmcompareResultFile = String
-type ModelsFile = String
-type ModelDetail = String
-type ModelLayout = String
-type ComparisonAlignment = String
 
 options = Options
   { cmcompareResultFile = def &= name "r" &= help "Path to CMCompare result file",
@@ -46,6 +42,8 @@ options = Options
     alignmentFile = "" &= name "s" &= help "Path to stockholm alignment file",
     modelDetail = "detailed" &= name "d" &= help "Set verbosity of drawn models: simple, detailed",
     modelLayout = "flat" &= name "l" &= help "Set layout of drawn models: flat, tree",
+    emissionLayout = "box" &= name "e" &= help "Set layout of drawn models: score, probability, box (Default: box)",
+    alignmentEntries = (50 :: Int) &= name "n" &= help "Set cutoff for included stockholm alignment entries (Default: 50)",
     maxWidth = (100:: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)", 
     comparisonAlignment = "model" &= name "a" &= help "Set layout of drawn models: model, comparison",
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
@@ -69,11 +67,11 @@ main = do
        let alns = if (isRight alnInput) then (map (\a -> Just a) (E.fromRight alnInput)) else (replicate modelNumber Nothing)
        if oneOutputFile
               then do
-                printCM (E.fromRight outputName) svgsize (drawCMComparisons modelDetail models alns comparisons)
-	      else do
-	        printCM (E.fromRight outputName) svgsize (drawCMComparisons modelDetail models alns comparisons)
-	        --let modelNames = map ((++"."++outputFormat) . T.unpack . CM._name) models 
-		--let modelVis = drawSingleCMComparisons modelDetail models alns comparisons
+                printCM (E.fromRight outputName) svgsize (drawCMComparisons modelDetail alignmentEntries emissionLayout maxWidth models alns comparisons)
+              else do
+                printCM (E.fromRight outputName) svgsize (drawCMComparisons modelDetail alignmentEntries emissionLayout maxWidth models alns comparisons)
+                --let modelNames = map ((++"."++outputFormat) . T.unpack . CM._name) models 
+                --let modelVis = drawSingleCMComparisons modelDetail entryNumberCutoff emissiontype maxWidth models alns comparisons
                 --mapM_ (\(a,b) -> printCM a svgsize b) (zip modelNames modelVis)
      else do
        if modelFileExists then return () else putStrLn "Model file not found"
