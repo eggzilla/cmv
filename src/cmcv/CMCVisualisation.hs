@@ -12,22 +12,26 @@ module Main where
 
 import Bio.CMCompareResult
 import Bio.CMDraw
---import qualified Biobase.SElab.CM as CM
+import qualified Biobase.SElab.CM as CM
 import Biobase.SElab.CM.Import     
 import System.Console.CmdArgs
 import Data.Either
 import qualified Data.Either.Unwrap as E
 import System.Directory
+import qualified Data.Text as T
+import Bio.StockholmParser
 
 options :: Options
 data Options = Options            
   { cmcompareResultFile :: CmcompareResultFile,
     modelsFile :: ModelsFile,
+    alignmentFile :: String, 
     modelDetail :: ModelDetail,
     modelLayout :: ModelLayout,
     maxWidth :: Double,              
     comparisonAlignment :: ComparisonAlignment,
-    outputFormat :: String 
+    outputFormat :: String,
+    oneOutputFile :: Bool
   } deriving (Show,Data,Typeable)
 
 type CmcompareResultFile = String
@@ -39,11 +43,13 @@ type ComparisonAlignment = String
 options = Options
   { cmcompareResultFile = def &= name "r" &= help "Path to CMCompare result file",
     modelsFile = def &= name "m" &= help "Path to covariance model file",
+    alignmentFile = "" &= name "s" &= help "Path to stockholm alignment file",
     modelDetail = "detailed" &= name "d" &= help "Set verbosity of drawn models: simple, detailed",
     modelLayout = "flat" &= name "l" &= help "Set layout of drawn models: flat, tree",
     maxWidth = (100:: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)", 
     comparisonAlignment = "model" &= name "a" &= help "Set layout of drawn models: model, comparison",
-    outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)"
+    outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
+    oneOutputFile = False  &= name "o" &= help "Merge all output into one file (Default: False)"
   } &= summary "CMCV devel version" &= help "Florian Eggenhofer - 2013-2016" &= verbosity
 
 main :: IO ()
@@ -60,14 +66,15 @@ main = do
        alnInput <- readStockholm alignmentFile
        let outputName = diagramName "cmcv" outputFormat
        let modelNumber = length models
-       let alns = if (isRight alnInput) then (map (\a -> Just a) (fromRight alnInput)) else (replicate modelNumber Nothing)
+       let alns = if (isRight alnInput) then (map (\a -> Just a) (E.fromRight alnInput)) else (replicate modelNumber Nothing)
        if oneOutputFile
               then do
                 printCM (E.fromRight outputName) svgsize (drawCMComparisons modelDetail models alns comparisons)
 	      else do
-	        let modelNames = map ((++"."++outputFormat) . T.unpack . CM._name) models alns
-		let modelVis = drawSingleCMComparisons modelDetail models alns comparisonsHighlightParameters
-                mapM_ (\(a,b) -> printCM a svgsize b) (zip modelNames modelVis)
+	        printCM (E.fromRight outputName) svgsize (drawCMComparisons modelDetail models alns comparisons)
+	        --let modelNames = map ((++"."++outputFormat) . T.unpack . CM._name) models 
+		--let modelVis = drawSingleCMComparisons modelDetail models alns comparisons
+                --mapM_ (\(a,b) -> printCM a svgsize b) (zip modelNames modelVis)
      else do
        if modelFileExists then return () else putStrLn "Model file not found"
        if cmcFileExists then return () else putStrLn "Comparison file not found"
