@@ -118,10 +118,19 @@ drawCM modelDetail (cm,aln,blankComparisonNodeLabels,modelColor)
 	 --dummyNullModelBitscores = zip dummyLetters nullModelBitscores
 	 --nullModelBox = vcat (map (emissionEntry "score") dummyNullModelBitscores)
 	 modelName = CM._name cm
-	 detailedModelAlignment = alignTL (vcat' with { _sep = 5 }  [modelHeader,detailedModel]) -- ,alignmentDiagram])
+	 detailedModelAlignment = alignTL (vcat' with { _sep = 5 }  [modelHeader,detailedNodeTransitions]) -- ,alignmentDiagram])
 	 modelHeader = makeModelHeader (T.unpack modelName) modelColor
 	 nodeIndices = V.iterateN nodeNumber (1+) 0
-	 detailedModel = vcat (V.toList (V.map (drawCMNodeDetailed alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber V.empty allStates nodes) nodeIndices))
+	 detailedNodeTransitions = detailedNodes -- applyAll (arrowList ++ labelList) detailedNodes
+	 detailedNodes = vcat (V.toList (V.map (drawCMNodeDetailed alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber V.empty allStates nodes) nodeIndices))
+	 --transitions = assocs (getTransitions states)
+	 --arrowList = 
+	 --labelList =
+
+--getTransitions states nodes nodeIndex = nodeTransitions
+--  where node = nodes V.! nodeIndex
+--        stateIndices = VU.toList (CM._nstates node)
+--	_sTransitions
 
 makeModelHeader mName modelColor = strutX 2 ||| hcat (map setTitelLetter mName) ||| strutX 1 ||| rect 4 4 # lw 0.1 # fc modelColor
 setTitelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 4.0 <> rect 4.0 4.0 # lw 0
@@ -200,16 +209,17 @@ nodeBox = rect 60 60 # lw 0.1
 
 --drawCMStateBox :: [Char]  -> String -> Double -> CM.States -> PI.PInt () CM.StateIndex -> QDiagram NullBackend V2 n Any
 drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIndex
-  | stype == CM.StateType 0 = dState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named (nid ++"d")
-  | stype == CM.StateType 1 = mpState # translate (r2 (negate 7,8)) <> statebox 16.0 20.0 # named (nid ++"mp")
-  | stype == CM.StateType 2 = mlState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named (nid ++"ml")
-  | stype == CM.StateType 3 = mrState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named (nid ++"mr")
-  | stype == CM.StateType 6 = sState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named (nid ++"s")
-  | stype == CM.StateType 7 = eState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named (nid ++"e")
-  | stype == CM.StateType 8 = bState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named (nid ++"b")
-  | stype == CM.StateType 9 = elState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named (nid ++"el")                                               
+  | stype == CM.StateType 0 = dState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named ("s" ++ stateIndx)
+  | stype == CM.StateType 1 = mpState # translate (r2 (negate 7,8)) <> statebox 16.0 20.0 # named ("s" ++ stateIndx)
+  | stype == CM.StateType 2 = mlState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named ("s" ++ stateIndx)
+  | stype == CM.StateType 3 = mrState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named ("s" ++ stateIndx)
+  | stype == CM.StateType 6 = sState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named ("s" ++ stateIndx)
+  | stype == CM.StateType 7 = eState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named ("s" ++ stateIndx)
+  | stype == CM.StateType 8 = bState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named ("s" ++ stateIndx)
+  | stype == CM.StateType 9 = elState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named ("s" ++ stateIndx)                                               
   | otherwise = mempty
     where stype = (CM._sStateType currentStates) PA.! sIndex
+          stateIndx = show (PI.getPInt sIndex)
           singleEmissionBitscores = V.map ((score2Prob 1.0) . ((CM._sSingleEmissions currentStates) PA.!)) (makeSingleEmissionIndices sIndex)
           singleEmissionEntries = setEmissions emissiontype singleEmissionBitscores
           singleSymbolsAndEmissions = zip ["A","U","G","C"] (V.toList singleEmissionEntries)
@@ -218,25 +228,26 @@ drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIn
 	  pairSymbolsAndEmissions = zip ["AA","AU","AG","AC","UU","UA","UG","UC","GG","GA","GU","GC","CC","CA","CU","CG"] (V.toList pairEmissionEntries)
 	  pairSymbolsAndEmissions1 = take 8 pairSymbolsAndEmissions
 	  pairSymbolsAndEmissions2 = drop 8 pairSymbolsAndEmissions
-          dState = text' "D" # translate (r2 (3,0.5)) === strutX 1.5 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          mpState = text' "MP" # translate (r2 (7,0.5)) === strutX 1.5 === (vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions1) ||| strutX 0.5 ||| vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions2))
-          mlState = text' "ML" # translate (r2 (3,0.5)) === strutX 1.5 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          mrState = text' "MR" # translate (r2 (3,0.5)) === strutX 1.5 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          sState = text' "S" # translate (r2 (3,0.5)) === strutX 1.5 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions)
-          eState = text' "E" # translate (r2 (3,0.5)) === strutX 1.5 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          bState = text' "B" # translate (r2 (3,0.5)) === strutX 1.5 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          elState =  text' "EL" # translate (r2 (3,0.5)) === strutX 1.5 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          dState = text' ("D" ++ stateIndx)  # translate (r2 (3,0.5)) === strutX 2 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          mpState = text' ("MP" ++ stateIndx) # translate (r2 (7,0.5)) === strutX 2 === (vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions1) ||| strutX 0.5 ||| vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions2))
+          mlState = text' ("ML" ++ stateIndx) # translate (r2 (3,0.5)) === strutX 2 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          mrState = text' ("MR" ++ stateIndx) # translate (r2 (3,0.5)) === strutX 2 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          sState = text' ("S" ++ stateIndx) # translate (r2 (3,0.5)) === strutX 2 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions)
+          eState = text' ("E" ++ stateIndx) # translate (r2 (3,0.5)) === strutX 2 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          bState = text' ("B" ++ stateIndx) # translate (r2 (3,0.5)) === strutX 2 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          elState =  text' ("EL" ++ stateIndx) # translate (r2 (3,0.5)) === strutX 2 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
           
 drawCMInsertStateBox nid alphabetSymbols emissiontype boxlength currentStates sIndex
-  | stype == CM.StateType 4 = (ilState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named (nid ++"il")) ||| strutX 40
-  | stype == CM.StateType 5 = (irState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named (nid ++"ir")) 
+  | stype == CM.StateType 4 = (ilState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named ("s" ++ stateIndx)) ||| strutX 40
+  | stype == CM.StateType 5 = (irState # translate (r2 (negate 3,8)) <> statebox 8.0 20.0 # named ("s" ++ stateIndx)) 
   | otherwise = mempty
-    where stype = (CM._sStateType currentStates) PA.! sIndex          
+    where stype = (CM._sStateType currentStates) PA.! sIndex
+          stateIndx = show (PI.getPInt sIndex)
           singleEmissionBitscores = V.map ((score2Prob 1.0) . ((CM._sSingleEmissions currentStates) PA.!)) (makeSingleEmissionIndices sIndex)
           singleEmissionEntries = setEmissions emissiontype singleEmissionBitscores
           singleSymbolsAndEmissions = zip ["A","U","G","C"] (V.toList singleEmissionEntries)
-          ilState = text' "IL" # translate (r2 (3,0.5)) === strutX 1.5 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          irState = text' "IR" # translate (r2 (3,0.5)) === strutX 1.5 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          ilState = text' ("IL" ++ stateIndx) # translate (r2 (3,0.5)) === strutX 2 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          irState = text' ("IR" ++ stateIndx) # translate (r2 (3,0.5)) === strutX 2 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
 
 setEmissions :: String -> V.Vector Double -> V.Vector Double
 setEmissions emissiontype emissions
