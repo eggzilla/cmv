@@ -122,15 +122,15 @@ drawCM modelDetail entryNumberCutoff emissiontype maxWidth (cm,aln,comparisonNod
 	 detailedModelAlignment = alignTL (vcat' with { _sep = 5 }  [modelHeader,detailedNodeTransitions,alignmentDiagram])
 	 modelHeader = makeModelHeader (T.unpack modelName) modelColor
 	 nodeIndices = V.iterateN nodeNumber (1+) 0
-	 detailedNodeTransitions = applyAll (arrowList ++ labelList) detailedNodes
+	 detailedNodeTransitions = applyAll (arrowList ++ []) detailedNodes
 	 detailedNodes = vcat (V.toList (V.map (drawCMNodeDetailed alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber V.empty allStates nodes) nodeIndices))
          trans = CM._sTransitions (CM._states cm)
          (lo,up) = PA.bounds trans
          (transitionIndexTuple,transitionPAIndices) = unzip $ makeTransitionIndices (deConstr up)
-         transitionBitscores = map ((score2Prob 1) . snd . (trans PA.!)) transitionPAIndices
-         connectedStates = V.map (\((a,b),c) -> (a,b,c,(0,0))) (V.fromList (zip transitionIndexTuple transitionBitscores))
+         transitionBitscores = map ((\(a,b) ->("a" ++ (show (PI.getPInt a)),(score2Prob 1 b))) . (trans PA.!)) transitionPAIndices
+         connectedStates = V.map (\((stateId,targetRelativeIndex),(targetStateIndex,bitS)) -> (stateId,targetStateIndex,bitS,(0,0))) (V.fromList (zip transitionIndexTuple transitionBitscores))
 	 arrowList = V.toList (V.map makeArrow connectedStates) -- connectedNodes V.++ V.map makeSelfArrow selfConnectedNodes)
-         labelList = V.toList (V.map makeLabel connectedStates) -- connectedNodes V.++ V.map makeSelfLabel selfConnectedNodes)
+         --labelList = V.toList (V.map makeLabel connectedStates) -- connectedNodes V.++ V.map makeSelfLabel selfConnectedNodes)
 	 alignmentDiagram = if isJust aln then drawStockholmLines entryNumberCutoff maxWidth nodeAlignmentColIndices comparisonNodeLabels (fromJust aln) else mempty
 
 --getTransitions states nodes nodeIndex = nodeTransitions
@@ -228,10 +228,10 @@ drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIn
   | otherwise = mempty
     where stype = (CM._sStateType currentStates) PA.! sIndex
           stateIndx = show (PI.getPInt sIndex)
-          singleEmissionBitscores = V.map ((score2Prob 1.0) . ((CM._sSingleEmissions currentStates) PA.!)) (makeSingleEmissionIndices sIndex)
+          singleEmissionBitscores = V.map ((score2Prob 1) . ((CM._sSingleEmissions currentStates) PA.!)) (makeSingleEmissionIndices sIndex)
           singleEmissionEntries = setEmissions emissiontype singleEmissionBitscores
           singleSymbolsAndEmissions = zip ["A","U","G","C"] (V.toList singleEmissionEntries)
-	  pairEmissionBitscores = V.map ((score2Prob 1.0). ((CM._sPairEmissions currentStates) PA.!)) (makePairEmissionIndices sIndex)
+	  pairEmissionBitscores = V.map ((score2Prob 1). ((CM._sPairEmissions currentStates) PA.!)) (makePairEmissionIndices sIndex)
           pairEmissionEntries = setEmissions emissiontype pairEmissionBitscores
 	  pairSymbolsAndEmissions = zip ["AA","AU","AG","AC","UU","UA","UG","UC","GG","GA","GU","GC","CC","CA","CU","CG"] (V.toList pairEmissionEntries)
 	  pairSymbolsAndEmissions1 = take 8 pairSymbolsAndEmissions
@@ -310,6 +310,69 @@ processCMGuideTree :: CM.CM -> [(String,String)]
 --processCMGuideTree cm = map getNodeInfo (Map.assocs (CM._nodes cm))
 processCMGuideTree cm = map getNodeInfo (V.toList (CM._nodes cm))
 
+getBlankComparisonNodeLabels :: CM.CM -> V.Vector (Int, V.Vector (Colour Double))
+getBlankComparisonNodeLabels model = comparisonNodeLabels
+   where comparisonNodeLabels = V.generate (nodeNumber +1 ) makeBlankComparisonNodeLabel
+         nodeNumber = CM._nodesInModel model
+
+makeBlankComparisonNodeLabel :: Int ->  (Int,(V.Vector (Colour Double)))
+makeBlankComparisonNodeLabel nodeNumber = (nodeNumber,V.singleton white)
+
+makeColorVector modelNumber = V.map (\(a,b,c) -> R.rgb a b c) modelRGBTupel
+   where indexVector = V.iterateN (modelNumber) (1+) 0
+         stepSize = (765 :: Double) / (fromIntegral modelNumber)
+	 modelRGBTupel = V.map (makeRGBTupel stepSize) indexVector
+
+--makeRGBTupel :: Double -> Int -> (Double,Double,Double)
+makeRGBTupel stepSize modelNumber = (a,b,c)
+  where  totalSize = (fromIntegral modelNumber) * stepSize 
+         a = (rgbBoundries (totalSize  - 255))/255
+	 b = (rgbBoundries (totalSize - a - 255))/255
+	 c = (rgbBoundries (totalSize - a - b))/255
+
+--rgbBoundries :: Double -> Double	     
+rgbBoundries rgbValue
+  | rgbValue>210 = 210
+  | rgbValue<50 = 50
+  | otherwise = rgbValue
+
+-- deConsSnd :: ((PAI.Z PAI.:. PInt () CM.StateIndex) PAI.:. Int) (PInt () CM.StateIndex, Bitscore) -> String
+deConstr (PAI.Z PAI.:. a PAI.:. b) = PI.getPInt a 
+
+--getPhantom (PInt i p) = p
+-- fromIS PAI.IndexStream a = a
+
+makeTransitionIndices n = concatMap makeTransitionSubIndices indexes
+  where indexes = [0..n]
+
+makeTransitionSubIndices n = map  (\subI -> (("e" ++ show (n),"a" ++ show (n+subI)),(PAI.Z PAI.:. (PI.PInt n) PAI.:. subI ))) subIndices
+  where subIndices = [0..5]
+
+makeArrow (lab1,lab2,weight,_) = connectOutside' arrowStyle1 lab1 lab2 
+  where arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw (local (0.1)) & headLength .~ local 0.001 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
+makeSelfArrow (lab1,lab2,weight,_) = connectPerim' arrowStyle lab1 lab1 (4/12 @@ turn) (2/12 @@ turn)
+  where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw (local (0.1)) & headLength .~ local 0.001  & tailLength .~ 0.9 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
+        shaft' = arc xDir (-2.7/5 @@ turn) 
+
+-- %~ lw (local (0.1 * weight))
+
+makeLabel (n1,n2,weight,(xOffset,yOffset))=
+  withName n1 $ \b1 ->
+  withName n2 $ \b2 ->
+    let v = location b2 .-. location b1
+        midpoint = location b1 .+^ (v ^/ 2)
+    in
+      Diagrams.Prelude.atop (position [((midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + yOffset)), (hcat (map setLabelLetter (show weight))) )])
+
+makeSelfLabel (n1,n2,weight,(xOffset,yOffset))=
+  withName n1 $ \b1 ->
+  withName n2 $ \b2 ->
+    let v = location b2 .-. location b1
+        midpoint = location b1 .+^ (v ^/ 2)
+    in
+      Diagrams.Prelude.atop (position [(midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + yOffset), (hcat (map setLabelLetter (show weight))))])
+
+-------- Simple/ Flat functions
 --getNodeInfo :: (CM.Node, (CM.NodeType, [CM.State])) -> (String,String)
 --getNodeInfo (nodeid, (nodetype, _ )) = (show (CM._nId nodeid) , (show nodetype))
 
@@ -419,65 +482,3 @@ mkPath a b c d = position [a,b,c,d,a]
               
 paralellogram :: forall (v :: * -> *) n. (Floating n, Ord n, Metric v) => Point v n -> Point v n -> Point v n -> Point v n -> Path v n
 paralellogram a b c d = pathFromTrailAt (closeTrail (trailFromVertices [a,b,d,c,a])) a
-
-getBlankComparisonNodeLabels :: CM.CM -> V.Vector (Int, V.Vector (Colour Double))
-getBlankComparisonNodeLabels model = comparisonNodeLabels
-   where comparisonNodeLabels = V.generate (nodeNumber +1 ) makeBlankComparisonNodeLabel
-         nodeNumber = CM._nodesInModel model
-
-makeBlankComparisonNodeLabel :: Int ->  (Int,(V.Vector (Colour Double)))
-makeBlankComparisonNodeLabel nodeNumber = (nodeNumber,V.singleton white)
-
-makeColorVector modelNumber = V.map (\(a,b,c) -> R.rgb a b c) modelRGBTupel
-   where indexVector = V.iterateN (modelNumber) (1+) 0
-         stepSize = (765 :: Double) / (fromIntegral modelNumber)
-	 modelRGBTupel = V.map (makeRGBTupel stepSize) indexVector
-
---makeRGBTupel :: Double -> Int -> (Double,Double,Double)
-makeRGBTupel stepSize modelNumber = (a,b,c)
-  where  totalSize = (fromIntegral modelNumber) * stepSize 
-         a = (rgbBoundries (totalSize  - 255))/255
-	 b = (rgbBoundries (totalSize - a - 255))/255
-	 c = (rgbBoundries (totalSize - a - b))/255
-
---rgbBoundries :: Double -> Double	     
-rgbBoundries rgbValue
-  | rgbValue>210 = 210
-  | rgbValue<50 = 50
-  | otherwise = rgbValue
-
--- deConsSnd :: ((PAI.Z PAI.:. PInt () CM.StateIndex) PAI.:. Int) (PInt () CM.StateIndex, Bitscore) -> String
-deConstr (PAI.Z PAI.:. a PAI.:. b) = PI.getPInt a 
-
---getPhantom (PInt i p) = p
--- fromIS PAI.IndexStream a = a
-
-makeTransitionIndices n = concatMap makeTransitionSubIndices indexes
-  where indexes = [1..n]
-
-makeTransitionSubIndices n = map  (\a -> (("e" ++ show (n-1),"a" ++ show (n+a)),(PAI.Z PAI.:. (PI.PInt n) PAI.:. a ))) subIndices
-  where subIndices = [1..5]
-
-makeArrow (lab1,lab2,weight,_) = connectOutside' arrowStyle1 lab1 lab2 
-  where arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw (local (0.1)) & headLength .~ local 0.001 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
-makeSelfArrow (lab1,lab2,weight,_) = connectPerim' arrowStyle lab1 lab1 (4/12 @@ turn) (2/12 @@ turn)
-  where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw (local (0.1)) & headLength .~ local 0.001  & tailLength .~ 0.9 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
-        shaft' = arc xDir (-2.7/5 @@ turn) 
-
--- %~ lw (local (0.1 * weight))
-
-makeLabel (n1,n2,weight,(xOffset,yOffset))=
-  withName n1 $ \b1 ->
-  withName n2 $ \b2 ->
-    let v = location b2 .-. location b1
-        midpoint = location b1 .+^ (v ^/ 2)
-    in
-      Diagrams.Prelude.atop (position [((midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + yOffset)), (hcat (map setLabelLetter (show weight))) )])
-
-makeSelfLabel (n1,n2,weight,(xOffset,yOffset))=
-  withName n1 $ \b1 ->
-  withName n2 $ \b2 ->
-    let v = location b2 .-. location b1
-        midpoint = location b1 .+^ (v ^/ 2)
-    in
-      Diagrams.Prelude.atop (position [(midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + yOffset), (hcat (map setLabelLetter (show weight))))])
