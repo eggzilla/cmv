@@ -63,9 +63,12 @@ drawCMComparisons modelDetail entryNumberCutoff emissiontype maxWidth cms alns c
   | modelDetail == "simple" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput)) <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
   | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput)) 
   | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput))
-  where zippedInput = zip4 cms alns comparisonNodeLabels colorList
+  where zippedInput = zip4 cms alns comparisonNodeLabels (V.toList colorVector)
+        modelNumber = length cms
         comparisonNodeLabels = map getBlankComparisonNodeLabels cms
-        colorList = replicate (length cms) white
+	colorVector = makeColorVector modelNumber
+	modelNames =  V.fromList (map (T.unpack . CM._name) cms)
+	nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
 	comparisonsHighlightParameter = getComparisonsHighlightParameters cms comparisons
 
 -- | Draw one or more CM 
@@ -74,9 +77,12 @@ drawSingleCMComparisons modelDetail entryNumberCutoff emissiontype maxWidth cms 
   | modelDetail == "simple" = map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput -- <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
   | modelDetail == "detailed" = map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput
   | otherwise = map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput -- <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
-  where zippedInput = zip4 cms alns comparisonNodeLabels colorList
+  where zippedInput = zip4 cms alns comparisonNodeLabels (V.toList colorVector)
+        modelNumber = length cms
         comparisonNodeLabels = map getBlankComparisonNodeLabels cms
-        colorList = replicate (length cms) white
+	colorVector = makeColorVector modelNumber
+	modelNames =  V.fromList (map (T.unpack . CM._name) cms)
+	nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
 	comparisonsHighlightParameter = getComparisonsHighlightParameters cms comparisons
 
 -- | Draw one or more CM and concatenate them vertically
