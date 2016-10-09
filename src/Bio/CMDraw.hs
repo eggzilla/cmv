@@ -135,7 +135,7 @@ drawCM modelDetail entryNumberCutoff emissiontype maxWidth (cm,aln,comparisonNod
          (lo,up) = PA.bounds trans
          (transitionIndexTuple,transitionPAIndices) = unzip $ makeTransitionIndices (deConstr up)
          transitionBitscores = map ((\(a,b) ->((show (PI.getPInt a)),(score2Prob 1 b))) . (trans PA.!)) transitionPAIndices
-         allConnectedStates = V.map (\((stateId,targetId),(targetStateIndex,bitS)) -> (stateId,targetId,bitS,(0,0))) (V.fromList (zip transitionIndexTuple transitionBitscores))
+         allConnectedStates = V.map (\((stateId,targetId),(targetStateIndex,bitS)) -> (stateId,targetStateIndex,bitS,(0,0))) (V.fromList (zip transitionIndexTuple transitionBitscores))
 	 connectedStates = V.filter (\(stateId,targetStateIndex,_,_) -> stateId /= targetStateIndex) allConnectedStates
 	 selfConnectedStates = V.filter (\(stateId,targetStateIndex,_,_) -> stateId == targetStateIndex) allConnectedStates
 	 arrowList = V.toList (V.map makeArrow connectedStates V.++ V.map makeSelfArrow selfConnectedStates)
@@ -384,7 +384,7 @@ makeTransitionIndices n = concatMap makeTransitionSubIndices indexes
   where indexes = [0..n]
 
 makeTransitionSubIndices n = map  (\subI -> ((show (n),show (n+subI)),(PAI.Z PAI.:. (PI.PInt n) PAI.:. subI ))) subIndices
-  where subIndices = [0..5]
+  where subIndices = [0..4]
 
 makeArrow (lab1,lab2,weight,_) = connectOutside' arrowStyle1 ("e" ++ lab1) ("a" ++ lab2) 
   where arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw (local (0.1)) & headLength .~ local 0.001 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
