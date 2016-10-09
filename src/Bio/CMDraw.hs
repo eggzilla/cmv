@@ -65,7 +65,7 @@ drawCMComparisons modelDetail entryNumberCutoff emissiontype maxWidth cms alns c
   | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput))
   where zippedInput = zip4 cms alns comparisonNodeLabels (V.toList colorVector)
         modelNumber = length cms
-        comparisonNodeLabels = map getBlankComparisonNodeLabels cms
+        comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) cms
 	colorVector = makeColorVector modelNumber
 	modelNames =  V.fromList (map (T.unpack . CM._name) cms)
 	nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
@@ -79,7 +79,7 @@ drawSingleCMComparisons modelDetail entryNumberCutoff emissiontype maxWidth cms 
   | otherwise = map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput -- <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
   where zippedInput = zip4 cms alns comparisonNodeLabels (V.toList colorVector)
         modelNumber = length cms
-        comparisonNodeLabels = map getBlankComparisonNodeLabels cms
+        comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) cms
 	colorVector = makeColorVector modelNumber
 	modelNames =  V.fromList (map (T.unpack . CM._name) cms)
 	nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
@@ -135,6 +135,7 @@ drawCM modelDetail entryNumberCutoff emissiontype maxWidth (cm,aln,comparisonNod
          (transitionIndexTuple,transitionPAIndices) = unzip $ makeTransitionIndices (deConstr up)
          transitionBitscores = map ((\(a,b) ->("a" ++ (show (PI.getPInt a)),(score2Prob 1 b))) . (trans PA.!)) transitionPAIndices
          connectedStates = V.map (\((stateId,targetRelativeIndex),(targetStateIndex,bitS)) -> (stateId,targetStateIndex,bitS,(0,0))) (V.fromList (zip transitionIndexTuple transitionBitscores))
+	 selfConnectedStates = V.map (\((stateId,targetRelativeIndex),(targetStateIndex,bitS)) -> (stateId,targetStateIndex,bitS,(0,0))) (V.fromList (zip transitionIndexTuple transitionBitscores))
 	 arrowList = V.toList (V.map makeArrow connectedStates) -- connectedNodes V.++ V.map makeSelfArrow selfConnectedNodes)
          --labelList = V.toList (V.map makeLabel connectedStates) -- connectedNodes V.++ V.map makeSelfLabel selfConnectedNodes)
 	 alignmentDiagram = if isJust aln then drawStockholmLines entryNumberCutoff maxWidth nodeAlignmentColIndices comparisonNodeLabels (fromJust aln) else mempty
@@ -323,6 +324,31 @@ getBlankComparisonNodeLabels model = comparisonNodeLabels
 
 makeBlankComparisonNodeLabel :: Int ->  (Int,(V.Vector (Colour Double)))
 makeBlankComparisonNodeLabel nodeNumber = (nodeNumber,V.singleton white)
+
+getComparisonNodeLabels :: [CmcompareResult] -> V.Vector (String, Colour Double) -> CM.CM -> V.Vector (Int, V.Vector (Colour Double))
+getComparisonNodeLabels comparsionResults colorVector model = comparisonNodeLabels
+   where modelName = T.unpack (CM._name model)
+         relevantComparisons1 = filter ((modelName==) . model1Name) comparsionResults
+	 modelNodeInterval1 = map (\a -> (model2Name a,model2matchednodes a))  relevantComparisons1 
+	 relevantComparisons2 = filter ((modelName==) . model2Name) comparsionResults
+         modelNodeInterval2 = map (\a -> (model1Name a,model1matchednodes a))  relevantComparisons2
+         modelNodeIntervals =  V.fromList (modelNodeInterval1 ++ modelNodeInterval2)
+         colorNodeIntervals = V.map (modelToColor colorVector) modelNodeIntervals
+         nodeNumber = CM._nodesInModel model
+         comparisonNodeLabels = V.generate (nodeNumber +1) (makeComparisonNodeLabel colorNodeIntervals)
+         --nodeColorLabels = map model colorNodeIntervals
+
+modelToColor :: V.Vector (String,Colour Double) ->  (String,[Int]) -> (Colour Double,[Int])
+modelToColor colorVector (mName,nInterval) = nColorInterval
+  where nColorInterval = (snd (fromJust entry),nInterval)
+        --nColorInterval = maybe Nothing (\a -> Just (snd a,nInterval)) entry
+        entry = V.find (\(a,c)-> mName == a) colorVector
+
+makeComparisonNodeLabel :: V.Vector (Colour Double,[Int]) -> Int -> (Int,(V.Vector (Colour Double)))
+makeComparisonNodeLabel colorNodeIntervals nodeNumber = comparisonNodeLabel
+  where relevantColorNodeIntervals = V.filter (\(_,b) -> elem nodeNumber b) colorNodeIntervals
+        modelColors = V.map fst relevantColorNodeIntervals
+        comparisonNodeLabel = if (null modelColors) then (nodeNumber,V.singleton white) else (nodeNumber,modelColors)
 
 makeColorVector modelNumber = V.map (\(a,b,c) -> R.rgb a b c) modelRGBTupel
    where indexVector = V.iterateN (modelNumber) (1+) 0
