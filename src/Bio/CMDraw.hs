@@ -56,6 +56,7 @@ import Biobase.SElab.Types
 import Data.Colour
 import qualified Data.Colour.SRGB.Linear as R
 import Data.Maybe
+import GHC.Float
 
 -- | Draw one or more CM guide trees and concatenate them vertically
 drawCMComparisons modelDetail entryNumberCutoff emissiontype maxWidth cms alns comparisons
@@ -128,16 +129,17 @@ drawCM modelDetail entryNumberCutoff emissiontype maxWidth (cm,aln,comparisonNod
 	 detailedModelAlignment = alignTL (vcat' with { _sep = 5 }  [modelHeader,detailedNodeTransitions,alignmentDiagram])
 	 modelHeader = makeModelHeader (T.unpack modelName) modelColor
 	 nodeIndices = V.iterateN nodeNumber (1+) 0
-	 detailedNodeTransitions = applyAll (arrowList ++ []) detailedNodes
+	 detailedNodeTransitions = applyAll (arrowList ++ labelList) detailedNodes
 	 detailedNodes = vcat (V.toList (V.map (drawCMNodeDetailed alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) nodeIndices))
          trans = CM._sTransitions (CM._states cm)
          (lo,up) = PA.bounds trans
          (transitionIndexTuple,transitionPAIndices) = unzip $ makeTransitionIndices (deConstr up)
-         transitionBitscores = map ((\(a,b) ->("a" ++ (show (PI.getPInt a)),(score2Prob 1 b))) . (trans PA.!)) transitionPAIndices
-         connectedStates = V.map (\((stateId,targetRelativeIndex),(targetStateIndex,bitS)) -> (stateId,targetStateIndex,bitS,(0,0))) (V.fromList (zip transitionIndexTuple transitionBitscores))
-	 selfConnectedStates = V.map (\((stateId,targetRelativeIndex),(targetStateIndex,bitS)) -> (stateId,targetStateIndex,bitS,(0,0))) (V.fromList (zip transitionIndexTuple transitionBitscores))
-	 arrowList = V.toList (V.map makeArrow connectedStates) -- connectedNodes V.++ V.map makeSelfArrow selfConnectedNodes)
-         --labelList = V.toList (V.map makeLabel connectedStates) -- connectedNodes V.++ V.map makeSelfLabel selfConnectedNodes)
+         transitionBitscores = map ((\(a,b) ->((show (PI.getPInt a)),(score2Prob 1 b))) . (trans PA.!)) transitionPAIndices
+         allConnectedStates = V.map (\((stateId,targetId),(targetStateIndex,bitS)) -> (stateId,targetId,bitS,(0,0))) (V.fromList (zip transitionIndexTuple transitionBitscores))
+	 connectedStates = V.filter (\(stateId,targetStateIndex,_,_) -> stateId /= targetStateIndex) allConnectedStates
+	 selfConnectedStates = V.filter (\(stateId,targetStateIndex,_,_) -> stateId == targetStateIndex) allConnectedStates
+	 arrowList = V.toList (V.map makeArrow connectedStates V.++ V.map makeSelfArrow selfConnectedStates)
+         labelList = V.toList (V.map makeLabel connectedStates V.++ V.map makeSelfLabel selfConnectedStates)
 	 alignmentDiagram = if isJust aln then drawStockholmLines entryNumberCutoff maxWidth nodeAlignmentColIndices comparisonNodeLabels (fromJust aln) else mempty
 
 makeModelHeader mName modelColor = strutX 2 ||| hcat (map setTitelLetter mName) ||| strutX 1 ||| rect 4 4 # lw 0.1 # fc modelColor
@@ -381,32 +383,32 @@ deConstr (PAI.Z PAI.:. a PAI.:. b) = PI.getPInt a
 makeTransitionIndices n = concatMap makeTransitionSubIndices indexes
   where indexes = [0..n]
 
-makeTransitionSubIndices n = map  (\subI -> (("e" ++ show (n),"a" ++ show (n+subI)),(PAI.Z PAI.:. (PI.PInt n) PAI.:. subI ))) subIndices
+makeTransitionSubIndices n = map  (\subI -> ((show (n),show (n+subI)),(PAI.Z PAI.:. (PI.PInt n) PAI.:. subI ))) subIndices
   where subIndices = [0..5]
 
-makeArrow (lab1,lab2,weight,_) = connectOutside' arrowStyle1 lab1 lab2 
+makeArrow (lab1,lab2,weight,_) = connectOutside' arrowStyle1 ("e" ++ lab1) ("a" ++ lab2) 
   where arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw (local (0.1)) & headLength .~ local 0.001 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
-makeSelfArrow (lab1,lab2,weight,_) = connectPerim' arrowStyle lab1 lab1 (4/12 @@ turn) (2/12 @@ turn)
+makeSelfArrow (lab1,lab2,weight,_) = connectPerim' arrowStyle ("e" ++ lab1) ("a" ++ lab1) (8/12 @@ turn) (10/12 @@ turn)
   where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw (local (0.1)) & headLength .~ local 0.001  & tailLength .~ 0.9 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
-        shaft' = arc xDir (-2.7/5 @@ turn) 
+        shaft' = arc xDir (2.7/5 @@ turn) 
 
 -- %~ lw (local (0.1 * weight))
 
 makeLabel (n1,n2,weight,(xOffset,yOffset))=
-  withName n1 $ \b1 ->
-  withName n2 $ \b2 ->
+  withName ("e" ++ n1) $ \b1 ->
+  withName ("a" ++ n2) $ \b2 ->
     let v = location b2 .-. location b1
         midpoint = location b1 .+^ (v ^/ 2)
     in
-      Diagrams.Prelude.atop (position [((midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + yOffset)), (hcat (map setLabelLetter (show weight))) )])
+      Diagrams.Prelude.atop (position [((midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + yOffset)), (hcat (map setLabelLetter (show (roundPos 2 weight)))))])
 
 makeSelfLabel (n1,n2,weight,(xOffset,yOffset))=
-  withName n1 $ \b1 ->
-  withName n2 $ \b2 ->
+  withName ("e" ++ n1) $ \b1 ->
+  withName ("a" ++ n2) $ \b2 ->
     let v = location b2 .-. location b1
         midpoint = location b1 .+^ (v ^/ 2)
     in
-      Diagrams.Prelude.atop (position [(midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + yOffset), (hcat (map setLabelLetter (show weight))))])
+      Diagrams.Prelude.atop (position [(midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + yOffset), (hcat (map setLabelLetter (show (roundPos 2 weight)))))])
 
 -------- Simple/ Flat functions
 --getNodeInfo :: (CM.Node, (CM.NodeType, [CM.State])) -> (String,String)
@@ -518,3 +520,6 @@ mkPath a b c d = position [a,b,c,d,a]
               
 paralellogram :: forall (v :: * -> *) n. (Floating n, Ord n, Metric v) => Point v n -> Point v n -> Point v n -> Point v n -> Path v n
 paralellogram a b c d = pathFromTrailAt (closeTrail (trailFromVertices [a,b,d,c,a])) a
+
+roundPos :: (RealFrac a) => Int -> a -> a
+roundPos positions number  = (fromInteger $ round $ number * (10^positions)) / (10.0^^positions)
