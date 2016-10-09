@@ -59,17 +59,17 @@ import Data.Maybe
 
 -- | Draw one or more CM guide trees and concatenate them vertically
 drawCMComparisons modelDetail entryNumberCutoff emissiontype maxWidth cms alns comparisons
-  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput)) <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
-  | modelDetail == "simple" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput)) <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
+  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput)) --  <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
+  | modelDetail == "simple" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput)) -- <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
   | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput)) 
   | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff emissiontype maxWidth) zippedInput))
   where zippedInput = zip4 cms alns comparisonNodeLabels (V.toList colorVector)
         modelNumber = length cms
         comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) cms
 	colorVector = makeColorVector modelNumber
-	modelNames =  V.fromList (map (T.unpack . CM._name) cms)
+	modelNames = V.fromList (map (T.unpack . CM._name) cms)
 	nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
-	comparisonsHighlightParameter = getComparisonsHighlightParameters cms comparisons
+	-- comparisonsHighlightParameter = getComparisonsHighlightParameters cms comparisons
 
 -- | Draw one or more CM 
 drawSingleCMComparisons modelDetail entryNumberCutoff emissiontype maxWidth cms alns comparisons
@@ -129,7 +129,7 @@ drawCM modelDetail entryNumberCutoff emissiontype maxWidth (cm,aln,comparisonNod
 	 modelHeader = makeModelHeader (T.unpack modelName) modelColor
 	 nodeIndices = V.iterateN nodeNumber (1+) 0
 	 detailedNodeTransitions = applyAll (arrowList ++ []) detailedNodes
-	 detailedNodes = vcat (V.toList (V.map (drawCMNodeDetailed alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber V.empty allStates nodes) nodeIndices))
+	 detailedNodes = vcat (V.toList (V.map (drawCMNodeDetailed alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) nodeIndices))
          trans = CM._sTransitions (CM._states cm)
          (lo,up) = PA.bounds trans
          (transitionIndexTuple,transitionPAIndices) = unzip $ makeTransitionIndices (deConstr up)
@@ -139,11 +139,6 @@ drawCM modelDetail entryNumberCutoff emissiontype maxWidth (cm,aln,comparisonNod
 	 arrowList = V.toList (V.map makeArrow connectedStates) -- connectedNodes V.++ V.map makeSelfArrow selfConnectedNodes)
          --labelList = V.toList (V.map makeLabel connectedStates) -- connectedNodes V.++ V.map makeSelfLabel selfConnectedNodes)
 	 alignmentDiagram = if isJust aln then drawStockholmLines entryNumberCutoff maxWidth nodeAlignmentColIndices comparisonNodeLabels (fromJust aln) else mempty
-
---getTransitions states nodes nodeIndex = nodeTransitions
---  where node = nodes V.! nodeIndex
---        stateIndices = VU.toList (CM._nstates node)
---	_sTransitions
 
 makeModelHeader mName modelColor = strutX 2 ||| hcat (map setTitelLetter mName) ||| strutX 1 ||| rect 4 4 # lw 0.1 # fc modelColor
 setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0.5 # lw 0
@@ -175,7 +170,7 @@ labelToColor label
 labelToColor _ = sRGB24 245 245 245
 
 --drawCMNodeDetailed :: [Char] -> String -> Double -> Int -> Int -> Int -> V.Vector (Int, V.Vector (Colour Double)) -> CM.States -> CM.Node -> QDiagram b V2 n Any
-drawCMNodeDetailed alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex comparisonNodeLabels states nodes nodeIndex 
+drawCMNodeDetailed alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes nodeIndex 
   -- | idNumber == 0 = beginBox
   -- | idNumber == (lastIndex - 1) = nodeBox ||| endBox
   -- | idNumber == rowStart = rowStartBox idNumber boxlength ||| nodeBox
@@ -184,9 +179,9 @@ drawCMNodeDetailed alphabetSymbols emissiontype boxlength rowStart rowEnd lastIn
   where node = nodes V.! nodeIndex
         idNumber = CM._nid node
         nid = show idNumber
-	nodeBox = drawCMNodeBox alphabetSymbols emissiontype boxlength states node
+	nodeBox = drawCMNodeBox alphabetSymbols emissiontype boxlength states comparisonNodeLabels node
 
-drawCMNodeBox alphabetSymbols emissiontype boxlength currentStates node
+drawCMNodeBox alphabetSymbols emissiontype boxlength currentStates comparisonNodeLabels node
   | ntype == CM.NodeType 0 = bifNode # translate (r2 (negate 25,25)) <> nodeBox
   | ntype == CM.NodeType 1 = matPNode # translate (r2 (negate 25,25)) <> nodeBox
   | ntype == CM.NodeType 2 = matLNode # translate (r2 (negate 25,25)) <> nodeBox
@@ -198,29 +193,38 @@ drawCMNodeBox alphabetSymbols emissiontype boxlength currentStates node
   | otherwise = endNode <> nodeBox
     where ntype = CM._ntype node
           idNumber = PI.getPInt (CM._nid node)
-          nid = show idNumber
+          nId = show idNumber
+	  nodeLabels = V.toList (snd (comparisonNodeLabels V.! idNumber))
           stateIndices = VU.toList (CM._nstates node)               
-          splitStatesBox = hcat (map (drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates) stateIndices)
-	  insertStatesBox = hcat (map (drawCMInsertStateBox nid alphabetSymbols emissiontype boxlength currentStates) stateIndices)
-          --insertStatesBox = if (length insertStates) == 2 then hcat [(insertStates !! 0),(strutX (0)),(insertStates !! 1)] else hcat [(insertStates !! 0),(strutX (0))] 
+          splitStatesBox = hcat (map (drawCMSplitStateBox nId alphabetSymbols emissiontype boxlength currentStates) stateIndices)
+	  insertStatesBox = hcat (map (drawCMInsertStateBox nId alphabetSymbols emissiontype boxlength currentStates) stateIndices)
           -- bif b
-          bifNode = (text' "BIF" # rotate (1/4 @@ turn)   ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          bifNode = ((idBox nId "BIF" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- matP mp ml mr d il ir
-          matPNode = (text' "MATP" # rotate (1/4 @@ turn) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          matPNode = ((idBox nId "MATP" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- matL ml d il
-          matLNode = (text' "MATL" # rotate (1/4 @@ turn) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          matLNode = ((idBox nId "MATL" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- matR mr d ir
-          matRNode = (text' "MATR" # rotate (1/4 @@ turn) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          matRNode = ((idBox nId "MATR" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- begL s
-          begLNode = (text' "BEGL" # rotate (1/4 @@ turn) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          begLNode = ((idBox nId "BEGL" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- begR s il
-          begRNode = (text' "BEGR" # rotate (1/4 @@ turn) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          begRNode = ((idBox nId "BEGR" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- root s il ir
-          rootNode = (text' "ROOT" # rotate (1/4 @@ turn) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          rootNode = ((idBox nId "ROOT" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- end e
-          endNode = (text' "END" # rotate (1/4 @@ turn) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
-                    
+          endNode = ((idBox nId "END" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+
+idBox nId nType nodeLabels = (alignedText 0 0 nId # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nId))/2)), negate 1.25)) <>  wheel nodeLabels # lw 0.1 <> rect 1.5 3 # lw 0) ||| strutX 2.0 ||| text' nType
 nodeBox = rect 60 60 # lw 0.1
+
+wheel colors = wheel' # rotate r
+   where
+     wheel' = mconcat $ zipWith fc colors (iterateN n (rotate a) w)
+     n = length colors
+     a = 1 / (fromIntegral n) @@ turn
+     w = wedge 3 xDir a # lwG 0
+     r = (1/4 @@ turn)  ^-^  (1/(2*(fromIntegral n)) @@ turn)
 
 --drawCMStateBox :: [Char]  -> String -> Double -> CM.States -> PI.PInt () CM.StateIndex -> QDiagram NullBackend V2 n Any
 drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIndex
