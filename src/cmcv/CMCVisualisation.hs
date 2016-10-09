@@ -2,6 +2,7 @@
 {-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 -- | Visualize detailed comparsions of Infernal Covariance Models
 --   Datastructures and parsing of covariance models is provided by Biobase
@@ -69,10 +70,9 @@ main = do
               then do
                 printCM (E.fromRight outputName) svgsize (drawCMComparisons modelDetail alignmentEntries emissionLayout maxWidth models alns comparisons)
               else do
-                printCM (E.fromRight outputName) svgsize (drawCMComparisons modelDetail alignmentEntries emissionLayout maxWidth models alns comparisons)
-                --let modelNames = map ((++"."++outputFormat) . T.unpack . CM._name) models 
-                --let modelVis = drawSingleCMComparisons modelDetail entryNumberCutoff emissiontype maxWidth models alns comparisons
-                --mapM_ (\(a,b) -> printCM a svgsize b) (zip modelNames modelVis)
+                let modelNames = map ((++"."++outputFormat) . T.unpack . CM._name) models 
+                let modelVis = drawSingleCMComparisons modelDetail alignmentEntries emissionLayout maxWidth models alns comparisons
+                mapM_ (\(a,b) -> printCM a svgsize b) (zip modelNames modelVis)
      else do
        if modelFileExists then return () else putStrLn "Model file not found"
        if cmcFileExists then return () else putStrLn "Comparison file not found"
