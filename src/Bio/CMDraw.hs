@@ -298,7 +298,7 @@ makeSingleEmissionIndices index = V.fromList [(PAI.Z  PAI.:. index PAI.:. A),(PA
 
 makePairEmissionIndices index = V.fromList [(PAI.Z  PAI.:. index PAI.:. A PAI.:. A),(PAI.Z  PAI.:. index PAI.:. A PAI.:. U),(PAI.Z  PAI.:. index PAI.:. A PAI.:. G),(PAI.Z  PAI.:. index PAI.:. A PAI.:. C),(PAI.Z  PAI.:. index PAI.:. U PAI.:. U),(PAI.Z  PAI.:. index PAI.:. U PAI.:. A),(PAI.Z  PAI.:. index PAI.:. U PAI.:. G),(PAI.Z  PAI.:. index PAI.:. U PAI.:. C),(PAI.Z  PAI.:. index PAI.:. G PAI.:. G),(PAI.Z  PAI.:. index PAI.:. G PAI.:. A),(PAI.Z  PAI.:. index PAI.:. G PAI.:. U),(PAI.Z  PAI.:. index PAI.:. G PAI.:. C),(PAI.Z  PAI.:. index PAI.:. C PAI.:. C),(PAI.Z  PAI.:. index PAI.:. C PAI.:. A),(PAI.Z  PAI.:. index PAI.:. C PAI.:. U),(PAI.Z  PAI.:. index PAI.:. C PAI.:.G)]
 
-statebox x y si = (rect 1 0 # lw 0 # named ("a" ++ si)) === rect x y  # lw 0.1 === rect 1 0 # lw 0 # named ("e" ++ si)
+statebox x y si = ((rect 0.05 0 # lw 0 # named ("s" ++ si) ||| rect 7.9 0 # lw 0 # named ("a" ++ si) ||| rect 0.05 0 # lw 0 # named ("z" ++ si))) === rect x y  # lw 0.1 === rect 1 0 # lw 0 # named ("e" ++ si)
        
 --scaling
 -- | Specifies the size of the diagram. Absolute adapts to overall size according to subdiagrams
@@ -388,15 +388,16 @@ makeTransitionSubIndices n = map  (\subI -> ((show (n),show (n+subI)),(PAI.Z PAI
 
 makeArrow (lab1,lab2,weight,_) = connectOutside' arrowStyle1 ("e" ++ lab1) ("a" ++ lab2) 
   where arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw (local (0.1)) & headLength .~ local 0.001 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
-makeSelfArrow (lab1,lab2,weight,_) = connectPerim' arrowStyle ("e" ++ lab1) ("a" ++ lab1) (8/12 @@ turn) (10/12 @@ turn)
-  where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw (local (0.1)) & headLength .~ local 0.001  & tailLength .~ 0.9 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
-        shaft' = arc xDir (2.7/5 @@ turn) 
+
+makeSelfArrow (lab1,lab2,weight,_) = connectPerim' arrowStyle ("s" ++ lab1) ("z" ++ lab1) (3/12 @@ turn) (8/12 @@ turn)
+  where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw (local (0.1)) & headLength .~ local 0.001  & tailLength .~ 0.5 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
+        shaft' = arc xDir (-4/5 @@ turn) 
 
 -- %~ lw (local (0.1 * weight))
 
 makeLabel (n1,n2,weight,(xOffset,yOffset))=
-  withName ("e" ++ n1) $ \b1 ->
-  withName ("a" ++ n2) $ \b2 ->
+  withName ("a" ++ n1) $ \b1 ->
+  withName ("s" ++ n2) $ \b2 ->
     let v = location b2 .-. location b1
         midpoint = location b1 .+^ (v ^/ 2)
     in
@@ -404,7 +405,7 @@ makeLabel (n1,n2,weight,(xOffset,yOffset))=
 
 makeSelfLabel (n1,n2,weight,(xOffset,yOffset))=
   withName ("e" ++ n1) $ \b1 ->
-  withName ("a" ++ n2) $ \b2 ->
+  withName ("e" ++ n2) $ \b2 ->
     let v = location b2 .-. location b1
         midpoint = location b1 .+^ (v ^/ 2)
     in
