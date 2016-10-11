@@ -32,7 +32,10 @@ module Bio.CMDraw
      getComparisonHighlightParameters,
      highlightComparisonIntervalBoundry,
      connectionLine,
-     mkPath
+     mkPath,
+     NodeIndices,
+     buildIndexStructure,
+     getIndexEnd
     ) where
   
 import Diagrams.Prelude
@@ -142,19 +145,32 @@ drawCM modelDetail entryNumberCutoff emissiontype maxWidth (cm,aln,comparisonNod
          labelList = V.toList (V.map makeLabel connectedStates V.++ V.map makeSelfLabel selfConnectedStates)
 	 alignmentDiagram = if isJust aln then drawStockholmLines entryNumberCutoff maxWidth nodeAlignmentColIndices comparisonNodeLabels (fromJust aln) else mempty
 
---NodeIndices = L a | R a | S a
-                            
---buildIndexStructure nodes indices
---  | isRoot = [buildIndexStructure ]  -- start tree             
---  | isBif =  ([buildIndexInterval index],[buildIndexTree nodes remainingIndices]) -- start new subtree
---  | isBEGL = -- set current label
---  | isBEGR =  -- set current label
---  | isEnd = -- terminate current label
---  | otherwise =  -- add to current label
---    where currentIndex = V.head indices
---          currentNode = nodes V.! currentIndex
---          remainingIndices = v.tail indices
-  
+data NodeIndices = S [Int] | L [Int] | R [Int]
+  deriving (Show, Eq)
+         
+
+buildIndexStructure :: V.Vector CM.Node -> V.Vector Int -> [(NodeIndices, t)]
+buildIndexStructure nodes indices
+  | ntype == CM.NodeType 6 = [(S [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices)]  -- ROOT start tree             
+  | ntype == CM.NodeType 0 = [buildIndexStructure nodes remainingIndices] -- BIF
+  | ntype == CM.NodeType 4 = [(L [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices)] -- BEGL set current label
+  | ntype == CM.NodeType 5 = [(R [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices)]  -- BEGR set current label
+  | ntype == CM.NodeType 7 = [] -- END
+  | otherwise = [] -- currentIndex ++ remainingIndices -- OTHERS
+    where currentIndex = V.head indices
+          currentNode = nodes V.! currentIndex
+          remainingIndices = V.drop (currentEnd-1) indices
+          currentEnd = getIndexEnd nodes indices
+          ntype = CM._ntype currentNode
+
+getIndexEnd nodes indices
+  | ntype == CM.NodeType 7 = currentIndex
+  | ntype == CM.NodeType 0 = currentIndex
+  | otherwise = getIndexEnd nodes indices
+   where currentIndex = V.head indices
+         remainingIndices = V.tail
+         currentNode = nodes V.! currentIndex
+         ntype = CM._ntype currentNode
                             
 makeModelHeader mName modelColor = strutX 2 ||| hcat (map setTitelLetter mName) ||| strutX 1 ||| rect 4 4 # lw 0.1 # fc modelColor
 setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0.5 # lw 0

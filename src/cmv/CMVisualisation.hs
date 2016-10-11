@@ -67,6 +67,12 @@ main = do
 	      let modelNames = map ((++ "." ++outputFormat) . T.unpack . CM._name) models
 	      let modelVis = drawSingleCMs modelDetail alignmentEntries emissionLayout maxWidth models alns
               mapM_ (\(a,b) -> printCM a svgsize b) (zip modelNames modelVis)
+              let testcm = head models
+              let nodes = CM._nodes testcm
+              let nodeNumber = V.length nodes
+              let indices = V.iterateN rowNumber (1+) 0
+              let indexStru = buildIndexStructure nodes indices
+              print indexStru
         else do
           print "Could not read covariance models from input file"
     else do
