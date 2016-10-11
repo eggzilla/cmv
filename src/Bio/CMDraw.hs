@@ -142,6 +142,20 @@ drawCM modelDetail entryNumberCutoff emissiontype maxWidth (cm,aln,comparisonNod
          labelList = V.toList (V.map makeLabel connectedStates V.++ V.map makeSelfLabel selfConnectedStates)
 	 alignmentDiagram = if isJust aln then drawStockholmLines entryNumberCutoff maxWidth nodeAlignmentColIndices comparisonNodeLabels (fromJust aln) else mempty
 
+--NodeIndices = L a | R a | S a
+                            
+--buildIndexStructure nodes indices
+--  | isRoot = [buildIndexStructure ]  -- start tree             
+--  | isBif =  ([buildIndexInterval index],[buildIndexTree nodes remainingIndices]) -- start new subtree
+--  | isBEGL = -- set current label
+--  | isBEGR =  -- set current label
+--  | isEnd = -- terminate current label
+--  | otherwise =  -- add to current label
+--    where currentIndex = V.head indices
+--          currentNode = nodes V.! currentIndex
+--          remainingIndices = v.tail indices
+  
+                            
 makeModelHeader mName modelColor = strutX 2 ||| hcat (map setTitelLetter mName) ||| strutX 1 ||| rect 4 4 # lw 0.1 # fc modelColor
 setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0.5 # lw 0
 setStateLetter echar = alignedText 1 1 [echar] # fontSize 2.0 <> rect 2.0 2.0 # lw 0
