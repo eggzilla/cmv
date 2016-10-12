@@ -263,24 +263,24 @@ drawCMNodeBox alphabetSymbols emissiontype boxlength currentStates comparisonNod
           nId = show idNumber
 	  nodeLabels = V.toList (snd (comparisonNodeLabels V.! idNumber))
           stateIndices = VU.toList (CM._nstates node)               
-          splitStatesBox = hcat (map (drawCMSplitStateBox nId alphabetSymbols emissiontype boxlength currentStates) stateIndices)
+          splitStatesBox = hcat' with { _sep = 0.01 } (map (drawCMSplitStateBox nId alphabetSymbols emissiontype boxlength currentStates) stateIndices)
 	  insertStatesBox = hcat (map (drawCMInsertStateBox nId alphabetSymbols emissiontype boxlength currentStates) stateIndices)
           -- bif b
-          bifNode = ((idBox nId "BIF" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          bifNode = ((idBox nId "BIF" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- matP mp ml mr d il ir
-          matPNode = ((idBox nId "MATP" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          matPNode = ((idBox nId "MATP" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- matL ml d il
-          matLNode = ((idBox nId "MATL" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          matLNode = ((idBox nId "MATL" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- matR mr d ir
-          matRNode = ((idBox nId "MATR" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          matRNode = ((idBox nId "MATR" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- begL s
-          begLNode = ((idBox nId "BEGL" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          begLNode = ((idBox nId "BEGL" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- begR s il
-          begRNode = ((idBox nId "BEGR" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          begRNode = ((idBox nId "BEGR" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- root s il ir
-          rootNode = ((idBox nId "ROOT" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          rootNode = ((idBox nId "ROOT" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- end e
-          endNode = ((idBox nId "END" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 2.0 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          endNode = ((idBox nId "END" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
 
 idBox nId nType nodeLabels = (alignedText 0 0 nId # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nId))/2)), negate 1.25)) <>  wheel nodeLabels # lw 0.1 <> rect 1.5 3 # lw 0) ||| strutX 2.0 ||| text' nType
 nodeBox = rect 60 60 # lw 0.1
@@ -325,15 +325,15 @@ drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIn
           
 drawCMInsertStateBox nid alphabetSymbols emissiontype boxlength currentStates sIndex
   | stype == CM.StateType 4 = ((ilState # translate (r2 (negate 3,negate 2))) <> statebox 8.0 20.0 stateIndx) ||| strutX 38
-  | stype == CM.StateType 5 = (irState # translate (r2 (negate 3,negate 2))) <> statebox 8.0 20.0 stateIndx   
+  | stype == CM.StateType 5 = (irState # translate (r2 (negate 3,negate 2))) <> inverseStatebox 8.0 20.0 stateIndx   
   | otherwise = mempty
     where stype = (CM._sStateType currentStates) PA.! sIndex
           stateIndx = show (PI.getPInt sIndex)
           singleEmissionBitscores = V.map ((score2Prob 1.0) . ((CM._sSingleEmissions currentStates) PA.!)) (makeSingleEmissionIndices sIndex)
           singleEmissionEntries = setEmissions emissiontype singleEmissionBitscores
           singleSymbolsAndEmissions = zip ["A","U","G","C"] (V.toList singleEmissionEntries)
-          ilState = textWithSize' ("IL" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutX 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          irState = textWithSize' ("IR" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutX 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          ilState = textWithSize' ("IL" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          irState = textWithSize' ("IR" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
 
 setEmissions :: String -> V.Vector Double -> V.Vector Double
 setEmissions emissiontype emissions
@@ -363,8 +363,10 @@ makeSingleEmissionIndices index = V.fromList [(PAI.Z  PAI.:. index PAI.:. A),(PA
 
 makePairEmissionIndices index = V.fromList [(PAI.Z  PAI.:. index PAI.:. A PAI.:. A),(PAI.Z  PAI.:. index PAI.:. A PAI.:. U),(PAI.Z  PAI.:. index PAI.:. A PAI.:. G),(PAI.Z  PAI.:. index PAI.:. A PAI.:. C),(PAI.Z  PAI.:. index PAI.:. U PAI.:. U),(PAI.Z  PAI.:. index PAI.:. U PAI.:. A),(PAI.Z  PAI.:. index PAI.:. U PAI.:. G),(PAI.Z  PAI.:. index PAI.:. U PAI.:. C),(PAI.Z  PAI.:. index PAI.:. G PAI.:. G),(PAI.Z  PAI.:. index PAI.:. G PAI.:. A),(PAI.Z  PAI.:. index PAI.:. G PAI.:. U),(PAI.Z  PAI.:. index PAI.:. G PAI.:. C),(PAI.Z  PAI.:. index PAI.:. C PAI.:. C),(PAI.Z  PAI.:. index PAI.:. C PAI.:. A),(PAI.Z  PAI.:. index PAI.:. C PAI.:. U),(PAI.Z  PAI.:. index PAI.:. C PAI.:.G)]
 
-statebox x y si = ((rect 0.05 0 # lw 0 # named ("s" ++ si) ||| rect 7.9 0 # lw 0 # named ("a" ++ si) ||| rect 0.05 0 # lw 0 # named ("z" ++ si))) === rect x y  # lw 0.1 === rect 1 0 # lw 0 # named ("e" ++ si)
-       
+statebox x y si = ((rect 0.05 0.1 # lw 0 # named ("s" ++ si) ||| rect 1 0.1 # lw 0 # named ("a" ++ si) ||| rect 2 0.1 # lw 0 ||| rect 0.05 0.1 # lw 0 # named ("z" ++ si))) === rect x y  # lw 0.1 === rect 1 0 # lw 0 # named ("e" ++ si)
+
+inverseStatebox x y si = ((rect 0.05 0.1 # lw 0 # named ("s" ++ si) ||| rect 1 0.1 # lw 0 # named ("a" ++ si) ||| rect 2 0.1 # lw 0  ||| rect 0.05 0.1 # lw 0 # named ("z" ++ si))) === rect x y  # lw 0.1 === rect 1 0 # lw 0 # named ("e" ++ si)                  
+                  
 --scaling
 -- | Specifies the size of the diagram. Absolute adapts to overall size according to subdiagrams
 svgsize :: SizeSpec V2 Double
@@ -471,13 +473,14 @@ makeLabel (n1,n2,weight,(xOffset,yOffset))=
     in
       Diagrams.Prelude.atop (position [((midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + yOffset)), (hcat (map setLabelLetter (show (roundPos 2 weight)))))])
 
-makeSelfLabel (n1,n2,weight,(xOffset,yOffset))=
-  withName ("e" ++ n1) $ \b1 ->
-  withName ("e" ++ n2) $ \b2 ->
-    let v = location b2 .-. location b1
-        midpoint = location b1 .+^ (v ^/ 2)
-    in
-      Diagrams.Prelude.atop (position [(midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + yOffset), (hcat (map setLabelLetter (show (roundPos 2 weight)))))])
+makeSelfLabel (n1,n2,weight,(xOffset,yOffset))
+  | weight == 0 = mempty
+  | otherwise = withName ("e" ++ n1) $ \b1 ->
+                withName ("e" ++ n2) $ \b2 ->
+                  let v = location b2 .-. location b1
+                      midpoint = location b1 .+^ (v ^/ 2)
+                  in
+                    Diagrams.Prelude.atop (position [(midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + yOffset), (hcat (map setLabelLetter (show (roundPos 2 weight)))))])
 
 -------- Simple/ Flat functions
 --getNodeInfo :: (CM.Node, (CM.NodeType, [CM.State])) -> (String,String)
