@@ -68,10 +68,10 @@ main = do
        let alns = if (isRight alnInput) then (map (\a -> Just a) (E.fromRight alnInput)) else (replicate modelNumber Nothing)
        if oneOutputFile
               then do
-                printCM (E.fromRight outputName) svgsize (drawCMComparisons modelDetail alignmentEntries emissionLayout maxWidth models alns comparisons)
+                printCM (E.fromRight outputName) svgsize (drawCMComparisons modelDetail alignmentEntries modelLayout emissionLayout maxWidth models alns comparisons)
               else do
                 let modelNames = map ((++"."++outputFormat) . T.unpack . CM._name) models 
-                let modelVis = drawSingleCMComparisons modelDetail alignmentEntries emissionLayout maxWidth models alns comparisons
+                let modelVis = drawSingleCMComparisons modelDetail alignmentEntries modelLayout emissionLayout maxWidth models alns comparisons
                 mapM_ (\(a,b) -> printCM a svgsize b) (zip modelNames modelVis)
      else do
        if modelFileExists then return () else putStrLn "Model file not found"

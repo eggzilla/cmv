@@ -64,10 +64,10 @@ main = do
           let alns = if (isRight alnInput) then (map (\a -> Just a) (fromRight alnInput)) else (replicate modelNumber Nothing)
 	  if oneOutputFile
             then do	      
-              printCM (fromRight outputName) svgsize (drawCMs modelDetail alignmentEntries emissionLayout maxWidth models alns)
+              printCM (fromRight outputName) svgsize (drawCMs modelDetail alignmentEntries modelLayout emissionLayout maxWidth models alns)
 	    else do
 	      let modelNames = map ((++ "." ++outputFormat) . T.unpack . CM._name) models
-	      let modelVis = drawSingleCMs modelDetail alignmentEntries emissionLayout maxWidth models alns
+	      let modelVis = drawSingleCMs modelDetail alignmentEntries modelLayout emissionLayout maxWidth models alns
               mapM_ (\(a,b) -> printCM a svgsize b) (zip modelNames modelVis)
               let testcm = head models
               let nodes = CM._nodes testcm
