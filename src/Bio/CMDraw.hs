@@ -169,17 +169,17 @@ buildIndexStructure row nodes indices
     where currentIndex = V.head indices
           currentNode = nodes V.! currentIndex
           --remainingIndices = V.drop (currentEnd) indices
-          remainingIndices2 = V.tail indices
+          remainingIndices2 = V.drop 1  indices
           currentEnd = getIndexEnd nodes indices
           ntype = CM._ntype currentNode
                   
 getIndexEnd nodes indices
-  | null indices = currentIndex    
+  | null indices = V.length nodes
   | ntype == CM.NodeType 7 = currentIndex
   | ntype == CM.NodeType 0 = currentIndex
   | otherwise = getIndexEnd nodes remainingIndices
    where currentIndex = V.head indices
-         remainingIndices = V.tail indices
+         remainingIndices = V.drop 1 indices
          currentNode = nodes V.! currentIndex
          ntype = CM._ntype currentNode
                             

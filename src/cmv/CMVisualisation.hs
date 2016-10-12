@@ -72,7 +72,7 @@ main = do
               let testcm = head models
               let nodes = CM._nodes testcm
               let nodeNumber = V.length nodes
-              let indices = V.iterateN (nodeNumber-1) (1+) 1
+              let indices = V.iterateN (nodeNumber-1) (1+) 0
               let indexStru = buildIndexStructure 0 nodes indices
               print indexStru
               --let currentNode = nodes V.! 0
