@@ -148,27 +148,38 @@ drawCM modelDetail entryNumberCutoff emissiontype maxWidth (cm,aln,comparisonNod
 data NodeIndices = S [Int] | L [Int] | R [Int]
   deriving (Show, Eq)
          
-
-buildIndexStructure :: V.Vector CM.Node -> V.Vector Int -> [(NodeIndices, t)]
-buildIndexStructure nodes indices
-  | ntype == CM.NodeType 6 = [(S [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices)]  -- ROOT start tree             
-  | ntype == CM.NodeType 0 = [buildIndexStructure nodes remainingIndices] -- BIF
-  | ntype == CM.NodeType 4 = [(L [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices)] -- BEGL set current label
-  | ntype == CM.NodeType 5 = [(R [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices)]  -- BEGR set current label
-  | ntype == CM.NodeType 7 = [] -- END
-  | otherwise = [] -- currentIndex ++ remainingIndices -- OTHERS
+                                                         -- Row,Parent,Type,StartIndex,Stop
+buildIndexStructure :: Int -> V.Vector CM.Node -> V.Vector Int -> [(Int,Int,String,Int,Int)]
+buildIndexStructure row nodes indices
+  | null indices = []                   
+  | ntype == CM.NodeType 6 = ((row,0,"S,",currentIndex,currentEnd) : (buildIndexStructure row nodes remainingIndices2))  -- ROOT start tree             
+  -- | ntype == CM.NodeType 0 = buildIndexStructure nodes remainingIndices -- BIF
+  | ntype == CM.NodeType 4 = ((row,0,"L,",currentIndex,currentEnd) : (buildIndexStructure row nodes remainingIndices2)) --(L [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices) -- BEGL set current label
+  | ntype == CM.NodeType 5 = ((row,0,"R,",currentIndex,currentEnd) : (buildIndexStructure row nodes remainingIndices2)) -- (R [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices)  -- BEGR set current label
+  -- | ntype == CM.NodeType 7 = [] -- END
+  | ntype == CM.NodeType 1 = ((buildIndexStructure row nodes remainingIndices2))
+  | ntype == CM.NodeType 2 = ((buildIndexStructure row nodes remainingIndices2))
+  | ntype == CM.NodeType 3 = ((buildIndexStructure row nodes remainingIndices2))
+  | ntype == CM.NodeType 7 = ((buildIndexStructure row nodes remainingIndices2))
+  | ntype == CM.NodeType 8 = ((buildIndexStructure row  nodes remainingIndices2))
+  | ntype == CM.NodeType 9 = ((buildIndexStructure row  nodes remainingIndices2))
+  | ntype == CM.NodeType 10 = ((buildIndexStructure row nodes remainingIndices2))
+  | ntype == CM.NodeType 0 = ((buildIndexStructure (row + 1) nodes remainingIndices2))   
+  | otherwise = []
     where currentIndex = V.head indices
           currentNode = nodes V.! currentIndex
-          remainingIndices = V.drop (currentEnd-1) indices
+          --remainingIndices = V.drop (currentEnd) indices
+          remainingIndices2 = V.tail indices
           currentEnd = getIndexEnd nodes indices
           ntype = CM._ntype currentNode
-
+                  
 getIndexEnd nodes indices
+  | null indices = currentIndex    
   | ntype == CM.NodeType 7 = currentIndex
   | ntype == CM.NodeType 0 = currentIndex
-  | otherwise = getIndexEnd nodes indices
+  | otherwise = getIndexEnd nodes remainingIndices
    where currentIndex = V.head indices
-         remainingIndices = V.tail
+         remainingIndices = V.tail indices
          currentNode = nodes V.! currentIndex
          ntype = CM._ntype currentNode
                             

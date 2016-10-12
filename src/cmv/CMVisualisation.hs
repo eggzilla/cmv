@@ -20,6 +20,8 @@ import System.Directory
 import Data.Either.Unwrap
 import Bio.StockholmParser
 import qualified Data.Text as T
+import qualified Data.Vector as V
+    
 
 options :: Options
 data Options = Options            
@@ -70,9 +72,11 @@ main = do
               let testcm = head models
               let nodes = CM._nodes testcm
               let nodeNumber = V.length nodes
-              let indices = V.iterateN rowNumber (1+) 0
-              let indexStru = buildIndexStructure nodes indices
+              let indices = V.iterateN (nodeNumber-1) (1+) 1
+              let indexStru = buildIndexStructure 0 nodes indices
               print indexStru
+              --let currentNode = nodes V.! 0
+              --print currentNode              
         else do
           print "Could not read covariance models from input file"
     else do
