@@ -127,7 +127,8 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth (cm,aln,c
          alphabetSymbols = ['A','U','C','G']
 	 nodeAlignmentColIndices = V.map (CM._nColL) nodes
          indices = V.iterateN (nodeNumber-1) (1+) 0
-         indexStru = buildIndexStructure 0 nodes indices
+         indexStructure = buildIndexStructure 0 nodes indices
+         indexStructureGroupedByRow = groupBy indexStructureRow indexStructure
 	 --nullModel = CM._nullModel cm
 	 --nullModelBitscores = VU.toList (VU.map (getBitscore) nullModel)
 	 --dummyLetters = replicate (length nullModelBitscores) "I"
@@ -141,7 +142,7 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth (cm,aln,c
          simpleModelTreeLayout = vcat (map drawCMNodeSimple simpleNodes)
 	 detailedModelTreeLayout = alignTL (vcat' with { _sep = 5 }  [modelHeader,detailedNodeTreeTransitions,alignmentDiagram])
          detailedNodeTreeTransitions = applyAll (arrowList ++ labelList) detailedNodesTree
-         detailedNodesTree = drawCMNodeRow alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes indexStru
+         detailedNodesTree = vcat (map (drawCMNodeRow alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) indexStructureGroupedByRow)
 	 modelHeader = makeModelHeader (T.unpack modelName) modelColor
 	 nodeIndices = V.iterateN nodeNumber (1+) 0
 	 detailedNodeTransitions = applyAll (arrowList ++ labelList) detailedNodes
@@ -156,6 +157,8 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth (cm,aln,c
 	 arrowList = V.toList (V.map makeArrow connectedStates V.++ V.map makeSelfArrow selfConnectedStates)
          labelList = V.toList (V.map makeLabel connectedStates V.++ V.map makeSelfLabel selfConnectedStates)
 	 alignmentDiagram = if isJust aln then drawStockholmLines entryNumberCutoff maxWidth nodeAlignmentColIndices comparisonNodeLabels (fromJust aln) else mempty
+
+indexStructureRow (row1,_,_,_,_)  (row2,_,_,_,_) = row1 == row2
 
 data NodeIndices = S [Int] | L [Int] | R [Int]
   deriving (Show, Eq)
