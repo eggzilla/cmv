@@ -63,7 +63,7 @@ import GHC.Float
 
 -- | Draw one or more CM guide trees and concatenate them vertically
 drawCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cms alns comparisons
-  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput)) --  <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
+  | modelDetail == "minimal" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput)) --  <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
   | modelDetail == "simple" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput)) -- <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
   | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput)) 
   | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput))
@@ -77,7 +77,7 @@ drawCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidt
 
 -- | Draw one or more CM 
 drawSingleCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cms alns comparisons
-  | modelDetail == "flat" = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput -- <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
+  | modelDetail == "minimal" = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput -- <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
   | modelDetail == "simple" = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput -- <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
   | modelDetail == "detailed" = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput
   | otherwise = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput -- <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
@@ -91,7 +91,7 @@ drawSingleCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype m
 
 -- | Draw one or more CM and concatenate them vertically
 drawCMs modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cms alns
-  | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput))
+  | modelDetail == "minimal" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput))
   | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput))
   | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput))
   | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput))
@@ -101,7 +101,7 @@ drawCMs modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cms alns
 
 -- | Draw one or more CM 
 drawSingleCMs modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cms alns
-  | modelDetail == "flat" = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput
+  | modelDetail == "minimal" = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput
   | modelDetail == "simple" = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput
   | modelDetail == "detailed" = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput
   | otherwise = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput
@@ -112,13 +112,13 @@ drawSingleCMs modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cm
 -- | Draw the guide Tree of a single CM
 --drawCM :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => [Char] -> [(String, [Char])] -> QDiagram b V2 n Any
 drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth (cm,aln,comparisonNodeLabels,modelColor)
-   | modelDetail == "flat" && modelLayout == "tree"  = flatModelAlignment
-   | modelDetail == "simple" && modelLayout == "tree"= simpleModelAlignment
-   | modelDetail == "detailed" && modelLayout == "tree" = detailedModelAlignment
-   | modelDetail == "flat" = vcat (map drawCMNodeFlat simpleNodes)
-   | modelDetail == "simple" = vcat (map drawCMNodeSimple simpleNodes)
-   | modelDetail == "detailed" = detailedModelAlignment                              
-   | otherwise = detailedModelAlignment
+   | modelDetail == "minimal" && modelLayout == "tree"  = minimalModelTreeLayout
+   | modelDetail == "simple" && modelLayout == "tree"= simpleModelTreeLayout
+   | modelDetail == "detailed" && modelLayout == "tree" = detailedModelTreeLayout
+   | modelDetail == "minimal" = minimalModelLayout
+   | modelDetail == "simple" = simpleModelLayout
+   | modelDetail == "detailed" = detailedModelLayout    
+   | otherwise =  detailedModelLayout
    where simpleNodes = (processCMGuideTree cm)         
          nodes = CM._nodes cm
          nodeNumber = V.length nodes
@@ -126,15 +126,22 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth (cm,aln,c
          boxlength = fromIntegral (length alphabetSymbols) + 2
          alphabetSymbols = ['A','U','C','G']
 	 nodeAlignmentColIndices = V.map (CM._nColL) nodes
+         indices = V.iterateN (nodeNumber-1) (1+) 0
+         indexStru = buildIndexStructure 0 nodes indices
 	 --nullModel = CM._nullModel cm
 	 --nullModelBitscores = VU.toList (VU.map (getBitscore) nullModel)
 	 --dummyLetters = replicate (length nullModelBitscores) "I"
 	 --dummyNullModelBitscores = zip dummyLetters nullModelBitscores
 	 --nullModelBox = vcat (map (emissionEntry "score") dummyNullModelBitscores)
 	 modelName = CM._name cm
-         flatModelAlignment = vcat (map drawCMNodeFlat simpleNodes)
-         simpleModelAlignment = vcat (map drawCMNodeSimple simpleNodes)
-	 detailedModelAlignment = alignTL (vcat' with { _sep = 5 }  [modelHeader,detailedNodeTransitions,alignmentDiagram])
+         minimalModelLayout = vcat (map drawCMNodeFlat simpleNodes)
+         simpleModelLayout = vcat (map drawCMNodeSimple simpleNodes)
+	 detailedModelLayout = alignTL (vcat' with { _sep = 5 }  [modelHeader,detailedNodeTransitions,alignmentDiagram])
+         minimalModelTreeLayout = vcat (map drawCMNodeFlat simpleNodes)
+         simpleModelTreeLayout = vcat (map drawCMNodeSimple simpleNodes)
+	 detailedModelTreeLayout = alignTL (vcat' with { _sep = 5 }  [modelHeader,detailedNodeTreeTransitions,alignmentDiagram])
+         detailedNodeTreeTransitions = applyAll (arrowList ++ labelList) detailedNodesTree
+         detailedNodesTree = drawCMNodeRow alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes indexStru
 	 modelHeader = makeModelHeader (T.unpack modelName) modelColor
 	 nodeIndices = V.iterateN nodeNumber (1+) 0
 	 detailedNodeTransitions = applyAll (arrowList ++ labelList) detailedNodes
@@ -179,7 +186,7 @@ buildIndexStructure row nodes indices
           ntype = CM._ntype currentNode
                   
 getIndexEnd nodes indices
-  | null indices = V.length nodes
+  | null indices = (V.length nodes -1)
   | ntype == CM.NodeType 7 = currentIndex
   | ntype == CM.NodeType 0 = currentIndex
   | otherwise = getIndexEnd nodes remainingIndices
@@ -192,6 +199,13 @@ makeModelHeader mName modelColor = strutX 2 ||| hcat (map setTitelLetter mName) 
 setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0.5 # lw 0
 setStateLetter echar = alignedText 1 1 [echar] # fontSize 2.0 <> rect 2.0 2.0 # lw 0
 setTitelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 4.0 <> rect 4.0 4.0 # lw 0
+
+drawCMNodeRow alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes intervals = strutY 4 === hcat' with { _sep = 8 } (map (drawCMNodeInterval alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes) intervals)
+
+drawCMNodeInterval alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes (row,parent,intervaltype,currentIndex,currentEnd) = intervalVis
+  where intervalVis = vcat' with { _sep = 8 } (map (drawCMNodeDetailed alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes) currentInterval)
+        currentInterval = [currentIndex..currentEnd]
+
 
 -- | Draws the guide tree nodes of a CM, simplified
 --drawCMNodeSimple :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => (t, [Char]) -> b

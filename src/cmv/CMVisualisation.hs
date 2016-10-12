@@ -39,7 +39,7 @@ data Options = Options
 options = Options
   { modelFile = def &= name "m" &= help "Path to covariance model file",
     alignmentFile = "" &= name "s" &= help "Path to stockholm alignment file",
-    modelDetail = "detailed" &= name "d" &= help "Set verbosity of drawn models: simple, detailed",
+    modelDetail = "detailed" &= name "d" &= help "Set verbosity of drawn models: minimal, simple, detailed",
     modelLayout = "flat" &= name "l" &= help "Set layout of drawn models: flat, tree",
     emissionLayout = "box" &= name "e" &= help "Set layout of drawn models: score, probability, box (Default: box)",
     alignmentEntries = (50 :: Int) &= name "n" &= help "Set cutoff for included stockholm alignment entries (Default: 50)",
@@ -69,14 +69,6 @@ main = do
 	      let modelNames = map ((++ "." ++outputFormat) . T.unpack . CM._name) models
 	      let modelVis = drawSingleCMs modelDetail alignmentEntries modelLayout emissionLayout maxWidth models alns
               mapM_ (\(a,b) -> printCM a svgsize b) (zip modelNames modelVis)
-              let testcm = head models
-              let nodes = CM._nodes testcm
-              let nodeNumber = V.length nodes
-              let indices = V.iterateN (nodeNumber-1) (1+) 0
-              let indexStru = buildIndexStructure 0 nodes indices
-              print indexStru
-              --let currentNode = nodes V.! 0
-              --print currentNode              
         else do
           print "Could not read covariance models from input file"
     else do
