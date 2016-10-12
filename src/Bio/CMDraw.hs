@@ -220,6 +220,8 @@ drawCMNodeSimple (number,label) = text' label # translate (r2 (0,2)) <> text' nu
 
 text' t = alignedText 0.5 0.5 t # fontSize 2 <> rect textLength 2 # lw 0.0
   where textLength = fromIntegral (length t) * 2
+textWithSize' t si = alignedText 0.5 0.5 t # fontSize si <> rect textLength 2 # lw 0.0
+  where textLength = fromIntegral (length t) * 2                     
 
 -- | Transform covariance model node labels to colors
 labelToColor :: forall b. (Floating b, Ord b) => [Char] -> Colour b
@@ -312,17 +314,17 @@ drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIn
 	  pairSymbolsAndEmissions = zip ["AA","AU","AG","AC","UU","UA","UG","UC","GG","GA","GU","GC","CC","CA","CU","CG"] (V.toList pairEmissionEntries)
 	  pairSymbolsAndEmissions1 = take 8 pairSymbolsAndEmissions
 	  pairSymbolsAndEmissions2 = drop 8 pairSymbolsAndEmissions
-          dState = text' ("D" ++ stateIndx)  # translate (r2 (3,0.5)) === strutX 2 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          mpState = text' ("MP" ++ stateIndx) # translate (r2 (7,0.5)) === strutX 2 === (vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions1) ||| strutX 0.5 ||| vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions2))
-          mlState = text' ("ML" ++ stateIndx) # translate (r2 (3,0.5)) === strutX 2 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          mrState = text' ("MR" ++ stateIndx) # translate (r2 (3,0.5)) === strutX 2 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          sState = text' ("S" ++ stateIndx) # translate (r2 (3,0.5)) === strutX 2 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions)
-          eState = text' ("E" ++ stateIndx) # translate (r2 (3,0.5)) === strutX 2 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          bState = text' ("B" ++ stateIndx) # translate (r2 (3,0.5)) === strutX 2 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          elState =  text' ("EL" ++ stateIndx) # translate (r2 (3,0.5)) === strutX 2 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          dState = textWithSize' ("D" ++ stateIndx) 1.5  # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          mpState = textWithSize' ("MP" ++ stateIndx) 1.5 # translate (r2 (7,0.5)) === strutY 1 === (vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions1) ||| strutX 0.5 ||| vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions2))
+          mlState = textWithSize' ("ML" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          mrState = textWithSize' ("MR" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          sState = textWithSize' ("S" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions)
+          eState = textWithSize' ("E" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          bState = textWithSize' ("B" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          elState = textWithSize' ("EL" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
           
 drawCMInsertStateBox nid alphabetSymbols emissiontype boxlength currentStates sIndex
-  | stype == CM.StateType 4 = ((ilState # translate (r2 (negate 3,negate 2))) <> statebox 8.0 20.0 stateIndx) ||| strutX 40
+  | stype == CM.StateType 4 = ((ilState # translate (r2 (negate 3,negate 2))) <> statebox 8.0 20.0 stateIndx) ||| strutX 38
   | stype == CM.StateType 5 = (irState # translate (r2 (negate 3,negate 2))) <> statebox 8.0 20.0 stateIndx   
   | otherwise = mempty
     where stype = (CM._sStateType currentStates) PA.! sIndex
@@ -330,8 +332,8 @@ drawCMInsertStateBox nid alphabetSymbols emissiontype boxlength currentStates sI
           singleEmissionBitscores = V.map ((score2Prob 1.0) . ((CM._sSingleEmissions currentStates) PA.!)) (makeSingleEmissionIndices sIndex)
           singleEmissionEntries = setEmissions emissiontype singleEmissionBitscores
           singleSymbolsAndEmissions = zip ["A","U","G","C"] (V.toList singleEmissionEntries)
-          ilState = text' ("IL" ++ stateIndx) # translate (r2 (3,0.5)) === strutX 2 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          irState = text' ("IR" ++ stateIndx) # translate (r2 (3,0.5)) === strutX 2 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          ilState = textWithSize' ("IL" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutX 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          irState = textWithSize' ("IR" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutX 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
 
 setEmissions :: String -> V.Vector Double -> V.Vector Double
 setEmissions emissiontype emissions
@@ -450,11 +452,14 @@ makeTransitionSubIndices n = map  (\subI -> ((show (n),show (n+subI)),(PAI.Z PAI
   where subIndices = [0..4]
 
 makeArrow (lab1,lab2,weight,_) = connectOutside' arrowStyle1 ("e" ++ lab1) ("a" ++ lab2) 
-  where arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw (local (0.1)) & headLength .~ local 0.001 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
+  where arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw (local (0.1)) & headLength .~ local 0.01 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
 
-makeSelfArrow (lab1,lab2,weight,_) = connectPerim' arrowStyle ("s" ++ lab1) ("z" ++ lab1) (3/12 @@ turn) (8/12 @@ turn)
-  where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw (local (0.1)) & headLength .~ local 0.001  & tailLength .~ 0.5 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
-        shaft' = arc xDir (-4/5 @@ turn) 
+makeSelfArrow (lab1,lab2,weight,_) = connectPerim' arrowStyle ("s" ++ lab1) ("z" ++ lab1) (5/12 @@ turn) (8/12 @@ turn)
+  where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw (local (0.1)) & headLength .~ local 0.01  & tailLength .~ 0 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
+        shaft' = wedge 3 xDir (2/4 @@ turn) 
+
+--  where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw (local (0.1)) & headLength .~ local 0.001  & tailLength .~ 0 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
+--        shaft' = arc xDir (-3.5/5 @@ turn) 
 
 -- %~ lw (local (0.1 * weight))
 
