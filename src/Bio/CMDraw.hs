@@ -60,6 +60,7 @@ import Data.Colour
 import qualified Data.Colour.SRGB.Linear as R
 import Data.Maybe
 import GHC.Float
+import Control.Monad.State
 
 -- | Draw one or more CM guide trees and concatenate them vertically
 drawCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cms alns comparisons
@@ -126,9 +127,10 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth (cm,aln,c
          boxlength = fromIntegral (length alphabetSymbols) + 2
          alphabetSymbols = ['A','U','C','G']
 	 nodeAlignmentColIndices = V.map (CM._nColL) nodes
-         indices = V.iterateN (nodeNumber-1) (1+) 0
-         indexStructure = buildIndexStructure 0 nodes indices
-         indexStructureGroupedByRow = groupBy indexStructureRow indexStructure
+         indices = V.toList (V.iterateN (nodeNumber-1) (1+) 0)
+         --indexStructure = buildIndexStructure 0 nodes indices
+         (finalState,indexStructure)= runState (buildIndexStructure 0 nodes indices) startState 
+         indexStructureGroupedByRow = groupBy indexStructureParent (fst indexStructure)
 	 --nullModel = CM._nullModel cm
 	 --nullModelBitscores = VU.toList (VU.map (getBitscore) nullModel)
 	 --dummyLetters = replicate (length nullModelBitscores) "I"
@@ -159,42 +161,69 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth (cm,aln,c
 	 alignmentDiagram = if isJust aln then drawStockholmLines entryNumberCutoff maxWidth nodeAlignmentColIndices comparisonNodeLabels (fromJust aln) else mempty
 
 indexStructureRow (row1,_,_,_,_)  (row2,_,_,_,_) = row1 == row2
+indexStructureParent (_,p1,_,_,_)  (_,p2,_,_,_) = p1 == p2
 
 data NodeIndices = S [Int] | L [Int] | R [Int]
   deriving (Show, Eq)
          
                                                          -- Row,Parent,Type,StartIndex,Stop
-buildIndexStructure :: Int -> V.Vector CM.Node -> V.Vector Int -> [(Int,Int,String,Int,Int)]
-buildIndexStructure row nodes indices
-  | null indices = []                   
-  | ntype == CM.NodeType 6 = ((row,0,"S,",currentIndex,currentEnd) : (buildIndexStructure row nodes remainingIndices2))  -- ROOT start tree             
-  -- | ntype == CM.NodeType 0 = buildIndexStructure nodes remainingIndices -- BIF
-  | ntype == CM.NodeType 4 = ((row,0,"L,",currentIndex,currentEnd) : (buildIndexStructure row nodes remainingIndices2)) --(L [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices) -- BEGL set current label
-  | ntype == CM.NodeType 5 = ((row,0,"R,",currentIndex,currentEnd) : (buildIndexStructure row nodes remainingIndices2)) -- (R [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices)  -- BEGR set current label
-  -- | ntype == CM.NodeType 7 = [] -- END
-  | ntype == CM.NodeType 1 = ((buildIndexStructure row nodes remainingIndices2))
-  | ntype == CM.NodeType 2 = ((buildIndexStructure row nodes remainingIndices2))
-  | ntype == CM.NodeType 3 = ((buildIndexStructure row nodes remainingIndices2))
-  | ntype == CM.NodeType 7 = ((buildIndexStructure row nodes remainingIndices2))
-  | ntype == CM.NodeType 8 = ((buildIndexStructure row  nodes remainingIndices2))
-  | ntype == CM.NodeType 9 = ((buildIndexStructure row  nodes remainingIndices2))
-  | ntype == CM.NodeType 10 = ((buildIndexStructure row nodes remainingIndices2))
-  | ntype == CM.NodeType 0 = ((buildIndexStructure (row + 1) nodes remainingIndices2))   
-  | otherwise = []
-    where currentIndex = V.head indices
-          currentNode = nodes V.! currentIndex
-          --remainingIndices = V.drop (currentEnd) indices
-          remainingIndices2 = V.drop 1  indices
-          currentEnd = getIndexEnd nodes indices
-          ntype = CM._ntype currentNode
-                  
+--buildIndexStructure :: Int -> V.Vector CM.Node -> V.Vector Int -> [(Int,Int,String,Int,Int)]
+--buildIndexStructure row nodes indices
+--  | null indices = []                   
+  -- | ntype == CM.NodeType 6 = ((row,0,"S,",currentIndex,currentEnd) : (buildIndexStructure row nodes remainingIndices2))  -- ROOT start tree             
+  -- -- | ntype == CM.NodeType 0 = buildIndexStructure nodes remainingIndices -- BIF
+  -- | ntype == CM.NodeType 4 = ((row,0,"L,",currentIndex,currentEnd) : (buildIndexStructure row nodes remainingIndices2)) --(L [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices) -- BEGL set current label
+  -- | ntype == CM.NodeType 5 = ((row,0,"R,",currentIndex,currentEnd) : (buildIndexStructure row nodes remainingIndices2)) -- (R [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices)  -- BEGR set current label
+  -- -- | ntype == CM.NodeType 7 = [] -- END
+  -- | ntype == CM.NodeType 1 = ((buildIndexStructure row nodes remainingIndices2))
+  -- | ntype == CM.NodeType 2 = ((buildIndexStructure row nodes remainingIndices2))
+  -- | ntype == CM.NodeType 3 = ((buildIndexStructure row nodes remainingIndices2))
+  -- | ntype == CM.NodeType 7 = ((buildIndexStructure row nodes remainingIndices2))
+  -- | ntype == CM.NodeType 8 = ((buildIndexStructure row  nodes remainingIndices2))
+  -- | ntype == CM.NodeType 9 = ((buildIndexStructure row  nodes remainingIndices2))
+  -- | ntype == CM.NodeType 10 = ((buildIndexStructure row nodes remainingIndices2))
+  -- | ntype == CM.NodeType 0 = ((buildIndexStructure (row + 1) nodes remainingIndices2))   
+  -- | otherwise = []
+  --   where currentIndex = V.head indices
+  --         currentNode = nodes V.! currentIndex
+  --         --remainingIndices = V.drop (currentEnd) indices
+  --         remainingIndices2 = V.drop 1  indices
+  --         currentEnd = getIndexEnd nodes indices
+  --         ntype = CM._ntype currentNode
+
+startState = ([],1::Int)
+--type IndexState =  [(Int,Int,String,Int,Int)]
+buildIndexStructure :: Int -> V.Vector CM.Node -> [Int] -> State ([(Int,Int,String,Int,Int)],Int) ([(Int,Int,String,Int,Int)],Int)
+buildIndexStructure row nodes [] = do
+  (a,b) <- get
+  return (a,b)
+ 
+buildIndexStructure row nodes (currentIndex:xs) = do
+  (interval,parentIntervalIndex) <- get
+  let currentNode = nodes V.! currentIndex
+  let currentEnd = getIndexEnd nodes (currentIndex:xs)
+  let ntype = CM._ntype currentNode
+  case ntype of                  
+    CM.NodeType 6 -> put (((row,parentIntervalIndex,"S,",currentIndex,currentEnd):interval),parentIntervalIndex+1) -- ROOT start tree             
+    CM.NodeType 4 -> put (((row,parentIntervalIndex,"L,",currentIndex,currentEnd):interval),parentIntervalIndex+1) --(L [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices) -- BEGL set current label
+    CM.NodeType 5 -> put (((row,parentIntervalIndex,"R,",currentIndex,currentEnd):interval),parentIntervalIndex+1) -- (R [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices)  -- BEGR set current label
+    CM.NodeType 1 -> put (interval,parentIntervalIndex)
+    CM.NodeType 2 -> put (interval,parentIntervalIndex)
+    CM.NodeType 3 -> put (interval,parentIntervalIndex)
+    CM.NodeType 7 -> put (interval,parentIntervalIndex)
+    CM.NodeType 8 -> put (interval,parentIntervalIndex)
+    CM.NodeType 9 -> put (interval,parentIntervalIndex)
+    CM.NodeType 10 -> put (interval,parentIntervalIndex)
+    CM.NodeType 0 -> put (interval,parentIntervalIndex)
+  buildIndexStructure row nodes xs
+
 getIndexEnd nodes indices
-  | null indices = (V.length nodes -1)
+  | null indices = (length nodes -1)
   | ntype == CM.NodeType 7 = currentIndex
   | ntype == CM.NodeType 0 = currentIndex
-  | otherwise = getIndexEnd nodes remainingIndices
-   where currentIndex = V.head indices
-         remainingIndices = V.drop 1 indices
+  | otherwise = getIndexEnd nodes remainingindices
+   where currentIndex = head indices
+         remainingindices = tail indices
          currentNode = nodes V.! currentIndex
          ntype = CM._ntype currentNode
                             
