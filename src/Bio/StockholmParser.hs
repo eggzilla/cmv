@@ -1,5 +1,6 @@
 -- | Parse Stockholm alignments
 module Bio.StockholmParser (
+                       readExistingStockholm,
                        parseStockholm,
                        readStockholm,
                        module Bio.StockholmData
@@ -11,6 +12,22 @@ import Text.Parsec.Numbers
 import qualified Control.Exception.Base as CE
 import qualified Data.Text as T
 import Data.List
+import System.Directory
+import Data.Either.Unwrap
+
+readExistingStockholm :: String -> IO (Either String [StockholmAlignment])
+readExistingStockholm filePath = do
+  if null filePath 
+    then return (Left "")
+    else do
+      fileExists <- doesFileExist filePath
+      if fileExists
+         then do
+          stockholmInput <- readStockholm filePath
+          if isLeft stockholmInput
+             then return (Left (show stockholmInput))
+             else return (Right (fromRight stockholmInput))
+         else return (Left ("Could not find stockholm alignment file with path:" ++ filePath))
 
 -- | parse 
 parseStockholm :: [Char] -> Either ParseError [StockholmAlignment]

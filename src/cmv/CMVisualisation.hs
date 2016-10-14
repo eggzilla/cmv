@@ -52,13 +52,13 @@ main :: IO ()
 main = do
   Options{..} <- cmdArgs options
   modelFileExists <- doesFileExist modelFile
-  alnFileExists <- doesFileExist alignmentFile
+  --alnFileExists <- doesFileExist alignmentFile
   if modelFileExists
     then do
       models <- fromFile modelFile
       if (not (null models))
         then do
-          alnInput <- readStockholm alignmentFile
+          alnInput <- readExistingStockholm alignmentFile
           let outputName = diagramName "cmv" outputFormat
 	  let modelNumber = length models
           let alns = if (isRight alnInput) then (map (\a -> Just a) (fromRight alnInput)) else (replicate modelNumber Nothing)
