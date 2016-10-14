@@ -130,7 +130,7 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth (cm,aln,c
          indices = V.toList (V.iterateN (nodeNumber-1) (1+) 0)
          --indexStructure = buildIndexStructure 0 nodes indices
          (finalState,indexStructure)= runState (buildIndexStructure 0 nodes indices) startState 
-         indexStructureGroupedByRow = groupBy indexStructureParent (fst indexStructure)
+         indexStructureGroupedByParent = groupBy indexStructureParent (fst indexStructure)
 	 --nullModel = CM._nullModel cm
 	 --nullModelBitscores = VU.toList (VU.map (getBitscore) nullModel)
 	 --dummyLetters = replicate (length nullModelBitscores) "I"
@@ -144,7 +144,7 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth (cm,aln,c
          simpleModelTreeLayout = vcat (map drawCMNodeSimple simpleNodes)
 	 detailedModelTreeLayout = alignTL (vcat' with { _sep = 5 }  [modelHeader,detailedNodeTreeTransitions,alignmentDiagram])
          detailedNodeTreeTransitions = applyAll (arrowList ++ labelList) detailedNodesTree
-         detailedNodesTree = vcat (map (drawCMNodeRow alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) indexStructureGroupedByRow)
+         detailedNodesTree = vcat (map (drawCMNodeRow alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) (reverse indexStructureGroupedByParent))
 	 modelHeader = makeModelHeader (T.unpack modelName) modelColor
 	 nodeIndices = V.iterateN nodeNumber (1+) 0
 	 detailedNodeTransitions = applyAll (arrowList ++ labelList) detailedNodes
@@ -164,7 +164,7 @@ indexStructureRow (row1,_,_,_,_)  (row2,_,_,_,_) = row1 == row2
 indexStructureParent (_,p1,_,_,_)  (_,p2,_,_,_) = p1 == p2
 
 data NodeIndices = S [Int] | L [Int] | R [Int]
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
          
                                                          -- Row,Parent,Type,StartIndex,Stop
 --buildIndexStructure :: Int -> V.Vector CM.Node -> V.Vector Int -> [(Int,Int,String,Int,Int)]
@@ -204,9 +204,9 @@ buildIndexStructure row nodes (currentIndex:xs) = do
   let currentEnd = getIndexEnd nodes (currentIndex:xs)
   let ntype = CM._ntype currentNode
   case ntype of                  
-    CM.NodeType 6 -> put (((row,parentIntervalIndex,"S,",currentIndex,currentEnd):interval),parentIntervalIndex+1) -- ROOT start tree             
-    CM.NodeType 4 -> put (((row,parentIntervalIndex,"L,",currentIndex,currentEnd):interval),parentIntervalIndex+1) --(L [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices) -- BEGL set current label
-    CM.NodeType 5 -> put (((row,parentIntervalIndex,"R,",currentIndex,currentEnd):interval),parentIntervalIndex+1) -- (R [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices)  -- BEGR set current label
+    CM.NodeType 6 -> put (((row,parentIntervalIndex,"S,",currentIndex,currentEnd):interval),parentIntervalIndex) -- ROOT start tree             
+    CM.NodeType 4 -> put (((row,parentIntervalIndex,"L,",currentIndex,currentEnd):interval),parentIntervalIndex) --(L [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices) -- BEGL set current label
+    CM.NodeType 5 -> put (((row,parentIntervalIndex,"R,",currentIndex,currentEnd):interval),parentIntervalIndex) -- (R [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices)  -- BEGR set current label
     CM.NodeType 1 -> put (interval,parentIntervalIndex)
     CM.NodeType 2 -> put (interval,parentIntervalIndex)
     CM.NodeType 3 -> put (interval,parentIntervalIndex)
@@ -214,7 +214,7 @@ buildIndexStructure row nodes (currentIndex:xs) = do
     CM.NodeType 8 -> put (interval,parentIntervalIndex)
     CM.NodeType 9 -> put (interval,parentIntervalIndex)
     CM.NodeType 10 -> put (interval,parentIntervalIndex)
-    CM.NodeType 0 -> put (interval,parentIntervalIndex)
+    CM.NodeType 0 -> put (interval,parentIntervalIndex+1)
   buildIndexStructure row nodes xs
 
 getIndexEnd nodes indices
