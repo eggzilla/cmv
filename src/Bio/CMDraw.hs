@@ -97,22 +97,16 @@ drawSingleCMs modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cm
 -- | Draw the guide Tree of a single CM
 --drawCM :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => [Char] -> [(String, [Char])] -> QDiagram b V2 n Any
 drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth (cm,aln,comparisonNodeLabels,modelColor)
-   | modelDetail == "minimal" && modelLayout == "tree"  = minimalModelTreeLayout
-   | modelDetail == "simple" && modelLayout == "tree"= simpleModelTreeLayout
-   | modelDetail == "detailed" && modelLayout == "tree" = detailedModelTreeLayout
-   | modelDetail == "minimal" = minimalModelLayout
-   | modelDetail == "simple" = simpleModelLayout
-   | modelDetail == "detailed" = detailedModelLayout    
-   | otherwise =  detailedModelLayout
-   where --simpleNodes = (processCMGuideTree cm)         
-         nodes = CM._nodes cm
+   | modelLayout == "tree" = modelTreeLayout
+   | modelLayout == "flat" = modelFlatLayout
+   | otherwise = modelTreeLayout
+   where nodes = CM._nodes cm
          nodeNumber = V.length nodes
          allStates = CM._states cm
          boxlength = fromIntegral (length alphabetSymbols) + 2
          alphabetSymbols = ['A','U','C','G']
 	 nodeAlignmentColIndices = V.map (CM._nColL) nodes
          indices = V.toList (V.iterateN (nodeNumber-1) (1+) 0)
-         --indexStructure = buildIndexStructure 0 nodes indices
          (finalState,indexStructure)= runState (buildIndexStructure 0 nodes indices) startState 
          indexStructureGroupedByParent = groupBy indexStructureParent (fst indexStructure)
 	 --nullModel = CM._nullModel cm
@@ -121,18 +115,14 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth (cm,aln,c
 	 --dummyNullModelBitscores = zip dummyLetters nullModelBitscores
 	 --nullModelBox = vcat (map (emissionEntry "score") dummyNullModelBitscores)
 	 modelName = CM._name cm
-         minimalModelLayout = vcat (V.toList (V.map (drawCMNodeMinimal alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) nodeIndices))
-         simpleModelLayout = vcat (V.toList (V.map (drawCMNodeSimple alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) nodeIndices))
-	 detailedModelLayout = alignTL (vcat' with { _sep = 5 }  [modelHeader,detailedNodeTransitions,alignmentDiagram])
-         minimalModelTreeLayout = vcat (V.toList (V.map (drawCMNodeMinimal alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) nodeIndices))
-         simpleModelTreeLayout = vcat (V.toList (V.map (drawCMNodeSimple alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) nodeIndices))
-	 detailedModelTreeLayout = alignTL (vcat' with { _sep = 5 }  [modelHeader,detailedNodeTreeTransitions,alignmentDiagram])
+	 modelFlatLayout = alignTL (vcat [modelHeader,detailedNodeTransitions,alignmentDiagram])
+         modelTreeLayout = alignTL (vcat [modelHeader,detailedNodeTreeTransitions,alignmentDiagram])
          detailedNodeTreeTransitions = applyAll (arrowList ++ labelList) detailedNodesTree
-         detailedNodesTree = vcat (map (drawCMNodeRow alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) (reverse indexStructureGroupedByParent))
+         detailedNodesTree = vcat (map (drawCMNodeRow modelDetail alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) (reverse indexStructureGroupedByParent))
 	 modelHeader = makeModelHeader (T.unpack modelName) modelColor
 	 nodeIndices = V.iterateN nodeNumber (1+) 0
 	 detailedNodeTransitions = applyAll (arrowList ++ labelList) detailedNodes
-	 detailedNodes = vcat (V.toList (V.map (drawCMNodeDetailed alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) nodeIndices))
+	 detailedNodes = vcat (V.toList (V.map (drawCMNode modelDetail alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) nodeIndices))
          trans = CM._sTransitions (CM._states cm)
          (lo,up) = PA.bounds trans
          (transitionIndexTuple,transitionPAIndices) = unzip $ makeTransitionIndices (deConstr up)
@@ -191,35 +181,11 @@ setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0
 setStateLetter echar = alignedText 1 1 [echar] # fontSize 2.0 <> rect 2.0 2.0 # lw 0
 setTitelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 4.0 <> rect 4.0 4.0 # lw 0
 
-drawCMNodeRow alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes intervals = strutY 4 === hcat' with { _sep = 8 } (map (drawCMNodeInterval alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes) intervals)
+drawCMNodeRow modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes intervals = strutY 4 === hcat' with { _sep = 8 } (map (drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes) intervals)
 
-drawCMNodeInterval alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes (row,parent,intervaltype,currentIndex,currentEnd) = intervalVis
-  where intervalVis = vcat' with { _sep = 8 } (map (drawCMNodeDetailed alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes) currentInterval)
+drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes (row,parent,intervaltype,currentIndex,currentEnd) = intervalVis
+  where intervalVis = vcat' with { _sep = 8 } (map (drawCMNode modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes) currentInterval)
         currentInterval = [currentIndex..currentEnd]
-
-
--- | Draws the guide tree nodes of a CM, simplified
---drawCMNodeSimple :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => (t, [Char]) -> b
-drawCMNodeMinimal alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes nodeIndex = (alignedText 0 0 nId # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nId))/2)), negate 1.25)) <>  wheel nodeLabels # lw 0.1 <> rect 1.5 3 # lw 0) 
-  where node = nodes V.! nodeIndex
-        idNumber = PI.getPInt (CM._nid node)
-        nId = show idNumber
-        nodeLabels = V.toList (snd (comparisonNodeLabels V.! idNumber))
-        
--- | Draws the guide tree nodes of a CM, verbose with label and index
---drawCMGuideNodeVerbose :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => (String, String) -> QDiagram b V2 n Any
-drawCMNodeSimple alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes nodeIndex = text' nodeType # translate (r2 (0,2)) <> text' nId # translate (r2 (0,negate 2)) <> rect 10 10 # lw 0.5  <> colourBoxes # translate (r2 (0,negate (totalBoxYlength)/2))
-  where node = nodes V.! nodeIndex
-        idNumber = PI.getPInt (CM._nid node)
-        nId = show idNumber
-        nodeType = getCMNodeType node
-        nodeLabels = V.toList (snd (comparisonNodeLabels V.! idNumber))
-        boxNumber = fromIntegral $ length nodeLabels
-        totalBoxYlength = 5
-        singleBoxYLength = totalBoxYlength / boxNumber
-        colourBoxes = vcat (map (colorBox singleBoxYLength) nodeLabels)
-
-colorBox singleBoxYLength colColour = rect 5 singleBoxYLength # fc colColour # lw 0.1
 
 getCMNodeType node
   | ntype == CM.NodeType 0 = "BIF"
@@ -252,16 +218,23 @@ labelToColor label
 labelToColor _ = sRGB24 245 245 245
 
 --drawCMNodeDetailed :: [Char] -> String -> Double -> Int -> Int -> Int -> V.Vector (Int, V.Vector (Colour Double)) -> CM.States -> CM.Node -> QDiagram b V2 n Any
-drawCMNodeDetailed alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes nodeIndex 
-  -- | idNumber == 0 = beginBox
-  -- | idNumber == (lastIndex - 1) = nodeBox ||| endBox
-  -- | idNumber == rowStart = rowStartBox idNumber boxlength ||| nodeBox
-  -- | idNumber == rowEnd - 1 = nodeBox ||| rowEndBox idNumber boxlength                    
-  | otherwise = nodeBox 
+drawCMNode modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes nodeIndex
+  | modelDetail == "minimal" = (alignedText 0 0 nId # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nId))/2)), negate 1.25)) <>  wheel nodeLabels # lw 0.1 <> rect 1.5 3 # lw 0) 
+  | modelDetail == "simple" = text' nodeType # translate (r2 (0,2)) <> text' nId # translate (r2 (0,negate 2)) <> rect 10 10 # lw 0.5  <> colourBoxes # translate (r2 (0,negate (totalBoxYlength)/2))
+  | otherwise = detailedNodeBox
   where node = nodes V.! nodeIndex
-        idNumber = CM._nid node
-        nid = show idNumber
-	nodeBox = drawCMNodeBox alphabetSymbols emissiontype boxlength states comparisonNodeLabels node
+        idNumber = PI.getPInt (CM._nid node)
+        nId = show idNumber
+	detailedNodeBox = drawCMNodeBox alphabetSymbols emissiontype boxlength states comparisonNodeLabels node
+        nodeType = getCMNodeType node
+        nodeLabels = V.toList (snd (comparisonNodeLabels V.! idNumber))
+        boxNumber = fromIntegral $ length nodeLabels
+        totalBoxYlength = 5
+        singleBoxYLength = totalBoxYlength / boxNumber
+        colourBoxes = vcat (map (colorBox singleBoxYLength) nodeLabels)
+
+colorBox singleBoxYLength colColour = rect 5 singleBoxYLength # fc colColour # lw 0.1
+        
 
 drawCMNodeBox alphabetSymbols emissiontype boxlength currentStates comparisonNodeLabels node
   | ntype == CM.NodeType 0 = bifNode # translate (r2 (negate 25,25)) <> nodeBox
