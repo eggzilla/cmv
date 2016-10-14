@@ -166,31 +166,6 @@ indexStructureParent (_,p1,_,_,_)  (_,p2,_,_,_) = p1 == p2
 data NodeIndices = S [Int] | L [Int] | R [Int]
   deriving (Show, Eq, Ord)
          
-                                                         -- Row,Parent,Type,StartIndex,Stop
---buildIndexStructure :: Int -> V.Vector CM.Node -> V.Vector Int -> [(Int,Int,String,Int,Int)]
---buildIndexStructure row nodes indices
---  | null indices = []                   
-  -- | ntype == CM.NodeType 6 = ((row,0,"S,",currentIndex,currentEnd) : (buildIndexStructure row nodes remainingIndices2))  -- ROOT start tree             
-  -- -- | ntype == CM.NodeType 0 = buildIndexStructure nodes remainingIndices -- BIF
-  -- | ntype == CM.NodeType 4 = ((row,0,"L,",currentIndex,currentEnd) : (buildIndexStructure row nodes remainingIndices2)) --(L [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices) -- BEGL set current label
-  -- | ntype == CM.NodeType 5 = ((row,0,"R,",currentIndex,currentEnd) : (buildIndexStructure row nodes remainingIndices2)) -- (R [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices)  -- BEGR set current label
-  -- -- | ntype == CM.NodeType 7 = [] -- END
-  -- | ntype == CM.NodeType 1 = ((buildIndexStructure row nodes remainingIndices2))
-  -- | ntype == CM.NodeType 2 = ((buildIndexStructure row nodes remainingIndices2))
-  -- | ntype == CM.NodeType 3 = ((buildIndexStructure row nodes remainingIndices2))
-  -- | ntype == CM.NodeType 7 = ((buildIndexStructure row nodes remainingIndices2))
-  -- | ntype == CM.NodeType 8 = ((buildIndexStructure row  nodes remainingIndices2))
-  -- | ntype == CM.NodeType 9 = ((buildIndexStructure row  nodes remainingIndices2))
-  -- | ntype == CM.NodeType 10 = ((buildIndexStructure row nodes remainingIndices2))
-  -- | ntype == CM.NodeType 0 = ((buildIndexStructure (row + 1) nodes remainingIndices2))   
-  -- | otherwise = []
-  --   where currentIndex = V.head indices
-  --         currentNode = nodes V.! currentIndex
-  --         --remainingIndices = V.drop (currentEnd) indices
-  --         remainingIndices2 = V.drop 1  indices
-  --         currentEnd = getIndexEnd nodes indices
-  --         ntype = CM._ntype currentNode
-
 startState = ([],1::Int)
 --type IndexState =  [(Int,Int,String,Int,Int)]
 buildIndexStructure :: Int -> V.Vector CM.Node -> [Int] -> State ([(Int,Int,String,Int,Int)],Int) ([(Int,Int,String,Int,Int)],Int)
@@ -273,14 +248,6 @@ getCMNodeType node
   | ntype == CM.NodeType 7 = "END"
   | otherwise = "NA"
     where ntype = CM._ntype node
-
--- | Draws the guide tree nodes of a CM, simplified
---drawCMNodeSimple :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => (t, [Char]) -> b
---drawCMNodeFlat (_,label) =  rect 2 2 # lw 0.1 # fc (labelToColor label)
-
--- | Draws the guide tree nodes of a CM, verbose with label and index
---drawCMGuideNodeVerbose :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => (String, String) -> QDiagram b V2 n Any
---drawCMNodeSimple (number,label) = text' label # translate (r2 (0,2)) <> text' number # translate (r2 (0,negate 2)) <> rect 10 10 # lw 0.5 # fc (labelToColor label)
 
 text' t = alignedText 0.5 0.5 t # fontSize 2 <> rect textLength 2 # lw 0.0
   where textLength = fromIntegral (length t) * 2
