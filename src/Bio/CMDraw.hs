@@ -63,11 +63,7 @@ import GHC.Float
 import Control.Monad.State
 
 -- | Draw one or more CM guide trees and concatenate them vertically
-drawCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cms alns comparisons
-  | modelDetail == "minimal" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput)) --  <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
-  | modelDetail == "simple" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput)) -- <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
-  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput)) 
-  | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput))
+drawCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cms alns comparisons = alignTL (vcat' with { _sep = 20 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput))
   where zippedInput = zip4 cms alns comparisonNodeLabels (V.toList colorVector)
         modelNumber = length cms
         comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) cms
@@ -77,11 +73,7 @@ drawCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidt
 	-- comparisonsHighlightParameter = getComparisonsHighlightParameters cms comparisons
 
 -- | Draw one or more CM 
-drawSingleCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cms alns comparisons
-  | modelDetail == "minimal" = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput -- <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
-  | modelDetail == "simple" = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput -- <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
-  | modelDetail == "detailed" = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput
-  | otherwise = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput -- <> (mconcat (highlightComparisonTrails modelDetail comparisonsHighlightParameter))
+drawSingleCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cms alns comparisons = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput
   where zippedInput = zip4 cms alns comparisonNodeLabels (V.toList colorVector)
         modelNumber = length cms
         comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) cms
@@ -91,21 +83,13 @@ drawSingleCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype m
 	comparisonsHighlightParameter = getComparisonsHighlightParameters cms comparisons
 
 -- | Draw one or more CM and concatenate them vertically
-drawCMs modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cms alns
-  | modelDetail == "minimal" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput))
-  | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput))
-  | modelDetail == "detailed" = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput))
-  | otherwise = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput))
+drawCMs modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cms alns = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput))
     where zippedInput = zip4 cms alns comparisonNodeLabels colorList
           comparisonNodeLabels = map getBlankComparisonNodeLabels cms
           colorList = replicate (length cms) white
 
 -- | Draw one or more CM 
-drawSingleCMs modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cms alns
-  | modelDetail == "minimal" = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput
-  | modelDetail == "simple" = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput
-  | modelDetail == "detailed" = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput
-  | otherwise = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput
+drawSingleCMs modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cms alns = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput
     where zippedInput = zip4 cms alns comparisonNodeLabels colorList
           comparisonNodeLabels = map getBlankComparisonNodeLabels cms
           colorList = replicate (length cms) white
