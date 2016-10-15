@@ -59,6 +59,7 @@ main = do
       if (not (null models))
         then do
           alnInput <- readExistingStockholm alignmentFile
+          if (isLeft alnInput) then print (fromLeft alnInput) else return ()
           let outputName = diagramName "cmv" outputFormat
 	  let modelNumber = length models
           let alns = if (isRight alnInput) then (map (\a -> Just a) (fromRight alnInput)) else (replicate modelNumber Nothing)

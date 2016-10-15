@@ -57,22 +57,24 @@ main = do
   if (modelFileExists && hmmCFileExists && alnFileExists)
     then do
       inputModels <- HM.readHMMER3 modelsFile
-      alns <- readStockholm alignmentFile
-      let rightAlns = map Just (E.fromRight alns)
       if (isRight inputModels)
         then do
-          let currentModels = E.fromRight inputModels
+          let models = E.fromRight inputModels
           hmmCResultParsed <- readHMMCompareResult hmmCompareResultFile
+	  let modelNumber = length models
+	  alnInput <- readExistingStockholm alignmentFile
+          if (isLeft alnInput) then print (E.fromLeft alnInput) else return ()
+          let alns = if (isRight alnInput) then (map (\a -> Just a) (E.fromRight alnInput)) else (replicate modelNumber Nothing)
           if (isRight hmmCResultParsed)
             then do
               let rightHMMCResultsParsed = E.fromRight hmmCResultParsed
               let outputName = diagramName "hmmcv" outputFormat
               if oneOutputFile
                 then do
-                  printHMM (E.fromRight outputName) svgsize (drawHMMComparison modelDetail alignmentEntries emissionLayout maxWidth currentModels rightAlns rightHMMCResultsParsed)
+                  printHMM (E.fromRight outputName) svgsize (drawHMMComparison modelDetail alignmentEntries emissionLayout maxWidth models alns rightHMMCResultsParsed)
                 else do
-                  let modelNames = map ((++"."++outputFormat) .  HM.name) currentModels
-                  let modelVis = drawSingleHMMComparison  modelDetail alignmentEntries emissionLayout maxWidth currentModels rightAlns rightHMMCResultsParsed
+                  let modelNames = map ((++"."++outputFormat) .  HM.name) models
+                  let modelVis = drawSingleHMMComparison  modelDetail alignmentEntries emissionLayout maxWidth models alns rightHMMCResultsParsed
                   mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelNames modelVis)
             else print (E.fromLeft hmmCResultParsed)
         else print (E.fromLeft inputModels)

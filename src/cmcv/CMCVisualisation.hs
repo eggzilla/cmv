@@ -62,7 +62,8 @@ main = do
        models <- fromFile modelsFile
        cmcResultParsed <- getCmcompareResults cmcompareResultFile
        let comparisons = rights cmcResultParsed
-       alnInput <- readStockholm alignmentFile
+       alnInput <- readExistingStockholm alignmentFile
+       if (isLeft alnInput) then print (E.fromLeft alnInput) else return ()
        let outputName = diagramName "cmcv" outputFormat
        let modelNumber = length models
        let alns = if (isRight alnInput) then (map (\a -> Just a) (E.fromRight alnInput)) else (replicate modelNumber Nothing)

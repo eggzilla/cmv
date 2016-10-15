@@ -37,7 +37,7 @@ options = Options
     modelLayout = "detailed" &= name "l" &= help "Set layout of drawn models: flat, tree (Default: detailed)",
     emissionLayout = "box" &= name "e" &= help "Set layout of drawn models: score, probability, box (Default: box)",
     alignmentEntries = (50 :: Int) &= name "n" &= help "Set cutoff for included stockholm alignment entries (Default: 50)",
-    maxWidth = (180:: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)",
+    maxWidth = (200:: Double) &= name "w" &= help "Set maximal width of result figure (Default: 200)",
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
     oneOutputFile = False  &= name "o" &= help "Merge all output into one file (Default: False)"
   } &= summary "HMMvisualisation devel version" &= help "Florian Eggenhofer - 2016" &= verbosity
@@ -52,7 +52,8 @@ main = do
        inputModels <- HM.readHMMER3 modelFile
        if isRight inputModels
          then do
-           alnInput <- readStockholm alignmentFile
+           alnInput <- readExistingStockholm alignmentFile
+           if (isLeft alnInput) then print (fromLeft alnInput) else return ()
            let outputName = diagramName "hmmv" outputFormat
            let currentModels = fromRight inputModels
            let modelNumber = length currentModels
