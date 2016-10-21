@@ -20,7 +20,9 @@ import Data.Either
 import qualified Data.Either.Unwrap as E
 import System.Directory
 import qualified Data.Text as T
-import Bio.StockholmParser
+import qualified Bio.StockholmParser as SP
+import Paths_cmcv (version)
+import Data.Version (showVersion)
 
 options :: Options
 data Options = Options            
@@ -49,7 +51,7 @@ options = Options
     comparisonAlignment = "model" &= name "a" &= help "Set layout of drawn models: model, comparison",
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
     oneOutputFile = False  &= name "o" &= help "Merge all output into one file (Default: False)"
-  } &= summary "CMCV devel version" &= help "Florian Eggenhofer - 2013-2016" &= verbosity
+  } &= summary ("cmcv " ++ toolVersion) &= help "Florian Eggenhofer - 2013-2016" &= verbosity
 
 main :: IO ()
 main = do
@@ -62,7 +64,7 @@ main = do
        models <- fromFile modelsFile
        cmcResultParsed <- getCmcompareResults cmcompareResultFile
        let comparisons = rights cmcResultParsed
-       alnInput <- readExistingStockholm alignmentFile
+       alnInput <- SP.readExistingStockholm alignmentFile
        if (isLeft alnInput) then print (E.fromLeft alnInput) else return ()
        let outputName = diagramName "cmcv" outputFormat
        let modelNumber = length models
@@ -78,5 +80,6 @@ main = do
        if modelFileExists then return () else putStrLn "Model file not found"
        if cmcFileExists then return () else putStrLn "Comparison file not found"
 
-
+toolVersion :: String
+toolVersion = showVersion version
   

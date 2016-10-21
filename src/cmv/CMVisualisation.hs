@@ -18,10 +18,11 @@ import Biobase.SElab.CM.Import
 import System.Console.CmdArgs
 import System.Directory
 import Data.Either.Unwrap
-import Bio.StockholmParser
+import qualified Bio.StockholmParser as SP
 import qualified Data.Text as T
 import qualified Data.Vector as V
-    
+import Paths_cmcv (version)
+import Data.Version (showVersion)    
 
 options :: Options
 data Options = Options            
@@ -46,7 +47,7 @@ options = Options
     maxWidth = (200 :: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)",
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
     oneOutputFile = False  &= name "o" &= help "Merge all output into one file (Default: False)"
-  } &= summary "CMV devel version" &= help "Florian Eggenhofer - 2013-2016" &= verbosity
+  } &= summary ("cmv " ++ toolVersion) &= help "Florian Eggenhofer - 2013-2016" &= verbosity
 
 main :: IO ()
 main = do
@@ -58,7 +59,7 @@ main = do
       models <- fromFile modelFile
       if (not (null models))
         then do
-          alnInput <- readExistingStockholm alignmentFile
+          alnInput <- SP.readExistingStockholm alignmentFile
           if (isLeft alnInput) then print (fromLeft alnInput) else return ()
           let outputName = diagramName "cmv" outputFormat
 	  let modelNumber = length models
@@ -75,4 +76,6 @@ main = do
     else do
       putStrLn "Input model file not found"
 
-
+toolVersion :: String
+toolVersion = showVersion version
+  

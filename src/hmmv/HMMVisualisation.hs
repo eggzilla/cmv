@@ -13,8 +13,10 @@ import Bio.HMMDraw
 import System.Console.CmdArgs
 import Data.Either.Unwrap
 import System.Directory
-import Bio.StockholmParser
+import qualified Bio.StockholmParser as SP
 import System.FilePath
+import Paths_cmcv (version)
+import Data.Version (showVersion)
 
 options :: Options
 data Options = Options            
@@ -40,7 +42,7 @@ options = Options
     maxWidth = (200:: Double) &= name "w" &= help "Set maximal width of result figure (Default: 200)",
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
     oneOutputFile = False  &= name "o" &= help "Merge all output into one file (Default: False)"
-  } &= summary "HMMvisualisation devel version" &= help "Florian Eggenhofer - 2016" &= verbosity
+  } &= summary ("hmmv " ++ toolVersion) &= help "Florian Eggenhofer - 2016" &= verbosity
 
 main :: IO ()
 main = do
@@ -52,7 +54,7 @@ main = do
        inputModels <- HM.readHMMER3 modelFile
        if isRight inputModels
          then do
-           alnInput <- readExistingStockholm alignmentFile
+           alnInput <- SP.readExistingStockholm alignmentFile
            if (isLeft alnInput) then print (fromLeft alnInput) else return ()
            let outputName = diagramName "hmmv" outputFormat
            let currentModels = fromRight inputModels
@@ -69,3 +71,6 @@ main = do
            print (fromLeft inputModels)
      else do
        putStrLn "Input model file not found"
+
+toolVersion :: String
+toolVersion = showVersion version
