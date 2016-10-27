@@ -120,7 +120,7 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth (cm,aln,c
          detailedNodeTreeTransitions = applyAll (arrowList ++ labelList) detailedNodesTree
          --detailedNodesTree = vcat (map (drawCMNodeRow modelDetail alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) (reverse indexStructureGroupedByParent))
          firstInterval = fromJust (find (\(_,p,_,_) -> p == 0) indexStructure)
-	 detailedNodesTree = drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes indexStructure firstInterval
+	 detailedNodesTree = drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure firstInterval
 	 modelHeader = makeModelHeader (T.unpack modelName) modelColor
 	 nodeIndices = V.iterateN nodeNumber (1+) 0
 	 detailedNodeTransitions = applyAll (arrowList ++ labelList) detailedNodes
@@ -183,7 +183,7 @@ setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0
 setStateLetter echar = alignedText 1 1 [echar] # fontSize 2.0 <> rect 2.0 2.0 # lw 0
 setTitelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 4.0 <> rect 4.0 4.0 # lw 0
 
-drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength parentInterval nodeNumber nodeNumber allStates comparisonNodeLabels nodes indexStructure (intervalId,parentId,intervalType,currentIndex,currentEnd) = tree
+drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure (intervalId,parentId,intervalType,currentIndex,currentEnd) = tree
   where tree = currentIntervalDrawing === hcat {_sep = 20} (map drawCMNodeTree nextIntervals)
         nextIntervals = filter (\(_,p,_,_) -> p == 0) indexStructure
         currentIntervalDrawing = drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength parentInterval nodeNumber nodeNumber allStates comparisonNodeLabels nodes (intervalId,parentId,intervalType,currentIndex,currentEnd)
