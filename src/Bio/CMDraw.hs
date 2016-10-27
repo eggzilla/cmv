@@ -34,7 +34,8 @@ module Bio.CMDraw
      connectionLine,
      mkPath,
      NodeIndices,
-     buildIndexStructure,
+     buildRowIndexStructure,
+     buildTreeIndexStructure,
      getIndexEnd
     ) where
   
@@ -107,7 +108,7 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth (cm,aln,c
          alphabetSymbols = ['A','U','C','G']
 	 nodeAlignmentColIndices = V.map (CM._nColL) nodes
          indices = V.toList (V.iterateN (nodeNumber-1) (1+) 0)
-         (indexStructure,finalState)= runState (buildIndexStructure 0 nodes indices) startState 
+         (indexStructure,finalState)= runState (buildTreeIndexStructure 1 nodes indices) startState 
          --indexStructureGroupedByParent = groupBy indexStructureParent (fst indexStructure)
 	 --nullModel = CM._nullModel cm
 	 --nullModelBitscores = VU.toList (VU.map (getBitscore) nullModel)
@@ -144,12 +145,12 @@ data NodeIndices = S [Int] | L [Int] | R [Int]
          
 startState = ([],1::Int)
 --type IndexState =  [(Int,Int,String,Int,Int)]
-buildIndexStructure :: Int -> V.Vector CM.Node -> [Int] -> State ([(Int,Int,String,Int,Int)],Int) ([(Int,Int,String,Int,Int)],Int)
-buildIndexStructure row nodes [] = do
+buildRowIndexStructure :: Int -> V.Vector CM.Node -> [Int] -> State ([(Int,Int,String,Int,Int)],Int) ([(Int,Int,String,Int,Int)],Int)
+buildRowIndexStructure row nodes [] = do
   (a,b) <- get
   return (a,b)
- 
-buildIndexStructure row nodes (currentIndex:xs) = do
+
+buildRowIndexStructure row nodes (currentIndex:xs) = do
   (interval,parentId) <- get
   let currentNode = nodes V.! currentIndex
   let currentEnd = getIndexEnd nodes (currentIndex:xs)
@@ -166,8 +167,41 @@ buildIndexStructure row nodes (currentIndex:xs) = do
     CM.NodeType 9 -> put (interval,parentId)
     CM.NodeType 10 -> put (interval,parentId)
     CM.NodeType 0 -> put (interval,parentId+1)
-  buildIndexStructure row nodes xs
+  buildRowIndexStructure row nodes xs
 
+buildTreeIndexStructure :: Int -> V.Vector CM.Node -> [Int] -> State ([(Int,Int,String,Int,Int)],Int) ([(Int,Int,String,Int,Int)],Int)                      
+buildTreeIndexStructure row nodes [] = do
+  (a,b) <- get
+  return (a,b)
+                      
+buildTreeIndexStructure intervalId nodes (currentIndex:xs) = do
+  (interval,parentId) <- get
+  let currentNode = nodes V.! currentIndex
+  let currentEnd = getIndexEnd nodes (currentIndex:xs)
+  let ntype = CM._ntype currentNode
+  let maxId = if null interval then 0 else maximum $ map (\(iid,_,_,_,_)-> iid) interval
+  let newId = maxId +1
+  let nextId = setNextId ntype intervalId newId
+  case ntype of                  
+    CM.NodeType 6 -> put (((newId,parentId,"S,",currentIndex,currentEnd):interval),parentId) 
+    CM.NodeType 4 -> put (((newId,intervalId,"L,",currentIndex,currentEnd):interval),parentId) 
+    CM.NodeType 5 -> put (((newId,intervalId,"R,",currentIndex,currentEnd):interval),parentId)
+    CM.NodeType 1 -> put (interval,parentId)
+    CM.NodeType 2 -> put (interval,parentId)
+    CM.NodeType 3 -> put (interval,parentId)
+    CM.NodeType 7 -> put (interval,parentId)
+    CM.NodeType 8 -> put (interval,parentId)
+    CM.NodeType 9 -> put (interval,parentId)
+    CM.NodeType 10 -> put (interval,parentId)
+    CM.NodeType 0 -> put (interval,parentId+1)
+  buildTreeIndexStructure nextId nodes xs
+
+setNextId ntype intervalId newId
+  | ntype == CM.NodeType 6 = newId
+  | ntype == CM.NodeType 4 = newId
+  | ntype == CM.NodeType 5 = newId
+  | otherwise = intervalId
+                      
 getIndexEnd nodes indices
   | null indices = (length nodes -1)
   | ntype == CM.NodeType 7 = currentIndex
@@ -186,7 +220,7 @@ setTitelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 4.0 <> rect 4.0 4.
 drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure (intervalId,parentId,intervalType,currentIndex,currentEnd) = nodeTree
   where nodeTree = currentIntervalDrawing === hcat' with {_sep = 20} (map (drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes remainingIntervals) nextIntervals)
         (nextIntervals,remainingIntervals) = partition (\(_,p,_,_,_) -> (parentId + 1) == p) indexStructure
-        currentIntervalDrawing = drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength currentIndex currentEnd currentEnd allStates comparisonNodeLabels nodes (intervalId,parentId,intervalType,currentIndex,currentEnd) --- ||| (text' (show indexStructure) <> rect 100 100)
+        currentIntervalDrawing = drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength currentIndex currentEnd currentEnd allStates comparisonNodeLabels nodes (intervalId,parentId,intervalType,currentIndex,currentEnd) ||| (text' (show indexStructure) <> rect 100 100)
  
 drawCMNodeRow modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes intervals = strutY 4 === hcat' with { _sep = 8 } (map (drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes) intervals)
 
