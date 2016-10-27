@@ -107,8 +107,8 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth (cm,aln,c
          alphabetSymbols = ['A','U','C','G']
 	 nodeAlignmentColIndices = V.map (CM._nColL) nodes
          indices = V.toList (V.iterateN (nodeNumber-1) (1+) 0)
-         (finalState,indexStructure)= runState (buildIndexStructure 0 nodes indices) startState 
-         indexStructureGroupedByParent = groupBy indexStructureParent (fst indexStructure)
+         (indexStructure,finalState)= runState (buildIndexStructure 0 nodes indices) startState 
+         --indexStructureGroupedByParent = groupBy indexStructureParent (fst indexStructure)
 	 --nullModel = CM._nullModel cm
 	 --nullModelBitscores = VU.toList (VU.map (getBitscore) nullModel)
 	 --dummyLetters = replicate (length nullModelBitscores) "I"
@@ -119,8 +119,8 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth (cm,aln,c
          modelTreeLayout = alignTL (vcat [modelHeader,detailedNodeTreeTransitions,alignmentDiagram])
          detailedNodeTreeTransitions = applyAll (arrowList ++ labelList) detailedNodesTree
          --detailedNodesTree = vcat (map (drawCMNodeRow modelDetail alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) (reverse indexStructureGroupedByParent))
-         firstInterval = fromJust (find (\(_,p,_,_) -> p == 0) indexStructure)
-	 detailedNodesTree = drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure firstInterval
+         firstInterval = fromJust (find (\(_,p,_,_,_) -> p == 0) (fst indexStructure))
+	 detailedNodesTree = drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes (fst indexStructure) firstInterval
 	 modelHeader = makeModelHeader (T.unpack modelName) modelColor
 	 nodeIndices = V.iterateN nodeNumber (1+) 0
 	 detailedNodeTransitions = applyAll (arrowList ++ labelList) detailedNodes
@@ -183,10 +183,10 @@ setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0
 setStateLetter echar = alignedText 1 1 [echar] # fontSize 2.0 <> rect 2.0 2.0 # lw 0
 setTitelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 4.0 <> rect 4.0 4.0 # lw 0
 
-drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure (intervalId,parentId,intervalType,currentIndex,currentEnd) = tree
-  where tree = currentIntervalDrawing === hcat {_sep = 20} (map drawCMNodeTree nextIntervals)
-        nextIntervals = filter (\(_,p,_,_) -> p == 0) indexStructure
-        currentIntervalDrawing = drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength parentInterval nodeNumber nodeNumber allStates comparisonNodeLabels nodes (intervalId,parentId,intervalType,currentIndex,currentEnd)
+drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure (intervalId,parentId,intervalType,currentIndex,currentEnd) = nodeTree
+  where nodeTree = currentIntervalDrawing === hcat' with {_sep = 20} (map (drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure) nextIntervals)
+        nextIntervals = filter (\(_,p,_,_,_) -> p == 0) indexStructure
+        currentIntervalDrawing = drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength currentIndex currentEnd currentEnd allStates comparisonNodeLabels nodes (intervalId,parentId,intervalType,currentIndex,currentEnd)
 
 drawCMNodeRow modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes intervals = strutY 4 === hcat' with { _sep = 8 } (map (drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes) intervals)
 
