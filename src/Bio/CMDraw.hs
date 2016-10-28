@@ -119,7 +119,6 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth (cm,aln,c
 	 modelFlatLayout = alignTL (vcat [modelHeader,detailedNodeTransitions,alignmentDiagram])
          modelTreeLayout = alignTL (vcat [modelHeader,detailedNodeTreeTransitions,alignmentDiagram])
          detailedNodeTreeTransitions = applyAll (arrowList ++ labelList) detailedNodesTree
-         --detailedNodesTree = vcat (map (drawCMNodeRow modelDetail alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) (reverse indexStructureGroupedByParent))
          firstInterval = fromJust (find (\(_,p,_,_,_) -> p == 0) (fst indexStructure))
 	 detailedNodesTree = drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes (fst indexStructure) firstInterval
 	 modelHeader = makeModelHeader (T.unpack modelName) modelColor
@@ -224,8 +223,11 @@ drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comp
  
 drawCMNodeRow modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes intervals = strutY 4 === hcat' with { _sep = 8 } (map (drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes) intervals)
 
-drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes (row,parent,intervaltype,currentIndex,currentEnd) = intervalVis
-  where intervalVis = vcat' with { _sep = 8 } (map (drawCMNode modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes) currentInterval)
+drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes (intervalId,parent,intervaltype,currentIndex,currentEnd)
+  | modelDetail == "interval" = intervalVis
+  | otherwise = nodeVis
+  where intervalVis = rect 10 10 <> text' (show intervalId)
+        nodeVis = vcat' with { _sep = 8 } (map (drawCMNode modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes) currentInterval)
         currentInterval = [currentIndex..currentEnd]
 
 getCMNodeType node
