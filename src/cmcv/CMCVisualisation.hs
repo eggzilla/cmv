@@ -36,6 +36,7 @@ data Options = Options
     maxWidth :: Double,              
     comparisonAlignment :: String,
     outputFormat :: String,
+    secondaryStructureVisualisation :: String,
     oneOutputFile :: Bool
   } deriving (Show,Data,Typeable)
 
@@ -50,6 +51,7 @@ options = Options
     maxWidth = (200 :: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)", 
     comparisonAlignment = "model" &= name "a" &= help "Set layout of drawn models: model, comparison",
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
+    secondaryStructureVisualisation = "" &= name "x" &= help "Select tool for secondary structure visualisation: forna, r2r (Default: none)",
     oneOutputFile = False  &= name "o" &= help "Merge all output into one file (Default: False)"
   } &= summary ("cmcv " ++ toolVersion) &= help "Florian Eggenhofer - 2013-2016" &= verbosity
 
