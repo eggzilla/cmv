@@ -120,7 +120,7 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth (cm,aln,c
          modelTreeLayout = alignTL (vcat [modelHeader,detailedNodeTreeTransitions,alignmentDiagram])
          detailedNodeTreeTransitions = applyAll (arrowList ++ labelList) detailedNodesTree
          --detailedNodesTree = vcat (map (drawCMNodeRow modelDetail alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) (reverse indexStructureGroupedByParent))
-         firstInterval = fromJust (find (\(_,p,_,_,_) -> p == 1) (fst indexStructure))
+         firstInterval = fromJust (find (\(_,p,_,_,_) -> p == 0) (fst indexStructure))
 	 detailedNodesTree = drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes (fst indexStructure) firstInterval
 	 modelHeader = makeModelHeader (T.unpack modelName) modelColor
 	 nodeIndices = V.iterateN nodeNumber (1+) 0
@@ -143,7 +143,7 @@ indexStructureParent (_,p1,_,_,_)  (_,p2,_,_,_) = p1 == p2
 data NodeIndices = S [Int] | L [Int] | R [Int]
   deriving (Show, Eq, Ord)
          
-startState = ([],1::Int)
+startState = ([],0::Int)
 --type IndexState =  [(Int,Int,String,Int,Int)]
 buildRowIndexStructure :: Int -> V.Vector CM.Node -> [Int] -> State ([(Int,Int,String,Int,Int)],Int) ([(Int,Int,String,Int,Int)],Int)
 buildRowIndexStructure row nodes [] = do
@@ -183,9 +183,9 @@ buildTreeIndexStructure intervalId nodes (currentIndex:xs) = do
   let newId = maxId +1
   let nextId = setNextId ntype intervalId newId
   case ntype of                  
-    CM.NodeType 6 -> put (((newId,parentId,"S,",currentIndex,currentEnd):interval),parentId) 
-    CM.NodeType 4 -> put (((newId,intervalId,"L,",currentIndex,currentEnd):interval),parentId) 
-    CM.NodeType 5 -> put (((newId,intervalId,"R,",currentIndex,currentEnd):interval),parentId)
+    CM.NodeType 6 -> put (((intervalId,parentId,"S,",currentIndex,currentEnd):interval),parentId) 
+    CM.NodeType 4 -> put (((newId,parentId,"L,",currentIndex,currentEnd):interval),parentId) 
+    CM.NodeType 5 -> put (((newId,parentId,"R,",currentIndex,currentEnd):interval),parentId)
     CM.NodeType 1 -> put (interval,parentId)
     CM.NodeType 2 -> put (interval,parentId)
     CM.NodeType 3 -> put (interval,parentId)
@@ -193,7 +193,7 @@ buildTreeIndexStructure intervalId nodes (currentIndex:xs) = do
     CM.NodeType 8 -> put (interval,parentId)
     CM.NodeType 9 -> put (interval,parentId)
     CM.NodeType 10 -> put (interval,parentId)
-    CM.NodeType 0 -> put (interval,parentId+1)
+    CM.NodeType 0 -> put (interval,intervalId)
   buildTreeIndexStructure nextId nodes xs
 
 setNextId ntype intervalId newId
@@ -218,9 +218,9 @@ setStateLetter echar = alignedText 1 1 [echar] # fontSize 2.0 <> rect 2.0 2.0 # 
 setTitelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 4.0 <> rect 4.0 4.0 # lw 0
 
 drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure (intervalId,parentId,intervalType,currentIndex,currentEnd) = nodeTree
-  where nodeTree = currentIntervalDrawing === hcat' with {_sep = 20} (map (drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes remainingIntervals) nextIntervals)
-        (nextIntervals,remainingIntervals) = partition (\(_,p,_,_,_) -> (parentId + 1) == p) indexStructure
-        currentIntervalDrawing = drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength currentIndex currentEnd currentEnd allStates comparisonNodeLabels nodes (intervalId,parentId,intervalType,currentIndex,currentEnd) ||| (text' (show indexStructure) <> rect 100 100)
+  where nodeTree = currentIntervalDrawing === hcat' with {_sep = 20} (map (drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure) nextIntervals)
+        nextIntervals = filter (\(_,p,_,_,_) -> intervalId == p) indexStructure
+        currentIntervalDrawing = drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength currentIndex currentEnd currentEnd allStates comparisonNodeLabels nodes (intervalId,parentId,intervalType,currentIndex,currentEnd) -- ||| (text' (show intervalId ++ "I" ++ show indexStructure) <> rect 100 100)
  
 drawCMNodeRow modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes intervals = strutY 4 === hcat' with { _sep = 8 } (map (drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes) intervals)
 
