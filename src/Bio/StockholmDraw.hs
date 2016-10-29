@@ -7,7 +7,8 @@
 module Bio.StockholmDraw
     (
      drawStockholmLines,
-     drawStockholm
+     drawStockholm,
+     convertWUSStoDotBracket
     ) where
   
 import Diagrams.Prelude
@@ -20,7 +21,6 @@ import qualified Data.Text as T
 import Data.Maybe
 import qualified Data.Vector as V
 import Bio.HMMCompareResult
-
 
 drawStockholmLines entriesNumberCutoff maxWidth nodeAlignmentColIndices comparisonNodeLabels aln = alignmentBlocks
   where currentEntries = V.fromList (take entriesNumberCutoff (S.sequenceEntries aln))
@@ -38,6 +38,28 @@ drawStockholmLines entriesNumberCutoff maxWidth nodeAlignmentColIndices comparis
         sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
         fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
         alignmentBlocks = vcat' with { _sep = 6.0 } (map (drawStockholmRowBlock maxIdLength vectorEntries maxEntryLength fullComparisonColLabels) blocks)
+
+convertWUSStoDotBracket :: T.Text -> T.Text
+convertWUSStoDotBracket wuss = T.pack $ map convertWUSSCharToDotBracket (T.unpack wuss)
+
+convertWUSSCharToDotBracket :: Char -> Char
+convertWUSSCharToDotBracket c
+  | c == '<' = '('
+  | c == '>' = '('
+  | c == '_' = '.'
+  | c == '-' = '.'
+  | c == '(' = '('
+  | c == ')' = '('
+  | c == '.' = '.'
+  | c == '[' = '('
+  | c == ']' = ')'
+  | c == '{' = '('
+  | c == '}' = ')'
+  | c == '~' = '.'
+  | c == ':' = '.'
+  | c == ',' = '.'
+  | otherwise = c
+  
 
 nodeToColIndices :: (Int,(Int,V.Vector (Colour Double))) -> (Int,V.Vector (Colour Double))
 nodeToColIndices (colIndex,(nodeIndex,colors)) = (colIndex,colors)
