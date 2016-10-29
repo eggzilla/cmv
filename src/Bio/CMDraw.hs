@@ -47,6 +47,7 @@ import Data.List
 import Text.Parsec.Error
 import qualified Data.Text as T
 import qualified Data.Vector as V
+import Bio.StockholmData
 import Bio.StockholmDraw
 import qualified Diagrams.Backend.Cairo as C
 import qualified Data.Vector.Unboxed as VU
@@ -140,6 +141,41 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth (cm,aln,c
                           "detailed" -> V.toList (V.map makeLabel connectedStates V.++ V.map makeSelfLabel selfConnectedStates)
                           _ -> []
 	 alignmentDiagram = if isJust aln then drawStockholmLines entryNumberCutoff maxWidth nodeAlignmentColIndices comparisonNodeLabels (fromJust aln) else mempty
+
+-- | Extracts consensus secondary structure from alignment and annotates cmcompare nodes
+secondaryStructureVisualisation selectedTool maxWidth cms alns comparisons
+  | selectedTool == "forna" = fornaVis
+  | selectedTool == "r2r" = r2rVis
+  | otherwise = []
+  where fornaVis = map buildFornaInput structureComparisonInfo
+        r2rVis = map buildr2rInput structureComparisonInfo
+	allColumnAnnotations = map columnAnnotations alns
+	consensusSequences = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
+	consensusStructures = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
+	--comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) cms
+	--colorVector = makeColorVector modelNumber
+	--modelNames = V.fromList (map (T.unpack . CM._name) cms)
+	--nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
+	structureComparisonInfo = zip4 cms consensusSequences consensusStructures comparisonNodeLabels
+
+buildFornaInput (cm,consensusSequence,consensusStructure,comparisonsLabels) = fornaInput
+  where fornaInput = ">" ++ modelName "\n" ++ (T.unpack consensusSequence) ++ "\n" ++  (T.unpack consensusStructure)
+        modelName = T.unpack $ CM._name cm
+        nodes = CM._nodes cm
+        nodeAlignmentColIndices = V.map (CM._nColL) nodes
+        colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabels
+        sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
+        fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
+
+buildR2RInput (cm,consensusSequence,consensusStructure,comparisonsLabels) = r2rInput
+  where r2rInput = ">" ++ modelName "\n" ++ (T.unpack consensusSequence) ++ "\n" ++  (T.unpack consensusStructure)
+        modelName = CM._name cm
+        nodes = CM._nodes cm
+        nodeAlignmentColIndices = V.map (CM._nColL) nodes
+        colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabels
+        sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
+        fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
+
 
 indexStructureToConnections (acc,emit,_,_,_) = (show emit,show acc,1,(0,0))
 
