@@ -67,15 +67,16 @@ main = do
 	  let modelNumber = length cms
           let alns = if (isRight alnInput) then (map (\a -> Just a) (fromRight alnInput)) else (replicate modelNumber Nothing)
 	  let structureVisInputs = secondaryStructureVisualisation secondaryStructureVisTool maxWidth cms alns []
-	  let modelNames = map ((++"."++outputFormat) . T.unpack . CM._name) cms
+	  let modelFileNames = map ((++ "." ++ outputFormat) . T.unpack . CM._name) cms
+	  let structureFileNames = map ((++ "." ++ secondaryStructureVisTool) . T.unpack . CM._name) cms
 	  if oneOutputFile
             then do	      
               printCM (fromRight outputName) svgsize (drawCMs modelDetail alignmentEntries modelLayout emissionLayout maxWidth cms alns)
-              mapM_ (\(a,b) -> writeFile (a ++ "." ++ secondaryStructureVisTool) b) (zip modelNames structureVisInputs)
+              mapM_ (\(a,b) -> writeFile a b) (zip structureFileNames structureVisInputs)
 	    else do
 	      let modelVis = drawSingleCMs modelDetail alignmentEntries modelLayout emissionLayout maxWidth cms alns
-              mapM_ (\(a,b) -> printCM a svgsize b) (zip modelNames modelVis)
-	      mapM_ (\(a,b) -> writeFile (a ++ "." ++ secondaryStructureVisTool) b) (zip modelNames structureVisInputs)
+              mapM_ (\(a,b) -> printCM a svgsize b) (zip modelFileNames modelVis)
+	      mapM_ (\(a,b) -> writeFile a b) (zip structureFileNames structureVisInputs)
         else do
           print "Could not read covariance models from input file"
     else do
