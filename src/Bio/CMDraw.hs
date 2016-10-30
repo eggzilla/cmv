@@ -36,7 +36,8 @@ module Bio.CMDraw
      NodeIndices,
      buildRowIndexStructure,
      buildTreeIndexStructure,
-     getIndexEnd
+     getIndexEnd,
+     secondaryStructureVisualisation
     ) where
   
 import Diagrams.Prelude
@@ -156,8 +157,11 @@ secondaryStructureVisualisation selectedTool maxWidth cms alns comparisons
 	nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
 	structureComparisonInfo = zip3 cms alns comparisonNodeLabels
 
-buildFornaInput (cm,aln,comparisonNodeLabels) = fornaInput
-  where fornaInput = ">" ++ modelName ++ "\n" ++ consensusSequence ++ "\n" ++ consensusStructure
+buildFornaInput (cm,maybeAln,comparisonNodeLabels)
+  | isNothing maybeAln = []
+  | otherwise = fornaInput
+  where aln = fromJust maybeAln
+        fornaInput = ">" ++ modelName ++ "\n" ++ consensusSequence ++ "\n" ++ consensusStructure
         allColumnAnnotations = columnAnnotations aln
         consensusSequenceList = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
 	consensusSequence = if null consensusSequenceList then "" else T.unpack (head consensusSequenceList)
@@ -171,8 +175,11 @@ buildFornaInput (cm,aln,comparisonNodeLabels) = fornaInput
         sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
         fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
 
-buildR2RInput (cm,aln,comparisonNodeLabels) = r2rInput
-  where r2rInput = ">" ++ modelName ++ "\n" ++ consensusSequence ++ "\n" ++ consensusStructure
+buildR2RInput (cm,maybeAln,comparisonNodeLabels)
+  | isNothing maybeAln = []
+  | otherwise = r2rInput
+  where aln = fromJust maybeAln
+        r2rInput = ">" ++ modelName ++ "\n" ++ consensusSequence ++ "\n" ++ consensusStructure
         allColumnAnnotations = columnAnnotations aln
         consensusSequenceList = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
 	consensusSequence = if null consensusStructureList then "" else T.unpack (head consensusStructureList)

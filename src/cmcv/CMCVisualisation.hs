@@ -36,7 +36,7 @@ data Options = Options
     maxWidth :: Double,              
     comparisonAlignment :: String,
     outputFormat :: String,
-    secondaryStructureVisualisation :: String,
+    secondaryStructureVisTool :: String,
     oneOutputFile :: Bool
   } deriving (Show,Data,Typeable)
 
@@ -51,7 +51,7 @@ options = Options
     maxWidth = (200 :: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)", 
     comparisonAlignment = "model" &= name "a" &= help "Set layout of drawn models: model, comparison",
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
-    secondaryStructureVisualisation = "" &= name "x" &= help "Select tool for secondary structure visualisation: forna, r2r (Default: none)",
+    secondaryStructureVisTool = "" &= name "x" &= help "Select tool for secondary structure visualisation: forna, r2r (Default: none)",
     oneOutputFile = False  &= name "o" &= help "Merge all output into one file (Default: False)"
   } &= summary ("cmcv " ++ toolVersion) &= help "Florian Eggenhofer - 2013-2016" &= verbosity
 
@@ -63,25 +63,27 @@ main = do
   cmcFileExists <- doesFileExist cmcompareResultFile
   if modelFileExists && cmcFileExists
      then do
-       models <- fromFile modelsFile
+       cms <- fromFile modelsFile
        cmcResultParsed <- getCmcompareResults cmcompareResultFile
        let comparisons = rights cmcResultParsed
        alnInput <- SP.readExistingStockholm alignmentFile
        if (isLeft alnInput) then print (E.fromLeft alnInput) else return ()
        let outputName = diagramName "cmcv" outputFormat
-       let modelNumber = length models
+       let modelNumber = length cms
        let alns = if (isRight alnInput) then (map (\a -> Just a) (E.fromRight alnInput)) else (replicate modelNumber Nothing)
+       let structureVisInputs = secondaryStructureVisualisation secondaryStructureVisTool maxWidth cms alns comparisons
+       let modelNames = map ((++"."++outputFormat) . T.unpack . CM._name) cms
        if oneOutputFile
               then do
-                printCM (E.fromRight outputName) svgsize (drawCMComparisons modelDetail alignmentEntries modelLayout emissionLayout maxWidth models alns comparisons)
+                printCM (E.fromRight outputName) svgsize (drawCMComparisons modelDetail alignmentEntries modelLayout emissionLayout maxWidth cms alns comparisons)
+		mapM_ (\(a,b) -> writeFile (a ++ "." ++ secondaryStructureVisTool) b) (zip modelNames structureVisInputs)
               else do
-                let modelNames = map ((++"."++outputFormat) . T.unpack . CM._name) models 
-                let modelVis = drawSingleCMComparisons modelDetail alignmentEntries modelLayout emissionLayout maxWidth models alns comparisons
+                let modelVis = drawSingleCMComparisons modelDetail alignmentEntries modelLayout emissionLayout maxWidth cms alns comparisons
                 mapM_ (\(a,b) -> printCM a svgsize b) (zip modelNames modelVis)
+		mapM_ (\(a,b) -> writeFile (a ++ "." ++ secondaryStructureVisTool) b) (zip modelNames structureVisInputs)
      else do
        if modelFileExists then return () else putStrLn "Model file not found"
        if cmcFileExists then return () else putStrLn "Comparison file not found"
 
 toolVersion :: String
 toolVersion = showVersion version
-  

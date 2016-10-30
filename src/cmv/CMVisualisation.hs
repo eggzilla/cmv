@@ -34,7 +34,7 @@ data Options = Options
     alignmentEntries :: Int,
     maxWidth :: Double,
     outputFormat :: String,
-    secondaryStructureVisualisation :: String,
+    secondaryStructureVisTool :: String,
     oneOutputFile :: Bool
   } deriving (Show,Data,Typeable)
 
@@ -47,7 +47,7 @@ options = Options
     alignmentEntries = (50 :: Int) &= name "n" &= help "Set cutoff for included stockholm alignment entries (Default: 50)",
     maxWidth = (200 :: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)",
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
-    secondaryStructureVisualisation = "" &= name "x" &= help "Select tool for secondary structure visualisation: forna, r2r (Default: none)",
+    secondaryStructureVisTool = "" &= name "x" &= help "Select tool for secondary structure visualisation: forna, r2r (Default: none)",
     oneOutputFile = False  &= name "o" &= help "Merge all output into one file (Default: False)"
   } &= summary ("cmv " ++ toolVersion) &= help "Florian Eggenhofer - 2013-2016" &= verbosity
 
@@ -58,21 +58,24 @@ main = do
   --alnFileExists <- doesFileExist alignmentFile
   if modelFileExists
     then do
-      models <- fromFile modelFile
-      if (not (null models))
+      cms <- fromFile modelFile
+      if (not (null cms))
         then do
           alnInput <- SP.readExistingStockholm alignmentFile
           if (isLeft alnInput) then print (fromLeft alnInput) else return ()
           let outputName = diagramName "cmv" outputFormat
-	  let modelNumber = length models
+	  let modelNumber = length cms
           let alns = if (isRight alnInput) then (map (\a -> Just a) (fromRight alnInput)) else (replicate modelNumber Nothing)
+	  let structureVisInputs = secondaryStructureVisualisation secondaryStructureVisTool maxWidth cms alns []
+	  let modelNames = map ((++"."++outputFormat) . T.unpack . CM._name) cms
 	  if oneOutputFile
             then do	      
-              printCM (fromRight outputName) svgsize (drawCMs modelDetail alignmentEntries modelLayout emissionLayout maxWidth models alns)
+              printCM (fromRight outputName) svgsize (drawCMs modelDetail alignmentEntries modelLayout emissionLayout maxWidth cms alns)
+              mapM_ (\(a,b) -> writeFile (a ++ "." ++ secondaryStructureVisTool) b) (zip modelNames structureVisInputs)
 	    else do
-	      let modelNames = map ((++ "." ++outputFormat) . T.unpack . CM._name) models
-	      let modelVis = drawSingleCMs modelDetail alignmentEntries modelLayout emissionLayout maxWidth models alns
+	      let modelVis = drawSingleCMs modelDetail alignmentEntries modelLayout emissionLayout maxWidth cms alns
               mapM_ (\(a,b) -> printCM a svgsize b) (zip modelNames modelVis)
+	      mapM_ (\(a,b) -> writeFile (a ++ "." ++ secondaryStructureVisTool) b) (zip modelNames structureVisInputs)
         else do
           print "Could not read covariance models from input file"
     else do
