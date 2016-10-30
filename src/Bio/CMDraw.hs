@@ -148,34 +148,54 @@ secondaryStructureVisualisation selectedTool maxWidth cms alns comparisons
   | selectedTool == "r2r" = r2rVis
   | otherwise = []
   where fornaVis = map buildFornaInput structureComparisonInfo
-        r2rVis = map buildr2rInput structureComparisonInfo
-	allColumnAnnotations = map columnAnnotations alns
-	consensusSequences = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
-	consensusStructures = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
-	--comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) cms
-	--colorVector = makeColorVector modelNumber
-	--modelNames = V.fromList (map (T.unpack . CM._name) cms)
-	--nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
-	structureComparisonInfo = zip4 cms consensusSequences consensusStructures comparisonNodeLabels
+        r2rVis = map buildR2RInput structureComparisonInfo
+	modelNumber = length cms
+	comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) cms
+	colorVector = makeColorVector modelNumber
+	modelNames = V.fromList (map (T.unpack . CM._name) cms)
+	nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
+	structureComparisonInfo = zip3 cms alns comparisonNodeLabels
 
-buildFornaInput (cm,consensusSequence,consensusStructure,comparisonsLabels) = fornaInput
-  where fornaInput = ">" ++ modelName "\n" ++ (T.unpack consensusSequence) ++ "\n" ++  (T.unpack consensusStructure)
+buildFornaInput (cm,aln,comparisonNodeLabels) = fornaInput
+  where fornaInput = ">" ++ modelName ++ "\n" ++ consensusSequence ++ "\n" ++ consensusStructure
+        allColumnAnnotations = columnAnnotations aln
+        consensusSequenceList = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
+	consensusSequence = if null consensusSequenceList then "" else T.unpack (head consensusSequenceList)
+	consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
+	consensusStructure = if null consensusStructureList then "" else T.unpack (head consensusStructureList)
         modelName = T.unpack $ CM._name cm
         nodes = CM._nodes cm
         nodeAlignmentColIndices = V.map (CM._nColL) nodes
+	maxEntryLength = length consensusStructure
         colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabels
         sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
         fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
 
-buildR2RInput (cm,consensusSequence,consensusStructure,comparisonsLabels) = r2rInput
-  where r2rInput = ">" ++ modelName "\n" ++ (T.unpack consensusSequence) ++ "\n" ++  (T.unpack consensusStructure)
-        modelName = CM._name cm
+buildR2RInput (cm,aln,comparisonNodeLabels) = r2rInput
+  where r2rInput = ">" ++ modelName ++ "\n" ++ consensusSequence ++ "\n" ++ consensusStructure
+        allColumnAnnotations = columnAnnotations aln
+        consensusSequenceList = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
+	consensusSequence = if null consensusStructureList then "" else T.unpack (head consensusStructureList)
+	consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
+	consensusStructure = if null consensusStructureList then "" else T.unpack (head consensusStructureList)
+        modelName = T.unpack $ CM._name cm
         nodes = CM._nodes cm
+	maxEntryLength = length consensusStructure
         nodeAlignmentColIndices = V.map (CM._nColL) nodes
         colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabels
         sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
         fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
 
+nodeToColIndices :: (Int,(Int,V.Vector (Colour Double))) -> (Int,V.Vector (Colour Double))
+nodeToColIndices (colIndex,(nodeIndex,colors)) = (colIndex,colors)
+
+fillComparisonColLabels :: Int ->  V.Vector (Int, V.Vector (Colour Double)) ->  V.Vector (Int, V.Vector (Colour Double))
+fillComparisonColLabels maxEntryLength sparseComparisonColLabels = fullComparisonColLabels
+   where fullComparisonColLabels = V.generate (maxEntryLength +1) (makeFullComparisonColLabel sparseComparisonColLabels)
+
+makeFullComparisonColLabel sparseComparisonColLabels colIndex = fullComparisonColLabel
+  where availableLabel = V.find (\(a,c)-> colIndex == a) sparseComparisonColLabels
+        fullComparisonColLabel = if isJust availableLabel then fromJust availableLabel else (colIndex,V.singleton white)
 
 indexStructureToConnections (acc,emit,_,_,_) = (show emit,show acc,1,(0,0))
 
