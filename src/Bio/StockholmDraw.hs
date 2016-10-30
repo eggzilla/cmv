@@ -45,11 +45,11 @@ convertWUSStoDotBracket wuss = T.pack $ map convertWUSSCharToDotBracket (T.unpac
 convertWUSSCharToDotBracket :: Char -> Char
 convertWUSSCharToDotBracket c
   | c == '<' = '('
-  | c == '>' = '('
+  | c == '>' = ')'
   | c == '_' = '.'
   | c == '-' = '.'
   | c == '(' = '('
-  | c == ')' = '('
+  | c == ')' = ')'
   | c == '.' = '.'
   | c == '[' = '('
   | c == ']' = ')'
