@@ -72,11 +72,13 @@ main = do
 	  if oneOutputFile
             then do	      
               printCM (fromRight outputName) svgsize (drawCMs modelDetail alignmentEntries modelLayout emissionLayout maxWidth cms alns)
-              mapM_ (\(a,b) -> writeFile a b) (zip structureFileNames structureVisInputs)
+              mapM_ (\(structureFileName,(structureVis,_)) -> writeFile structureFileName structureVis) (zip structureFileNames structureVisInputs)
+              mapM_ (\(structureFileName,(_,colorScheme)) -> writeFile (structureFileName ++"Color") colorScheme) (zip structureFileNames structureVisInputs)
 	    else do
 	      let modelVis = drawSingleCMs modelDetail alignmentEntries modelLayout emissionLayout maxWidth cms alns
               mapM_ (\(a,b) -> printCM a svgsize b) (zip modelFileNames modelVis)
-	      mapM_ (\(a,b) -> writeFile a b) (zip structureFileNames structureVisInputs)
+              mapM_ (\(structureFileName,(structureVis,_)) -> writeFile structureFileName structureVis) (zip structureFileNames structureVisInputs)
+              mapM_ (\(structureFileName,(_,colorScheme)) -> writeFile (structureFileName ++"Color") colorScheme) (zip structureFileNames structureVisInputs)
         else do
           print "Could not read covariance models from input file"
     else do

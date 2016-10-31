@@ -159,8 +159,8 @@ secondaryStructureVisualisation selectedTool maxWidth cms alns comparisons
 	structureComparisonInfo = zip3 cms alns comparisonNodeLabels
 
 buildFornaInput (cm,maybeAln,comparisonNodeLabels)
-  | isNothing maybeAln = []
-  | otherwise = fornaInput
+  | isNothing maybeAln = ([],[])
+  | otherwise = (fornaInput, colorScheme)
   where aln = fromJust maybeAln
         fornaInput = ">" ++ modelName ++ "\n" ++ gapfreeConsensusSequence ++ "\n" ++ consensusStructure
         allColumnAnnotations = columnAnnotations aln
@@ -176,18 +176,25 @@ buildFornaInput (cm,maybeAln,comparisonNodeLabels)
         colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabels
         sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
         fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
+        --forna only supports a single color per node, which has to be supplied as additional color scheme
+        singleColorLabels = concatMap comparisonColLabelsToFornaLabel (V.toList fullComparisonColLabels)
+        colorScheme = singleColorLabels
 
+comparisonColLabelsToFornaLabel (nodeNr,colorVector)
+  | V.length colorVector > 1 =  " " ++ show nodeNr ++ ":red "
+  | otherwise = ""
+                
 buildR2RInput (cm,maybeAln,comparisonNodeLabels)
-  | isNothing maybeAln = []
-  | otherwise = r2rInput
+  | isNothing maybeAln = ([],[])
+  | otherwise = (r2rInput,[])
   where aln = fromJust maybeAln
-        r2rInput = ">" ++ modelName ++ "\n" ++ gapfreeConsensusSequence ++ "\n" ++ consensusStructure
+        r2rInput = sHeader ++ sConsensusStructure ++ sConsensusSequence ++ sConsensusSequenceColor ++ sCovarianceAnnotation ++ sComparisonHighlight ++ sBackboneColorLabel
         allColumnAnnotations = columnAnnotations aln
         consensusSequenceList = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
-	consensusSequence = if null consensusStructureList then "" else T.unpack (head consensusStructureList)
-	gapfreeConsensusSequence = filter (not . isGap) consensusSequence
+	consensusSequence = if null consensusSequenceList then "" else T.unpack (head consensusSequenceList)
+	gapfreeConsensusSequence = map C.toUpper (filter (not . isGap) consensusSequence)
 	consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
-	consensusStructure = if null consensusStructureList then "" else T.unpack (head consensusStructureList)
+	consensusStructure = if null consensusStructureList then "" else extractGapfreeStructure consensusSequence (T.unpack (head consensusStructureList))
         modelName = T.unpack $ CM._name cm
         nodes = CM._nodes cm
 	maxEntryLength = length consensusStructure
@@ -195,13 +202,25 @@ buildR2RInput (cm,maybeAln,comparisonNodeLabels)
         colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabels
         sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
         fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
+        r2rLabels = map comparisonColLabelsToR2RLabel (V.toList fullComparisonColLabels)
+        sHeader =  "# STOCKHOLM 1.0\n"
+        sConsensusStructure =     "#=GC SS_cons          " ++ consensusStructure ++ "\n"
+        sConsensusSequence =      "#=GC cons             " ++ gapfreeConsensusSequence ++ "\n"
+        sConsensusSequenceColor = "#=GC conss            " ++ (replicate (length consensusStructure) '2') ++ "\n"
+        sCovarianceAnnotation =   "#=GC cov_SS_cons      " ++ (replicate (length consensusStructure) '.') ++ "\n"
+        sComparisonHighlight =    "#=GC R2R_LABEL        " ++ r2rLabels ++ "\n"
+        sBackboneColorLabel =     "#=GF R2R shade_along_backbone s rgb:200,0,0\n"
+
+comparisonColLabelsToR2RLabel (nodeNr,colorVector)
+  | length colorVector > 1 = 's'
+  | otherwise = '.'
 
 nodeToColIndices :: (Int,(Int,V.Vector (Colour Double))) -> (Int,V.Vector (Colour Double))
 nodeToColIndices (colIndex,(nodeIndex,colors)) = (colIndex,colors)
 
 fillComparisonColLabels :: Int ->  V.Vector (Int, V.Vector (Colour Double)) ->  V.Vector (Int, V.Vector (Colour Double))
 fillComparisonColLabels maxEntryLength sparseComparisonColLabels = fullComparisonColLabels
-   where fullComparisonColLabels = V.generate (maxEntryLength +1) (makeFullComparisonColLabel sparseComparisonColLabels)
+   where fullComparisonColLabels = V.generate maxEntryLength (makeFullComparisonColLabel sparseComparisonColLabels)
 
 makeFullComparisonColLabel sparseComparisonColLabels colIndex = fullComparisonColLabel
   where availableLabel = V.find (\(a,c)-> colIndex == a) sparseComparisonColLabels

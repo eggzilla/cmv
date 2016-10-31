@@ -77,11 +77,13 @@ main = do
        if oneOutputFile
               then do
                 printCM (E.fromRight outputName) svgsize (drawCMComparisons modelDetail alignmentEntries modelLayout emissionLayout maxWidth cms alns comparisons)
-		mapM_ (\(a,b) -> writeFile (a ++ "." ++ secondaryStructureVisTool) b) (zip structureFileNames structureVisInputs)
+                mapM_ (\(structureFileName,(structureVis,_)) -> writeFile structureFileName structureVis) (zip structureFileNames structureVisInputs)
+                mapM_ (\(structureFileName,(_,colorScheme)) -> writeFile (structureFileName ++"Color") colorScheme) (zip structureFileNames structureVisInputs)
               else do
                 let modelVis = drawSingleCMComparisons modelDetail alignmentEntries modelLayout emissionLayout maxWidth cms alns comparisons
                 mapM_ (\(a,b) -> printCM a svgsize b) (zip modelFileNames modelVis)
-		mapM_ (\(a,b) -> writeFile a b) (zip structureFileNames structureVisInputs)
+                mapM_ (\(structureFileName,(structureVis,_)) -> writeFile (structureFileName) structureVis) (zip structureFileNames structureVisInputs)
+                mapM_ (\(structureFileName,(_,colorScheme)) -> writeFile (structureFileName ++"Color") colorScheme) (zip structureFileNames structureVisInputs)
      else do
        if modelFileExists then return () else putStrLn "Model file not found"
        if cmcFileExists then return () else putStrLn "Comparison file not found"

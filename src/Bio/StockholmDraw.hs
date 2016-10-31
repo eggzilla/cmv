@@ -64,8 +64,9 @@ basePairIndices (x:xs) ys counter
 basePairIndices [] _ _ = [] 
 
 isGap :: Char -> Bool
-isGap char 
+isGap char
   | char == '.' = True
+  | char == '-' = True
   | char == ' ' = True
   | char == '\n' = True
   | otherwise = False
@@ -104,7 +105,7 @@ nodeToColIndices (colIndex,(nodeIndex,colors)) = (colIndex,colors)
 
 fillComparisonColLabels :: Int ->  V.Vector (Int, V.Vector (Colour Double)) ->  V.Vector (Int, V.Vector (Colour Double))
 fillComparisonColLabels maxEntryLength sparseComparisonColLabels = fullComparisonColLabels
-   where fullComparisonColLabels = V.generate (maxEntryLength +1) (makeFullComparisonColLabel sparseComparisonColLabels)
+   where fullComparisonColLabels = V.generate maxEntryLength  (makeFullComparisonColLabel sparseComparisonColLabels)
 
 makeFullComparisonColLabel sparseComparisonColLabels colIndex = fullComparisonColLabel
   where availableLabel = V.find (\(a,c)-> colIndex == a) sparseComparisonColLabels
