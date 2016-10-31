@@ -8,7 +8,9 @@ module Bio.StockholmDraw
     (
      drawStockholmLines,
      drawStockholm,
-     convertWUSStoDotBracket
+     convertWUSStoDotBracket,
+     extractGapfreeStructure,
+     isGap
     ) where
   
 import Diagrams.Prelude
@@ -21,6 +23,7 @@ import qualified Data.Text as T
 import Data.Maybe
 import qualified Data.Vector as V
 import Bio.HMMCompareResult
+import Data.List
 
 drawStockholmLines entriesNumberCutoff maxWidth nodeAlignmentColIndices comparisonNodeLabels aln = alignmentBlocks
   where currentEntries = V.fromList (take entriesNumberCutoff (S.sequenceEntries aln))
@@ -38,6 +41,41 @@ drawStockholmLines entriesNumberCutoff maxWidth nodeAlignmentColIndices comparis
         sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
         fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
         alignmentBlocks = vcat' with { _sep = 6.0 } (map (drawStockholmRowBlock maxIdLength vectorEntries maxEntryLength fullComparisonColLabels) blocks)
+
+extractGapfreeStructure :: String -> String -> String
+extractGapfreeStructure alignedSequence regularStructure1 = entryStructure
+  where regularsequence1 = map convertToRegularGap alignedSequence
+        bpindicestest1 = basePairIndices regularStructure1 [] 0
+        sequencegaps = elemIndices '-' regularsequence1
+        -- convert incomplete basepairs to .
+        incompleteBasepairs = filter (\(i,j) -> (elem i sequencegaps) || (elem j sequencegaps)) bpindicestest1
+        incompleteIndicesCharacterPairs = concatMap (\(a,b) -> [(a,'.'),(b,'.')]) incompleteBasepairs
+        completeBPStructure = V.update (V.fromList regularStructure1) (V.fromList incompleteIndicesCharacterPairs) 
+        -- remove gap character postitions from structure string
+        gapfreeCompleteStructure = V.filter (\(i,_) -> not (elem i sequencegaps)) (V.indexed completeBPStructure)
+        entryStructure = map snd (V.toList  gapfreeCompleteStructure)
+  
+basePairIndices :: String -> [Int] -> Int -> [(Int,Int)]
+basePairIndices (x:xs) ys counter
+  | x == '(' = basePairIndices xs (counter:ys) (counter+1)
+  | x == ')' = [(head ys,counter)] ++ basePairIndices xs (tail ys) (counter+1)
+  | x == '.' = [] ++ (basePairIndices xs ys (counter+1))
+  | otherwise = [] ++ (basePairIndices xs ys (counter+1))
+basePairIndices [] _ _ = [] 
+
+isGap :: Char -> Bool
+isGap char 
+  | char == '.' = True
+  | char == ' ' = True
+  | char == '\n' = True
+  | otherwise = False
+
+convertToRegularGap :: Char -> Char
+convertToRegularGap char 
+  | char == '.' = '-'
+  | char == ' ' = '-'
+  | char == '\n' = '-'
+  | otherwise = char
 
 convertWUSStoDotBracket :: T.Text -> T.Text
 convertWUSStoDotBracket wuss = T.pack $ map convertWUSSCharToDotBracket (T.unpack wuss)

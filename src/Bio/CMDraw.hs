@@ -64,6 +64,7 @@ import qualified Data.Colour.SRGB.Linear as R
 import Data.Maybe
 import GHC.Float
 import Control.Monad.State
+import qualified Data.Char as C 
 
 -- | Draw one or more CM guide trees and concatenate them vertically
 drawCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cms alns comparisons = alignTL (vcat' with { _sep = 20 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput))
@@ -161,12 +162,13 @@ buildFornaInput (cm,maybeAln,comparisonNodeLabels)
   | isNothing maybeAln = []
   | otherwise = fornaInput
   where aln = fromJust maybeAln
-        fornaInput = ">" ++ modelName ++ "\n" ++ consensusSequence ++ "\n" ++ consensusStructure
+        fornaInput = ">" ++ modelName ++ "\n" ++ gapfreeConsensusSequence ++ "\n" ++ consensusStructure
         allColumnAnnotations = columnAnnotations aln
         consensusSequenceList = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
 	consensusSequence = if null consensusSequenceList then "" else T.unpack (head consensusSequenceList)
+        gapfreeConsensusSequence = map C.toUpper (filter (not . isGap) consensusSequence)
 	consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
-	consensusStructure = if null consensusStructureList then "" else T.unpack (head consensusStructureList)
+	consensusStructure = if null consensusStructureList then "" else extractGapfreeStructure consensusSequence (T.unpack (head consensusStructureList))
         modelName = T.unpack $ CM._name cm
         nodes = CM._nodes cm
         nodeAlignmentColIndices = V.map (CM._nColL) nodes
@@ -179,10 +181,11 @@ buildR2RInput (cm,maybeAln,comparisonNodeLabels)
   | isNothing maybeAln = []
   | otherwise = r2rInput
   where aln = fromJust maybeAln
-        r2rInput = ">" ++ modelName ++ "\n" ++ consensusSequence ++ "\n" ++ consensusStructure
+        r2rInput = ">" ++ modelName ++ "\n" ++ gapfreeConsensusSequence ++ "\n" ++ consensusStructure
         allColumnAnnotations = columnAnnotations aln
         consensusSequenceList = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
 	consensusSequence = if null consensusStructureList then "" else T.unpack (head consensusStructureList)
+	gapfreeConsensusSequence = filter (not . isGap) consensusSequence
 	consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
 	consensusStructure = if null consensusStructureList then "" else T.unpack (head consensusStructureList)
         modelName = T.unpack $ CM._name cm
