@@ -28,6 +28,7 @@ data Options = Options
     alignmentEntries :: Int,
     maxWidth :: Double,
     outputFormat :: String,
+    outputDirectoryPath :: String,
     oneOutputFile :: Bool
   } deriving (Show,Data,Typeable)
 
@@ -41,6 +42,7 @@ options = Options
     alignmentEntries = (50 :: Int) &= name "n" &= help "Set cutoff for included stockholm alignment entries (Default: 50)",
     maxWidth = (200:: Double) &= name "w" &= help "Set maximal width of result figure (Default: 200)",
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
+    outputDirectoryPath = "" &= name "p" &= help "Output directory path (Default: none)",
     oneOutputFile = False  &= name "o" &= help "Merge all output into one file (Default: False)"
   } &= summary ("hmmv " ++ toolVersion) &= help "Florian Eggenhofer - 2016" &= verbosity
 

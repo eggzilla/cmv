@@ -32,6 +32,7 @@ data Options = Options
     maxWidth :: Double,
     comparisonAlignment :: String,
     outputFormat :: String,
+    outputDirectoryPath :: String,
     oneOutputFile :: Bool
   } deriving (Show,Data,Typeable)
 
@@ -46,6 +47,7 @@ options = Options
     maxWidth = (180:: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)",
     comparisonAlignment = "model" &= name "a" &= help "Set layout of drawn models: model, comparison",
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
+    outputDirectoryPath = "" &= name "p" &= help "Output directory path (Default: none)",
     oneOutputFile = False  &= name "o" &= help "Merge all output into one file (Default: False)"
   } &= summary ("hmmcv " ++ toolVersion) &= help "Florian Eggenhofer - 2013-2016" &= verbosity
 

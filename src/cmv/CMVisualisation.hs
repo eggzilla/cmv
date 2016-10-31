@@ -34,6 +34,7 @@ data Options = Options
     alignmentEntries :: Int,
     maxWidth :: Double,
     outputFormat :: String,
+    outputDirectoryPath :: String,
     secondaryStructureVisTool :: String,
     oneOutputFile :: Bool
   } deriving (Show,Data,Typeable)
