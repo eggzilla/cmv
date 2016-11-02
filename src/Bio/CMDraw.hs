@@ -320,8 +320,9 @@ drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength rowStart r
   | otherwise = nodeVis
   where intervalVis = rect 20 0 # named ("a" ++ intervalIdString)  # lw 0.0 === (rect 20 40 # lw 0.1 <> text' ((show currentIndex) ++ "-" ++ (show currentEnd))) === rect 20 0 # named ("e" ++ intervalIdString)  # lw 0.0 === strutY 5.0
         intervalIdString = show intervalId
-        nodeVis = vcat' with { _sep = 2 } (map (drawCMNode modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes) currentInterval)
+        nodeVis = vcat' with { _sep = nodespacer } (map (drawCMNode modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes) currentInterval)
         currentInterval = [currentIndex..currentEnd]
+        nodespacer = if (modelDetail == "detailed") then (2 :: Double) else (0 :: Double)
 
 getCMNodeType node
   | ntype == CM.NodeType 0 = "BIF"
@@ -355,8 +356,8 @@ labelToColor _ = sRGB24 245 245 245
 
 --drawCMNodeDetailed :: [Char] -> String -> Double -> Int -> Int -> Int -> V.Vector (Int, V.Vector (Colour Double)) -> CM.States -> CM.Node -> QDiagram b V2 n Any
 drawCMNode modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes nodeIndex
-  | modelDetail == "minimal" = (alignedText 0 0 nId # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nId))/2)), negate 1.25)) <> wheel nodeLabels # lw 0.1 <> rect 1.5 3 # lw 0) 
-  | modelDetail == "simple" = text' nodeType # translate (r2 (0,2)) <> text' nId # translate (r2 (0,negate 2)) <> rect 10 10 # lw 0.5  <> colourBoxes # translate (r2 (0,negate (totalBoxYlength)/2))
+  | modelDetail == "minimal" = (alignedText 0 0 nId # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nId))/2)), negate 1.25)) <> wheel nodeLabels # lw 0.1 <> rect 1.5 3 # lw 0.1) 
+  | modelDetail == "simple" = ((text' nId # translate (r2 (negate 5,0)) <> colourBoxes # translate (r2 (negate 5,0))) ||| text' nodeType # translate (r2 (10,0))) <> rect 20 5 # lw 0.5  
   | otherwise = detailedNodeBox
   where node = nodes V.! nodeIndex
         idNumber = PI.getPInt (CM._nid node)
