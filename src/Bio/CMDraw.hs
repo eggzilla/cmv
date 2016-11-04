@@ -357,7 +357,7 @@ labelToColor _ = sRGB24 245 245 245
 --drawCMNodeDetailed :: [Char] -> String -> Double -> Int -> Int -> Int -> V.Vector (Int, V.Vector (Colour Double)) -> CM.States -> CM.Node -> QDiagram b V2 n Any
 drawCMNode modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes nodeIndex
   | modelDetail == "minimal" = (alignedText 0 0 nId # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nId))/2)), negate 1.25)) <> wheel nodeLabels # lw 0.1 <> rect 1.5 3 # lw 0.1) 
-  | modelDetail == "simple" = ((text' nId # translate (r2 (negate 5,0)) <> colourBoxes # translate (r2 (negate 5,0))) ||| text' nodeType # translate (r2 (10,0))) <> rect 20 5 # lw 0.5  
+  | modelDetail == "simple" = ((text' nId # translate (r2 (negate 5,0)) <> colourBoxes # translate (r2 (negate 5, negate ((singleBoxYLength/2)-2.5)))) ||| strutX 2 ||| text' nodeType ) <> rect 20 5 # lw 0.5  
   | otherwise = detailedNodeBox
   where node = nodes V.! nodeIndex
         idNumber = PI.getPInt (CM._nid node)
@@ -366,9 +366,9 @@ drawCMNode modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd la
         nodeType = getCMNodeType node
         nodeLabels = V.toList (snd (comparisonNodeLabels V.! idNumber))
         boxNumber = fromIntegral $ length nodeLabels
-        totalBoxYlength = 5
-        singleBoxYLength = totalBoxYlength / boxNumber
-        colourBoxes = vcat (map (colorBox singleBoxYLength) nodeLabels)
+        totalBoxYlength = 5 - 0.2
+        singleBoxYLength = totalBoxYlength / boxNumber 
+        colourBoxes = vcat (map (colorBox singleBoxYLength) nodeLabels) -- <> rect 5 totalBoxYlength # lw 0.1
 
 colorBox singleBoxYLength colColour = rect 5 singleBoxYLength # fc colColour # lw 0.1
         
