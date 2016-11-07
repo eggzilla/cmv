@@ -368,9 +368,9 @@ drawCMNode modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd la
         nodeType = getCMNodeType node
         nodeLabels = V.toList (snd (comparisonNodeLabels V.! idNumber))
         boxNumber = fromIntegral $ length nodeLabels
-        totalBoxYlength = 5
-        singleBoxYLength = totalBoxYlength / boxNumber
-        colourBoxes = vcat (map (colorBox singleBoxYLength) nodeLabels)
+        totalBoxYlength = 5 - 0.2
+        singleBoxYLength = totalBoxYlength / boxNumber 
+        colourBoxes = vcat (map (colorBox singleBoxYLength) nodeLabels) -- <> rect 5 totalBoxYlength # lw 0.1
 
 colorBox singleBoxYLength colColour = rect 5 singleBoxYLength # fc colColour # lw 0.1
         
