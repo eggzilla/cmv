@@ -51,6 +51,7 @@ import qualified Data.Vector as V
 import Bio.StockholmData
 import Bio.StockholmDraw
 import qualified Diagrams.Backend.Cairo as C
+import Diagrams.Backend.Cairo
 import qualified Data.Vector.Unboxed as VU
 import qualified Data.PrimitiveArray.Index.PhantomInt as PI
 import qualified Data.PrimitiveArray.Class as PA
@@ -64,7 +65,8 @@ import qualified Data.Colour.SRGB.Linear as R
 import Data.Maybe
 import GHC.Float
 import Control.Monad.State
-import qualified Data.Char as C 
+import qualified Data.Char as C
+import Graphics.SVGFonts
 
 -- | Draw one or more CM guide trees and concatenate them vertically
 drawCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cms alns comparisons = alignTL (vcat' with { _sep = 20 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput))
@@ -336,8 +338,10 @@ getCMNodeType node
   | otherwise = "NA"
     where ntype = CM._ntype node
 
-text' t = alignedText 0.5 0.5 t # fontSize 2 <> rect textLength 2 # lw 0.0
-  where textLength = fromIntegral (length t) * 2
+
+text'  t = stroke (textSVG "T" 1) # fc black # fillRule EvenOdd
+--text' t = alignedText 0.5 0.5 t # fontSize 2 <> rect textLength 2 # lw 0.0
+--  where textLength = fromIntegral (length t) * 2
 textWithSize' t si = alignedText 0.5 0.5 t # fontSize si <> rect textLength 2 # lw 0.0
   where textLength = fromIntegral (length t) * 2                     
 
@@ -506,7 +510,7 @@ diagramName filename fileformat
   | fileformat == "ps" = Right (filename ++ "." ++ fileformat )
   | otherwise = Left "Unsupported output format requested (use svg, pdf, ps, png)"
 
-printCM outputName = C.renderCairo outputName
+printCM outputName = renderCairo outputName
                 
 processCMs :: [CM.CM] -> [[(String,String)]]
 processCMs cms = map processCMGuideTree cms
