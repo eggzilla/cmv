@@ -181,7 +181,8 @@ buildFornaInput (cm,maybeAln,comparisonNodeLabels)
         colorScheme = singleColorLabels
 
 comparisonColLabelsToFornaLabel (nodeNr,colorVector)
-  | V.length colorVector > 1 =  " " ++ show nodeNr ++ ":red "
+  | (V.null colorVector) = ""
+  | (V.head colorVector) /= white =  " " ++ show nodeNr ++ ":red "
   | otherwise = ""
                 
 buildR2RInput (cm,maybeAln,comparisonNodeLabels)
@@ -212,7 +213,8 @@ buildR2RInput (cm,maybeAln,comparisonNodeLabels)
         sBackboneColorLabel =     "#=GF R2R shade_along_backbone s rgb:200,0,0\n"
 
 comparisonColLabelsToR2RLabel (nodeNr,colorVector)
-  | length colorVector > 1 = 's'
+  | (V.null colorVector) = '.'
+  | (V.head colorVector) /= white = 's'
   | otherwise = '.'
 
 nodeToColIndices :: (Int,(Int,V.Vector (Colour Double))) -> (Int,V.Vector (Colour Double))
@@ -357,7 +359,7 @@ labelToColor _ = sRGB24 245 245 245
 --drawCMNodeDetailed :: [Char] -> String -> Double -> Int -> Int -> Int -> V.Vector (Int, V.Vector (Colour Double)) -> CM.States -> CM.Node -> QDiagram b V2 n Any
 drawCMNode modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes nodeIndex
   | modelDetail == "minimal" = (alignedText 0 0 nId # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nId))/2)), negate 1.25)) <> wheel nodeLabels # lw 0.1 <> rect 1.5 3 # lw 0.1) 
-  | modelDetail == "simple" = ((text' nId # translate (r2 (negate 5,0)) <> colourBoxes # translate (r2 (negate 5,0))) ||| text' nodeType # translate (r2 (10,0))) <> rect 20 5 # lw 0.5  
+  | modelDetail == "simple" = rect 20 5 # lw 0.5 <>  ((text' nId # translate (r2 (negate 7,0)) <> colourBoxes # translate (r2 (negate 7,0))) ||| text' nodeType # translate (r2 (14,0)))
   | otherwise = detailedNodeBox
   where node = nodes V.! nodeIndex
         idNumber = PI.getPInt (CM._nid node)
