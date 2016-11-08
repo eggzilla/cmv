@@ -339,7 +339,7 @@ getCMNodeType node
     where ntype = CM._ntype node
 
 
-text'  t = textSVG_ (TextOpts lin INSIDE_H KERN False 3 3) t # fc black # fillRule EvenOdd  # lw 0.0
+text'  t = textSVG_ (TextOpts lin INSIDE_H KERN False 3 3) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
 --text' t = alignedText 0.5 0.5 t # fontSize 2 <> rect textLength 2 # lw 0.0
 --  where textLength = fromIntegral (length t) * 2
 textWithSize' t si = alignedText 0.5 0.5 t # fontSize si <> rect textLength 2 # lw 0.0

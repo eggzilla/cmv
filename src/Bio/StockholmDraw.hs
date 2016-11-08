@@ -24,6 +24,7 @@ import Data.Maybe
 import qualified Data.Vector as V
 import Bio.HMMCompareResult
 import Data.List
+import Graphics.SVGFonts
 
 drawStockholmLines entriesNumberCutoff maxWidth nodeAlignmentColIndices comparisonNodeLabels aln = alignmentBlocks
   where currentEntries = V.fromList (take entriesNumberCutoff (S.sequenceEntries aln))
@@ -161,7 +162,8 @@ drawStockholmEntry maxIdLength entry = entryDia
         spacer = T.replicate spacerLength (T.pack " ")
         entryDia = hcat (map setAlignmentLetter entryText)         
 
-setAlignmentLetter echar = alignedText 0.5 0.5 [echar] # fontSize 2.0 <> rect 2 2.5 # lw 0
+setAlignmentLetter echar = textSVG_ (TextOpts lin INSIDE_H KERN False 3 3) [echar] # fc black # fillRule EvenOdd  # lw 0.0 # translate (r2 (negate 0.75, negate 0.75)) <> rect 2 2 # lw 0.0
+--setAlignmentLetter echar = alignedText 0.5 0.5 [echar] # fontSize 2.0 <> rect 2 2.5 # lw 0
 
 -- LetterInterval (SeqNr,Start,Length)
 makeLetterIntervals :: Int -> Double -> Int -> [((Int,Int),V.Vector (Int,Int,Int))]
