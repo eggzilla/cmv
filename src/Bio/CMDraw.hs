@@ -306,9 +306,13 @@ getIndexEnd nodes indices
          ntype = CM._ntype currentNode
                             
 makeModelHeader mName modelColor = strutX 2 ||| hcat (map setTitelLetter mName) ||| strutX 1 ||| rect 4 4 # lw 0.1 # fc modelColor
+--setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0.5 # lw 0
+--setStateLetter echar = alignedText 1 1 [echar] # fontSize 2.0 <> rect 2.0 2.0 # lw 0
+--setTitelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 4.0 <> rect 4.0 4.0 # lw 0
 setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0.5 # lw 0
 setStateLetter echar = alignedText 1 1 [echar] # fontSize 2.0 <> rect 2.0 2.0 # lw 0
 setTitelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 4.0 <> rect 4.0 4.0 # lw 0
+
 
 drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure (intervalId,parentId,intervalType,currentIndex,currentEnd) = nodeTree
   where nodeTree = currentIntervalDrawing === hcat' with {_sep = 2} (map (drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure) nextIntervals)
@@ -339,9 +343,11 @@ getCMNodeType node
     where ntype = CM._ntype node
 
 
-text'  t = textSVG_ (TextOpts lin INSIDE_H KERN False 3 3) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
+text' t = textSVG_ (TextOpts lin INSIDE_H KERN False 3 3) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
 --text' t = alignedText 0.5 0.5 t # fontSize 2 <> rect textLength 2 # lw 0.0
 --  where textLength = fromIntegral (length t) * 2
+-- textWithSize' t si = textSVG_ (TextOpts lin INSIDE_H KERN False si si) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75)) 
+--  where textLength = fromIntegral (length t) * 2 
 textWithSize' t si = alignedText 0.5 0.5 t # fontSize si <> rect textLength 2 # lw 0.0
   where textLength = fromIntegral (length t) * 2                     
 
