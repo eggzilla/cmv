@@ -352,11 +352,6 @@ text' t = textSVG_ (TextOpts bitStreamFont INSIDE_H KERN False 3 3) t # fc black
 textWithSize' t siInput = textSVG_ (TextOpts bitStreamFont INSIDE_H KERN False si si) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75)) 
   where textLength = fromIntegral (length t) * 2
         si = 2
--- using a local font
-text''' t = do
-    font <- loadFont "path/to/font.xml"
-    return $ stroke (textSVG' (TextOpts font INSIDE_H KERN False 1 1) t)
-
 --textWithSize' t si = alignedText 0.5 0.5 t # fontSize si <> rect textLength 2 # lw 0.0
 --  where textLength = fromIntegral (length t) * 2                     
 
