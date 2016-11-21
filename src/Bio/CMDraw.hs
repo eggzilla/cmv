@@ -184,10 +184,12 @@ buildFornaInput (cm,maybeAln,comparisonNodeLabels)
         singleColorLabels = concatMap comparisonColLabelsToFornaLabel (V.toList fullComparisonColLabels)
         colorScheme = singleColorLabels
 
+comparisonColLabelsToFornaLabel :: (Int, V.Vector (Colour Double)) -> String
 comparisonColLabelsToFornaLabel (nodeNr,colorVector)
   | V.length colorVector > 1 =  " " ++ show nodeNr ++ ":red "
   | otherwise = ""
-                
+
+buildR2RInput :: (CM.CM, Maybe StockholmAlignment,V.Vector (Int,V.Vector (Colour Double))) -> (String,String)
 buildR2RInput (cm,maybeAln,comparisonNodeLabels)
   | isNothing maybeAln = ([],[])
   | otherwise = (r2rInput,[])
@@ -215,6 +217,7 @@ buildR2RInput (cm,maybeAln,comparisonNodeLabels)
         sComparisonHighlight =    "#=GC R2R_LABEL        " ++ r2rLabels ++ "\n"
         sBackboneColorLabel =     "#=GF R2R shade_along_backbone s rgb:200,0,0\n"
 
+comparisonColLabelsToR2RLabel :: (Int, V.Vector (Colour Double)) -> Char
 comparisonColLabelsToR2RLabel (nodeNr,colorVector)
   | length colorVector > 1 = 's'
   | otherwise = '.'
@@ -222,29 +225,35 @@ comparisonColLabelsToR2RLabel (nodeNr,colorVector)
 nodeToColIndices :: (Int,(Int,V.Vector (Colour Double))) -> (Int,V.Vector (Colour Double))
 nodeToColIndices (colIndex,(nodeIndex,colors)) = (colIndex,colors)
 
-fillComparisonColLabels :: Int ->  V.Vector (Int, V.Vector (Colour Double)) ->  V.Vector (Int, V.Vector (Colour Double))
+fillComparisonColLabels :: Int -> V.Vector (Int, V.Vector (Colour Double)) ->  V.Vector (Int, V.Vector (Colour Double))
 fillComparisonColLabels maxEntryLength sparseComparisonColLabels = fullComparisonColLabels
    where fullComparisonColLabels = V.generate maxEntryLength (makeFullComparisonColLabel sparseComparisonColLabels)
 
+makeFullComparisonColLabel :: V.Vector (Int, V.Vector (Colour Double)) -> Int -> (Int, V.Vector (Colour Double))
 makeFullComparisonColLabel sparseComparisonColLabels colIndex = fullComparisonColLabel
   where availableLabel = V.find (\(a,c)-> colIndex == a) sparseComparisonColLabels
         fullComparisonColLabel = if isJust availableLabel then fromJust availableLabel else (colIndex,V.singleton white)
 
+indexStructureToConnections :: (Int, Int, String, Int, Int) -> (String,String,Double,(Double,Double))
 indexStructureToConnections (acc,emit,_,_,_) = (show emit,show acc,1,(0,0))
 
+indexStructureRow :: (Int, Int, String, Int, Int) -> (Int, Int, String, Int, Int) -> Bool
 indexStructureRow (row1,_,_,_,_)  (row2,_,_,_,_) = row1 == row2
+
+indexStructureParent ::  (Int, Int, String, Int, Int) -> (Int, Int, String, Int, Int) -> Bool
 indexStructureParent (_,p1,_,_,_)  (_,p2,_,_,_) = p1 == p2
 
 data NodeIndices = S [Int] | L [Int] | R [Int]
   deriving (Show, Eq, Ord)
-         
+
+startState :: ([(Int,Int,String,Int,Int)],Int)
 startState = ([],0::Int)
 --type IndexState =  [(Int,Int,String,Int,Int)]
 buildRowIndexStructure :: Int -> V.Vector CM.Node -> [Int] -> State ([(Int,Int,String,Int,Int)],Int) ([(Int,Int,String,Int,Int)],Int)
 buildRowIndexStructure row nodes [] = do
   (a,b) <- get
   return (a,b)
-
+  
 buildRowIndexStructure row nodes (currentIndex:xs) = do
   (interval,parentId) <- get
   let currentNode = nodes V.! currentIndex
@@ -262,9 +271,10 @@ buildRowIndexStructure row nodes (currentIndex:xs) = do
     CM.NodeType 9 -> put (interval,parentId)
     CM.NodeType 10 -> put (interval,parentId)
     CM.NodeType 0 -> put (interval,parentId+1)
+    _ -> put (interval,parentId)
   buildRowIndexStructure row nodes xs
 
-buildTreeIndexStructure :: Int -> V.Vector CM.Node -> [Int] -> State ([(Int,Int,String,Int,Int)],Int) ([(Int,Int,String,Int,Int)],Int)                      
+buildTreeIndexStructure :: Int -> V.Vector CM.Node -> [Int] -> State ([(Int,Int,String,Int,Int)],Int) ([(Int,Int,String,Int,Int)],Int)             
 buildTreeIndexStructure row nodes [] = do
   (a,b) <- get
   return (a,b)
@@ -289,14 +299,17 @@ buildTreeIndexStructure intervalId nodes (currentIndex:xs) = do
     CM.NodeType 9 -> put (interval,parentId)
     CM.NodeType 10 -> put (interval,parentId)
     CM.NodeType 0 -> put (interval,intervalId)
+    _ -> put (interval,intervalId)
   buildTreeIndexStructure nextId nodes xs
 
+setNextId :: CM.NodeType -> Int -> Int -> Int
 setNextId ntype intervalId newId
   | ntype == CM.NodeType 6 = newId
   | ntype == CM.NodeType 4 = newId
   | ntype == CM.NodeType 5 = newId
   | otherwise = intervalId
-                      
+
+getIndexEnd :: V.Vector CM.Node -> [Int] -> Int
 getIndexEnd nodes indices
   | null indices = (length nodes -1)
   | ntype == CM.NodeType 7 = currentIndex
@@ -306,7 +319,9 @@ getIndexEnd nodes indices
          remainingindices = tail indices
          currentNode = nodes V.! currentIndex
          ntype = CM._ntype currentNode
-                            
+
+--TODO swap with SVGFont
+makeModelHeader :: String -> Colour Double -> QDiagram Cairo V2 Double Any
 makeModelHeader mName modelColor = strutX 2 ||| hcat (map setTitelLetter mName) ||| strutX 1 ||| rect 4 4 # lw 0.1 # fc modelColor
 --setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0.5 # lw 0
 --setStateLetter echar = alignedText 1 1 [echar] # fontSize 2.0 <> rect 2.0 2.0 # lw 0
@@ -315,14 +330,16 @@ setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0
 setStateLetter echar = alignedText 1 1 [echar] # fontSize 2.0 <> rect 2.0 2.0 # lw 0
 setTitelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 4.0 <> rect 4.0 4.0 # lw 0
 
-
+drawCMNodeTree :: String -> [Char] -> String -> Int -> CM.States -> V.Vector (Int, V.Vector (Colour Double))-> V.Vector CM.Node -> [(Int, Int, String, Int, Int)] -> (Int,Int,String,Int,Int) -> QDiagram Cairo V2 Double Any
 drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure (intervalId,parentId,intervalType,currentIndex,currentEnd) = nodeTree
   where nodeTree = currentIntervalDrawing === hcat' with {_sep = 2} (map (drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure) nextIntervals)
         nextIntervals = filter (\(_,p,_,_,_) -> intervalId == p) indexStructure
         currentIntervalDrawing = drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength currentIndex currentEnd currentEnd allStates comparisonNodeLabels nodes (intervalId,parentId,intervalType,currentIndex,currentEnd) -- ||| (text' (show intervalId ++ "I" ++ show indexStructure) <> rect 100 100)
- 
+
+drawCMNodeRow :: String -> [Char] -> String -> Int -> Int -> Int -> Int -> CM.States -> V.Vector (Int, V.Vector (Colour Double))-> V.Vector CM.Node -> [(Int, Int, String, Int, Int)] -> QDiagram Cairo V2 Double Any
 drawCMNodeRow modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes intervals = strutY 4 === hcat' with { _sep = 8 } (map (drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes) intervals)
 
+drawCMNodeInterval :: String -> [Char] -> String -> Int -> Int -> Int -> Int -> CM.States -> V.Vector (Int, V.Vector (Colour Double))-> V.Vector CM.Node -> (Int, Int, String, Int, Int) -> QDiagram Cairo V2 Double Any
 drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes (intervalId,parent,intervaltype,currentIndex,currentEnd)
   | modelDetail == "interval" = intervalVis
   | otherwise = nodeVis
@@ -332,6 +349,7 @@ drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength rowStart r
         currentInterval = [currentIndex..currentEnd]
         nodespacer = if (modelDetail == "detailed") then (2 :: Double) else (0 :: Double)
 
+getCMNodeType :: CM.Node -> String
 getCMNodeType node
   | ntype == CM.NodeType 0 = "BIF"
   | ntype == CM.NodeType 1 = "MATP"
@@ -344,7 +362,10 @@ getCMNodeType node
   | otherwise = "NA"
     where ntype = CM._ntype node
 
+text' :: String -> QDiagram Cairo V2 Double Any
 text' t = textSVG_ (TextOpts bitStreamFont INSIDE_H KERN False 3 3) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
+
+textWithSize' :: String -> Double -> QDiagram Cairo V2 Double Any
 textWithSize' t si = textSVG_ (TextOpts bitStreamFont INSIDE_H KERN False si si) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate siOffset, negate siOffset)) 
   where textLength = fromIntegral (length t) * 2
         siOffset = si/2
