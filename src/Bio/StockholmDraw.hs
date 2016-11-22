@@ -153,13 +153,15 @@ drawStockholmEntryLine maxIdLength aln (seqIndex,currentStart,safeLength) = entr
         entrySeq = V.toList (V.slice currentStart safeLength (snd entry))
         spacerLength = (maxIdLength + 3) - length seqId 
         spacer = replicate spacerLength ' '
-        entryDia = hcat (map setAlignmentLetter entryText) 
+        entryDia = hcat (map setAlignmentLetter entryText)
 
+drawStockholm :: Int -> S.StockholmAlignment -> QDiagram Cairo V2 Double Any
 drawStockholm entriesNumberCutoff aln = alignTL (vcat' with { _sep = 1 } (map (drawStockholmEntry maxIdLength) currentEntries))
    where currentEntries = take entriesNumberCutoff (S.sequenceEntries aln)
-         entryNumber = length currentEntries
+         --entryNumber = length currentEntries
          maxIdLength = maximum (map (T.length . S.sequenceId) currentEntries)
 
+drawStockholmEntry :: Int -> S.SequenceEntry -> QDiagram Cairo V2 Double Any
 drawStockholmEntry maxIdLength entry = entryDia
   where entryText = T.unpack (seqId `T.append` spacer `T.append` (S.entrySequence entry))         
         seqId = S.sequenceId entry             
@@ -167,6 +169,7 @@ drawStockholmEntry maxIdLength entry = entryDia
         spacer = T.replicate spacerLength (T.pack " ")
         entryDia = hcat (map setAlignmentLetter entryText)         
 
+setAlignmentLetter :: Char -> QDiagram Cairo V2 Double Any
 setAlignmentLetter echar = textSVG_ (TextOpts lin INSIDE_H KERN False 3 3) [echar] # fc black # fillRule EvenOdd  # lw 0.0 # translate (r2 (negate 0.75, negate 0.75)) <> rect 2 2 # lw 0.0
 --setAlignmentLetter echar = alignedText 0.5 0.5 [echar] # fontSize 2.0 <> rect 2 2.5 # lw 0
 
@@ -176,7 +179,6 @@ makeLetterIntervals seqNumber letterNumberPerRow letterNumber = rowIntervals
   where --rowVector = V.iterateN rowNumber (1+) 0
         rowList = [0..(rowNumber-1)]
         rowNumber = ceiling $ (fromIntegral letterNumber) / letterNumberPerRow
-	--rowIntervals = V.concat (map (setAlignmentInterval (floor letterNumberPerRow) letterNumber seqNumber)  rowList)
         rowIntervals = map (setAlignmentInterval (floor letterNumberPerRow) letterNumber seqNumber)  rowList
         
 setAlignmentInterval :: Int -> Int -> Int -> Int -> ((Int,Int),V.Vector (Int,Int,Int))
@@ -188,8 +190,8 @@ setAlignmentInterval letterNumberPerRow letterNumber seqNumber rowIndex = ((inde
 setAlignmentLineInterval :: Int -> Int -> Int -> Int -> (Int,Int,Int)
 setAlignmentLineInterval letterNumberPerRow letterNumber rowIndex seqIndex = (seqIndex,currentStart,safeLength)
   where currentStart = rowIndex * letterNumberPerRow
-        length = letterNumberPerRow 
-	safeLength = if currentStart +length >= letterNumber then (letterNumber - currentStart) else length
+        rowLength = letterNumberPerRow 
+	safeLength = if currentStart + rowLength >= letterNumber then (letterNumber - currentStart) else rowLength
 
 makeVectorEntries :: S.SequenceEntry -> (String, V.Vector Char)
 makeVectorEntries entry = (entrySeqId,entrySeq)

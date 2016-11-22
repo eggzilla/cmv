@@ -71,6 +71,7 @@ import Graphics.SVGFonts.ReadFont (loadFont')
 import qualified Data.Text as T 
 
 -- | Draw one or more CM guide trees and concatenate them vertically
+drawCMComparisons :: String -> Int -> String -> String -> Double -> [CM.CM] -> [(Maybe StockholmAlignment)] -> [CmcompareResult] -> QDiagram Cairo V2 Double Any
 drawCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cms alns comparisons = alignTL (vcat' with { _sep = 20 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput))
   where zippedInput = zip4 cms alns comparisonNodeLabels (V.toList colorVector)
         modelNumber = length cms
@@ -80,7 +81,8 @@ drawCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidt
 	nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
 	-- comparisonsHighlightParameter = getComparisonsHighlightParameters cms comparisons
 
--- | Draw one or more CM 
+-- | Draw one or more CM
+drawSingleCMComparisons :: String -> Int -> String -> String -> Double -> [CM.CM] -> [(Maybe StockholmAlignment)] -> [CmcompareResult] -> [QDiagram Cairo V2 Double Any]
 drawSingleCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cms alns comparisons = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput
   where zippedInput = zip4 cms alns comparisonNodeLabels (V.toList colorVector)
         modelNumber = length cms
@@ -91,19 +93,21 @@ drawSingleCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype m
 	comparisonsHighlightParameter = getComparisonsHighlightParameters cms comparisons
 
 -- | Draw one or more CM and concatenate them vertically
+drawCMs :: String -> Int -> String -> String -> Double -> [CM.CM] -> [(Maybe StockholmAlignment)] -> QDiagram Cairo V2 Double Any
 drawCMs modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cms alns = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput))
     where zippedInput = zip4 cms alns comparisonNodeLabels colorList
           comparisonNodeLabels = map getBlankComparisonNodeLabels cms
           colorList = replicate (length cms) white
 
--- | Draw one or more CM 
+-- | Draw one or more CM
+drawSingleCMs :: String -> Int -> String -> String -> Double -> [CM.CM] -> [(Maybe StockholmAlignment)] -> [QDiagram Cairo V2 Double Any]
 drawSingleCMs modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cms alns = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput
     where zippedInput = zip4 cms alns comparisonNodeLabels colorList
           comparisonNodeLabels = map getBlankComparisonNodeLabels cms
           colorList = replicate (length cms) white
 
 -- | Draw the guide Tree of a single CM
---drawCM :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => [Char] -> [(String, [Char])] -> QDiagram b V2 n Any
+drawCM :: String -> Int -> String -> String -> Double -> (CM.CM,Maybe StockholmAlignment,V.Vector (Int,V.Vector (Colour Double)), Colour Double) -> QDiagram Cairo V2 Double Any
 drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth (cm,aln,comparisonNodeLabels,modelColor)
    | modelLayout == "tree" = modelTreeLayout
    | modelLayout == "flat" = modelFlatLayout
@@ -371,7 +375,7 @@ textWithSize' t si = textSVG_ (TextOpts bitStreamFont INSIDE_H KERN False si si)
         siOffset = si/2
 
 -- | Transform covariance model node labels to colors
-labelToColor :: forall b. (Floating b, Ord b) => [Char] -> Colour b
+labelToColor :: [Char] -> Colour Double
 labelToColor label
    | label == "MATP" = sRGB24 211 211 211 -- P
    | label == "MATL" = sRGB24 211 211 211 -- L
@@ -383,7 +387,7 @@ labelToColor label
    | label == "END"  = sRGB24 245 245 245 -- E
 labelToColor _ = sRGB24 245 245 245
 
---drawCMNodeDetailed :: [Char] -> String -> Double -> Int -> Int -> Int -> V.Vector (Int, V.Vector (Colour Double)) -> CM.States -> CM.Node -> QDiagram b V2 n Any
+drawCMNode :: String -> [Char] -> String -> Int -> Int -> Int -> Int -> CM.States -> V.Vector (Int, V.Vector (Colour Double)) -> V.Vector CM.Node -> Int -> QDiagram Cairo V2 Double Any
 drawCMNode modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes nodeIndex
   | modelDetail == "minimal" = (alignedText 0 0 nId # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nId))/2)), negate 1.25)) <> wheel nodeLabels # lw 0.1 <> rect 1.5 3 # lw 0.1) 
   | modelDetail == "simple" = ((text' nId # translate (r2 (negate 5,0)) <> colourBoxes # translate (r2 (negate 5, negate ((singleBoxYLength/2)-2.5)))) ||| strutX 2 ||| text' nodeType ) <> rect 20 5 # lw 0.5  
