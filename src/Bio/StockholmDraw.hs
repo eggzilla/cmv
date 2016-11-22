@@ -14,28 +14,29 @@ module Bio.StockholmDraw
     ) where
   
 import Diagrams.Prelude
-import qualified Diagrams.Backend.Cairo as C
-import Data.Typeable.Internal
-import Text.Printf
-import GHC.Float
+import Diagrams.Backend.Cairo
+--import Data.Typeable.Internal
+--import Text.Printf
+--import GHC.Float
 import qualified Bio.StockholmData as S
 import qualified Data.Text as T    
 import Data.Maybe
 import qualified Data.Vector as V
-import Bio.HMMCompareResult
+--import Bio.HMMCompareResult
 import Data.List
 import Graphics.SVGFonts
 
+drawStockholmLines :: Int -> Double -> V.Vector Int -> V.Vector (Int, V.Vector (Colour Double)) -> S.StockholmAlignment -> QDiagram Cairo V2 Double Any
 drawStockholmLines entriesNumberCutoff maxWidth nodeAlignmentColIndices comparisonNodeLabels aln = alignmentBlocks
   where currentEntries = V.fromList (take entriesNumberCutoff (S.sequenceEntries aln))
         entryNumber = V.length currentEntries
         vectorEntries = V.map makeVectorEntries currentEntries
         maxEntryLength = V.maximum (V.map (V.length . snd) vectorEntries)
         maxIdLength = V.maximum (V.map (length . fst) vectorEntries)
-        headerLength =  (fromIntegral maxIdLength + 3*letterWidth) 
+        --headerLength =  (fromIntegral maxIdLength + 3*letterWidth) 
         letterWidth = (2.0 :: Double)
         availableLettersPerRow = maxWidth / letterWidth
-        rowNumber = floor (availableLettersPerRow / (headerLength + fromIntegral maxEntryLength))
+        --rowNumber = floor (availableLettersPerRow / (headerLength + fromIntegral maxEntryLength))
         blocks = makeLetterIntervals entryNumber availableLettersPerRow maxEntryLength
         --alignmentRows = vcat' with { _sep = 6.0 } (V.toList (V.map (drawStockholmEntryLine maxIdLength vectorEntries) letterIntervals))
         colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabels
@@ -102,23 +103,25 @@ convertWUSSCharToDotBracket c
   
 
 nodeToColIndices :: (Int,(Int,V.Vector (Colour Double))) -> (Int,V.Vector (Colour Double))
-nodeToColIndices (colIndex,(nodeIndex,colors)) = (colIndex,colors)
+nodeToColIndices (colIndex,(_,colors)) = (colIndex,colors)
 
 fillComparisonColLabels :: Int ->  V.Vector (Int, V.Vector (Colour Double)) ->  V.Vector (Int, V.Vector (Colour Double))
 fillComparisonColLabels maxEntryLength sparseComparisonColLabels = fullComparisonColLabels
    where fullComparisonColLabels = V.generate maxEntryLength  (makeFullComparisonColLabel sparseComparisonColLabels)
 
+makeFullComparisonColLabel :: V.Vector (Int, V.Vector (Colour Double)) -> Int -> (Int, V.Vector (Colour Double))
 makeFullComparisonColLabel sparseComparisonColLabels colIndex = fullComparisonColLabel
-  where availableLabel = V.find (\(a,c)-> colIndex == a) sparseComparisonColLabels
+  where availableLabel = V.find (\(a,_)-> colIndex == a) sparseComparisonColLabels
         fullComparisonColLabel = if isJust availableLabel then fromJust availableLabel else (colIndex,V.singleton white)
 
---drawStockholmRowBlock :: Int ->  V.Vector (String, V.Vector Char) -> Int -> V.Vector (Int, V.Vector (Colour Double)) -> ((Int, Int), V.Vector (Int, Int, Int)) -> QDiagram b V2 n Any
+drawStockholmRowBlock :: Int ->  V.Vector (String, V.Vector Char) -> Int -> V.Vector (Int, V.Vector (Colour Double)) -> ((Int, Int), V.Vector (Int, Int, Int)) -> QDiagram Cairo V2 Double Any
 drawStockholmRowBlock maxIdLength vectorEntries maxEntryLength comparisonColLabels ((startIndex,endIndex),letterIntervals) = blockSequences
   where indices = [startIndex..safeEndIndex]        
         safeEndIndex = if (endIndex-1) > (maxEntryLength-1) then maxEntryLength-1 else endIndex-1
         indexLine = drawStockholmIndexLine maxIdLength indices comparisonColLabels     
         blockSequences = indexLine === strutY 2.0 === vcat' with { _sep = 2.0 } (V.toList (V.map (drawStockholmEntryLine maxIdLength vectorEntries) letterIntervals))
 
+drawStockholmIndexLine :: Int -> [Int] -> V.Vector (Int, V.Vector (Colour Double)) -> QDiagram Cairo V2 Double Any
 drawStockholmIndexLine maxIdLength indices comparisonColLabels = indexLine
   where --entryText = (spacer ++ indexLetters)      
         spacerLength = (maxIdLength + 3) 
@@ -130,7 +133,7 @@ drawStockholmIndexLine maxIdLength indices comparisonColLabels = indexLine
         totalBoxYlength = fromIntegral (length  maxEntryText) * 2.5
         indexLine = hcat (map setAlignmentLetter spacer) ||| hcat (map (drawStockholmIndexLineCol comparisonColLabels totalBoxYlength) indices)
 
---drawStockholmIndexLineCol :: V.Vector (Int, V.Vector (Colour Double)) -> Int -> QDiagram b V2 n Any
+drawStockholmIndexLineCol :: V.Vector (Int, V.Vector (Colour Double)) -> Double -> Int -> QDiagram Cairo V2 Double Any
 drawStockholmIndexLineCol comparisonColLabels totalBoxYlength entryIndex = vcat (map setAlignmentLetter entryText) <> colourBoxes # translate (r2 (0, negate ((singleBoxYLength/2)-1.25)))
   where comparisonColLabel = comparisonColLabels V.! entryIndex
         colColours = snd comparisonColLabel
@@ -139,13 +142,15 @@ drawStockholmIndexLineCol comparisonColLabels totalBoxYlength entryIndex = vcat 
         entryText = show entryIndex
         colourBoxes = vcat (V.toList (V.map (colorBox singleBoxYLength) colColours))
 
+colorBox :: Double -> Colour Double -> QDiagram Cairo V2 Double Any
 colorBox singleBoxYLength colColour = rect 2 singleBoxYLength # fc colColour # lw 0.1
-                    
-drawStockholmEntryLine maxIdLength aln (seqIndex,start,safeLength) = entryDia
+
+drawStockholmEntryLine :: Int -> V.Vector (String, V.Vector Char) -> (Int, Int, Int) -> QDiagram Cairo V2 Double Any
+drawStockholmEntryLine maxIdLength aln (seqIndex,currentStart,safeLength) = entryDia
   where entry = aln V.! seqIndex
         entryText = (seqId ++ spacer ++ entrySeq)
         seqId = fst entry      
-        entrySeq = V.toList (V.slice start safeLength (snd entry))
+        entrySeq = V.toList (V.slice currentStart safeLength (snd entry))
         spacerLength = (maxIdLength + 3) - length seqId 
         spacer = replicate spacerLength ' '
         entryDia = hcat (map setAlignmentLetter entryText) 
