@@ -153,6 +153,7 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth (cm,aln,c
 	 alignmentDiagram = if isJust aln then drawStockholmLines entryNumberCutoff maxWidth nodeAlignmentColIndices comparisonNodeLabels (fromJust aln) else mempty
 
 -- | Extracts consensus secondary structure from alignment and annotates cmcompare nodes
+secondaryStructureVisualisation :: String -> Double -> [CM.CM] -> [(Maybe StockholmAlignment)] -> [CmcompareResult] -> [(String,String)]
 secondaryStructureVisualisation selectedTool maxWidth cms alns comparisons
   | selectedTool == "forna" = fornaVis
   | selectedTool == "r2r" = r2rVis
@@ -166,6 +167,7 @@ secondaryStructureVisualisation selectedTool maxWidth cms alns comparisons
 	nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
 	structureComparisonInfo = zip3 cms alns comparisonNodeLabels
 
+buildFornaInput :: (CM.CM,Maybe StockholmAlignment,V.Vector (Int, V.Vector (Colour Double))) -> (String, String)
 buildFornaInput (cm,maybeAln,comparisonNodeLabels)
   | isNothing maybeAln = ([],[])
   | otherwise = (fornaInput, colorScheme)
@@ -252,12 +254,12 @@ data NodeIndices = S [Int] | L [Int] | R [Int]
 
 startState :: ([(Int,Int,String,Int,Int)],Int)
 startState = ([],0::Int)
---type IndexState =  [(Int,Int,String,Int,Int)]
+
 buildRowIndexStructure :: Int -> V.Vector CM.Node -> [Int] -> State ([(Int,Int,String,Int,Int)],Int) ([(Int,Int,String,Int,Int)],Int)
 buildRowIndexStructure row nodes [] = do
   (a,b) <- get
   return (a,b)
-  
+
 buildRowIndexStructure row nodes (currentIndex:xs) = do
   (interval,parentId) <- get
   let currentNode = nodes V.! currentIndex
@@ -403,9 +405,10 @@ drawCMNode modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd la
         singleBoxYLength = totalBoxYlength / boxNumber 
         colourBoxes = vcat (map (colorBox singleBoxYLength) nodeLabels) -- <> rect 5 totalBoxYlength # lw 0.1
 
+colorBox :: Double -> Colour Double -> QDiagram Cairo V2 Double Any
 colorBox singleBoxYLength colColour = rect 5 singleBoxYLength # fc colColour # lw 0.1
         
-
+drawCMNodeBox :: [Char] -> String -> Int -> CM.States -> V.Vector (Int, V.Vector (Colour Double)) -> CM.Node -> QDiagram Cairo V2 Double Any
 drawCMNodeBox alphabetSymbols emissiontype boxlength currentStates comparisonNodeLabels node
   | ntype == CM.NodeType 0 = bifNode # translate (r2 (negate 25,25)) <> nodeBox
   | ntype == CM.NodeType 1 = matPNode # translate (r2 (negate 25,25)) <> nodeBox
@@ -440,9 +443,12 @@ drawCMNodeBox alphabetSymbols emissiontype boxlength currentStates comparisonNod
           -- end e
           endNode = ((idBox nId "END" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
 
+idBox :: String -> String -> [(Colour Double)] -> QDiagram Cairo V2 Double Any
 idBox nId nType nodeLabels = (alignedText 0 0 nId # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nId))/2)), negate 1.25)) <>  wheel nodeLabels # lw 0.1 <> rect 1.5 3 # lw 0) ||| strutX 2.0 ||| text' nType
+nodeBox :: QDiagram Cairo V2 Double Any
 nodeBox = rect 60 60 # lw 0.1
 
+wheel :: [(Colour Double)] -> QDiagram Cairo V2 Double Any
 wheel colors = wheel' # rotate r
    where
      wheel' = mconcat $ zipWith fc colors (iterateN n (rotate a) w)
@@ -451,7 +457,7 @@ wheel colors = wheel' # rotate r
      w = wedge 3 xDir a # lwG 0
      r = (1/4 @@ turn)  ^-^  (1/(2*(fromIntegral n)) @@ turn)
 
---drawCMStateBox :: [Char]  -> String -> Double -> CM.States -> PI.PInt () CM.StateIndex -> QDiagram NullBackend V2 n Any
+--drawCMSplitStateBox :: Int -> [Char] -> String -> Double -> CM.States -> PI.PInt () CM.StateIndex -> QDiagram Cairo V2 Double Any
 drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIndex
   | stype == CM.StateType 0 = dState # translate (r2 (negate 3,negate 3)) <> statebox 8.0 20.0 stateIndx 
   | stype == CM.StateType 1 = mpState # translate (r2 (negate 7,negate 3)) <> statebox 16.0 20.0 stateIndx
