@@ -18,7 +18,7 @@ module Bio.HMMDraw
     ) where
   
 import Diagrams.Prelude
-import qualified Diagrams.Backend.Cairo as C
+import Diagrams.Backend.Cairo
 import Data.Typeable.Internal
 import qualified Bio.HMMParser as HM
 import Text.Printf
@@ -34,7 +34,7 @@ import qualified Data.Colour.SRGB.Linear as R
 import Data.List
 
 
-
+drawHMMComparison :: String -> Int -> String -> Double -> [HM.HMMER3] -> [Maybe S.StockholmAlignment] -> [HMMCompareResult] -> QDiagram Cairo V2 Double Any
 drawHMMComparison modelDetail entryNumberCutoff emissiontype maxWidth hmms alns comparisons
    | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
    | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
@@ -47,6 +47,7 @@ drawHMMComparison modelDetail entryNumberCutoff emissiontype maxWidth hmms alns 
  	   nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
  	   comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) hmms
 
+drawSingleHMMComparison :: String -> Int -> String -> Double -> [HM.HMMER3] -> [Maybe S.StockholmAlignment] -> [HMMCompareResult] -> [QDiagram Cairo V2 Double Any]
 drawSingleHMMComparison modelDetail entryNumberCutoff emissiontype maxWidth hmms alns comparisons
    | modelDetail == "flat" = map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput
    | modelDetail == "simple" = map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput
@@ -60,7 +61,7 @@ drawSingleHMMComparison modelDetail entryNumberCutoff emissiontype maxWidth hmms
  	   comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) hmms
                         
 -- | 
---drawHMMMER3s :: forall b. Renderable (Path V2 Double) b => String -> [HM.HMMER3] -> QDiagram b V2 Double Any
+drawHMMER3s :: String -> Int -> Double -> String -> [HM.HMMER3] -> [Maybe S.StockholmAlignment] -> QDiagram Cairo V2 Double Any
 drawHMMER3s modelDetail entryNumberCutoff maxWidth emissiontype hmms alns 
   | modelDetail == "flat" = alignTL (vcat' with { _sep = 8 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
   | modelDetail == "simple" = alignTL (vcat' with { _sep = 8 } (map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput))
@@ -70,6 +71,7 @@ drawHMMER3s modelDetail entryNumberCutoff maxWidth emissiontype hmms alns
           blankComparisonNodeLabels = map getBlankComparisonNodeLabels hmms
           colorList = replicate (length hmms) white
 
+drawSingleHMMER3s :: String -> Int -> Double -> String -> [HM.HMMER3] -> [Maybe S.StockholmAlignment] -> [QDiagram Cairo V2 Double Any]
 drawSingleHMMER3s modelDetail entryNumberCutoff maxWidth emissiontype hmms alns 
   | modelDetail == "flat" = map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput
   | modelDetail == "simple" = map (drawHMMER3 modelDetail entryNumberCutoff maxWidth emissiontype) zippedInput
@@ -81,7 +83,7 @@ drawSingleHMMER3s modelDetail entryNumberCutoff maxWidth emissiontype hmms alns
 
 
 -- |
---drawHMMER3 :: forall n b. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => String -> Int -> Double -> String -> (HM.HMMER3,Maybe S.StockholmAlignment) -> QDiagram b V2 Double Any
+drawHMMER3 :: String -> Int -> Double -> String -> (HM.HMMER3,Maybe S.StockholmAlignment, V.Vector (Int,V.Vector (Colour Double)), Colour Double) -> QDiagram Cairo V2 Double Any
 drawHMMER3 modelDetail entriesNumberCutoff maxWidth emissiontype (model,aln,comparisonNodeLabels,modelColor)
    | modelDetail == "flat" = hcat $ V.toList (V.map drawHMMNodeFlat currentNodes)
    | modelDetail == "simple" = hcat $ V.toList (V.map drawHMMNodeSimple currentNodes)
@@ -106,7 +108,7 @@ drawHMMER3 modelDetail entriesNumberCutoff maxWidth emissiontype (model,aln,comp
            --arrowList = map makeArrow connectedNodes ++ map makeSelfArrow selfconnectedNodes
            --labelList = map makeLabel connectedNodes ++ map makeSelfLabel selfconnectedNodes
 
---makeModelHeader :: String -> QDiagram NullBackend V2 Double Any
+makeModelHeader :: String -> Colour Double -> QDiagram Cairo V2 Double Any
 makeModelHeader mName modelColor = strutX 2 ||| hcat (map setTitelLetter mName) ||| strutX 1 ||| rect 4 4 # lw 0.1 # fc modelColor
 
 makeNodeIntervals :: Int -> Int -> V.Vector (Int,Int)
@@ -115,12 +117,13 @@ makeNodeIntervals nodeNumberPerRow nodeNumber = rowIntervals
         rowNumber = ceiling $ (fromIntegral nodeNumber) / (fromIntegral nodeNumberPerRow)
 	rowIntervals = V.map (setRowInterval nodeNumberPerRow nodeNumber) rowVector
 
+setRowInterval :: Int -> Int -> Int -> (Int,Int)
 setRowInterval nodeNumberPerRow nodeNumber index = (start,safeLength)
   where start = index*nodeNumberPerRow
         length = nodeNumberPerRow 
 	safeLength = if start +length >= nodeNumber then (nodeNumber - start) else length
 
---drawDetailedNodeRow :: [Char] -> String -> Double -> Int -> V.Vector HM.HMMER3Node -> (Int, Int) -> QDiagram b V2 Double Any
+drawDetailedNodeRow :: [Char] -> String -> Double -> Int -> V.Vector HM.HMMER3Node -> V.Vector (Int,V.Vector (Colour Double)) -> (Int, Int) -> QDiagram Cairo V2 Double Any
 drawDetailedNodeRow alphabetSymbols emissiontype boxLength lastIndex allNodes comparisonNodeLabels (currentIndex,nodeSliceLength) = detailedRow
   where currentNodes = V.slice currentIndex nodeSliceLength allNodes
         withLastRowNodes = V.slice (currentIndex -1) (nodeSliceLength +1) allNodes
@@ -136,11 +139,15 @@ drawDetailedNodeRow alphabetSymbols emissiontype boxLength lastIndex allNodes co
         lastNode = if currentIndex > 1 then V.slice (currentIndex -1) 1 allNodes else V.empty
         lastRowConnections = makeLastRowConnections boxLength lastNode
         lastRowList = V.toList (V.map makeArrow lastRowConnections V.++ V.map makeLabel lastRowConnections)   
-       
+
+setLetter :: Char -> QDiagram Cairo V2 Double Any 
 setLetter echar = alignedText 0.5 0.5 [echar] # fontSize 2 <> rect 1.0 1.0 # lw 0 -- # translate (r2 (negate 0.5, 0))
+setLabelLetter :: Char -> QDiagram Cairo V2 Double Any
 setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0.5 # lw 0
+setTitelLetter :: Char -> QDiagram Cairo V2 Double Any
 setTitelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 4.0 <> rect 4.0 4.0 # lw 0
 
+makeLastRowConnections :: Double -> V.Vector HM.HMMER3Node -> V.Vector ([Char], [Char], Double, (Double, Double))
 makeLastRowConnections boxlength currentnodes =  mm1A V.++ md1A V.++ im1A V.++ dm1A V.++ dd1A
   where mm1A = V.map makemm1A currentnodes 
         md1A = V.map (makemd1A boxlength) currentnodes
@@ -148,6 +155,7 @@ makeLastRowConnections boxlength currentnodes =  mm1A V.++ md1A V.++ im1A V.++ d
         dm1A = V.map (makedm1A boxlength) currentnodes
         dd1A = V.map makedd1A currentnodes
 
+makeConnections :: Double -> V.Vector HM.HMMER3Node -> V.Vector ([Char], [Char], Double, (Double, Double))
 makeConnections boxlength currentnodes =  mm1A V.++ miA V.++ md1A V.++ im1A V.++ dm1A V.++ dd1A
   where mm1A = V.map makemm1A currentnodes 
         miA = V.map (makemiA boxlength) currentnodes
@@ -156,21 +164,31 @@ makeConnections boxlength currentnodes =  mm1A V.++ miA V.++ md1A V.++ im1A V.++
         dm1A = V.map (makedm1A boxlength) currentnodes
         dd1A = V.map makedd1A currentnodes
 
+makeSelfConnections :: Double -> V.Vector HM.HMMER3Node -> V.Vector ([Char], [Char], Double, (Double, Double))
 makeSelfConnections boxlength currentnodes = V.map (makeiiA boxlength) currentnodes
 
-makemm1A currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((HM.nodeId currentNode) + 1) ++ "m", maybe 0 ((roundPos 2) . exp . negate) (HM.m2m currentNode),(0,0.5)) 
+makemm1A :: HM.HMMER3Node -> (String, String, Double, (Double, Double))
+makemm1A currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((HM.nodeId currentNode) + 1) ++ "m", maybe 0 ((roundPos 2) . exp . negate) (HM.m2m currentNode),(0,0.5))
+makemiA :: Double -> HM.HMMER3Node -> (String, String, Double, (Double, Double))
 makemiA boxlength currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((HM.nodeId currentNode)) ++ "i",  maybe 0 ((roundPos 2) . exp . negate) (HM.m2i currentNode),(0,setiayOffset boxlength))
+makemd1A :: Double -> HM.HMMER3Node -> (String, String, Double, (Double, Double))
 makemd1A boxlength currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((HM.nodeId currentNode) + 1) ++ "d", maybe 0 ((roundPos 2) . exp . negate) (HM.m2d currentNode),(1.5,2.0))
+makeim1A :: HM.HMMER3Node -> (String, String, Double, (Double, Double))
 makeim1A currentNode = (show ((HM.nodeId) currentNode) ++ "i", show ((HM.nodeId currentNode) + 1) ++ "m", maybe 0 ((roundPos 2) . exp . negate) (HM.i2m currentNode),(0,negate 0.5))
+makeiiA :: Double -> HM.HMMER3Node -> (String, String, Double, (Double, Double))
 makeiiA boxlength currentNode = (show ((HM.nodeId) currentNode) ++ "i", show ((HM.nodeId currentNode)) ++ "i", maybe 0 ((roundPos 2) . exp . negate) (HM.i2i currentNode),(0,3.0))
+makedm1A :: Double -> HM.HMMER3Node -> (String, String, Double, (Double, Double))
 makedm1A boxlength currentNode = (show ((HM.nodeId) currentNode) ++ "d", show ((HM.nodeId currentNode) + 1) ++ "m", maybe 0 ((roundPos 2) . exp . negate) (HM.d2m currentNode),(negate 1.5,2.0))
+makedd1A :: HM.HMMER3Node -> (String, String, Double, (Double, Double))
 makedd1A currentNode = (show ((HM.nodeId) currentNode) ++ "d", show ((HM.nodeId currentNode) + 1) ++ "d", maybe 0 ((roundPos 2) . exp . negate) (HM.d2d currentNode),(negate 1,1))
 
+setiayOffset :: Double -> Double
 setiayOffset boxlength
   | boxlength <= 10 = negate 0.3
   | otherwise = 3.5
 
-makeArrow (lab1,lab2,weight,_) = connectOutside' arrowStyle1 lab1 lab2 
+makeArrow :: (String,String,Double,(Double,Double)) -> QDiagram Cairo V2 Double Any -> QDiagram Cairo V2 Double Any
+makeArrow (lab1,lab2,weight,_) = connectOutside' arrowStyle1 (lab1) (lab2) 
   where arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw (local (0.1)) & headLength .~ local 0.001 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
 makeSelfArrow (lab1,lab2,weight,_) = connectPerim' arrowStyle lab1 lab1 (4/12 @@ turn) (2/12 @@ turn)
   where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw (local (0.1)) & headLength .~ local 0.001  & tailLength .~ 0.9 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
@@ -293,7 +311,8 @@ diagramName filename fileformat
   | fileformat == "ps" = Right (filename ++ "." ++ fileformat )
   | otherwise = Left "Unsupported output format requested (use svg, pdf, ps, png)"                     
 
-printHMM outputName = C.renderCairo outputName
+printHMM :: String -> SizeSpec V2 Double -> QDiagram Cairo V2 Double Any -> IO ()
+printHMM outputName = renderCairo outputName
 
 roundPos :: (RealFrac a) => Int -> a -> a
 roundPos positions number  = (fromInteger $ round $ number * (10^positions)) / (10.0^^positions)
@@ -341,22 +360,23 @@ makeComparisonNodeLabel colorNodeIntervals nodeNumber = comparisonNodeLabel
         modelColors = V.map fst relevantColorNodeIntervals
         comparisonNodeLabel = if (null modelColors) then (nodeNumber,V.singleton white) else (nodeNumber,modelColors)
 
-makeBlankComparisonNodeLabel :: Int ->  (Int,(V.Vector (Colour Double)))
+makeBlankComparisonNodeLabel :: Int -> (Int,(V.Vector (Colour Double)))
 makeBlankComparisonNodeLabel nodeNumber = (nodeNumber,V.singleton white)
 
+makeColorVector :: Int -> V.Vector (Colour Double)
 makeColorVector modelNumber = V.map (\(a,b,c) -> R.rgb a b c) modelRGBTupel
    where indexVector = V.iterateN (modelNumber) (1+) 0
          stepSize = (765 :: Double) / (fromIntegral modelNumber)
 	 modelRGBTupel = V.map (makeRGBTupel stepSize) indexVector
 
---makeRGBTupel :: Double -> Int -> (Double,Double,Double)
+makeRGBTupel :: Double -> Int -> (Double,Double,Double)
 makeRGBTupel stepSize modelNumber = (a,b,c)
   where  totalSize = (fromIntegral modelNumber) * stepSize 
          a = (rgbBoundries (totalSize  - 255))/255
 	 b = (rgbBoundries (totalSize - a - 255))/255
 	 c = (rgbBoundries (totalSize - a - b))/255
 
---rgbBoundries :: Double -> Double	     
+rgbBoundries :: Double -> Double	     
 rgbBoundries rgbValue
   | rgbValue>210 = 210
   | rgbValue<50 = 50
