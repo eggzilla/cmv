@@ -32,7 +32,8 @@ import Bio.HMMCompareResult
 import Bio.StockholmDraw
 import qualified Data.Colour.SRGB.Linear as R
 import Data.List
-
+import Graphics.SVGFonts
+import Bio.CMFont
 
 drawHMMComparison :: String -> Int -> String -> Double -> [HM.HMMER3] -> [Maybe S.StockholmAlignment] -> [HMMCompareResult] -> QDiagram Cairo V2 Double Any
 drawHMMComparison modelDetail entryNumberCutoff emissiontype maxWidth hmms alns comparisons
@@ -381,3 +382,11 @@ rgbBoundries rgbValue
   | rgbValue>210 = 210
   | rgbValue<50 = 50
   | otherwise = rgbValue        
+
+text' :: String -> QDiagram Cairo V2 Double Any
+text' t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 3 3) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
+
+textWithSize' :: String -> Double -> QDiagram Cairo V2 Double Any
+textWithSize' t si = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False si si) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate siOffset, negate siOffset)) 
+  where textLength = fromIntegral (length t) * 2
+        siOffset = si/2
