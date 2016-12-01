@@ -328,13 +328,13 @@ getIndexEnd nodes indices
 
 --TODO swap with SVGFont
 makeModelHeader :: String -> Colour Double -> QDiagram Cairo V2 Double Any
-makeModelHeader mName modelColor = strutX 2 ||| hcat (map setTitelLetter mName) ||| strutX 1 ||| rect 4 4 # lw 0.1 # fc modelColor
+makeModelHeader mName modelColor = strutX 2 ||| setTitel mName ||| strutX 1 ||| rect 4 4 # lw 0.1 # fc modelColor
 --setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0.5 # lw 0
 --setStateLetter echar = alignedText 1 1 [echar] # fontSize 2.0 <> rect 2.0 2.0 # lw 0
 --setTitelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 4.0 <> rect 4.0 4.0 # lw 0
-setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0.5 # lw 0
-setStateLetter echar = alignedText 1 1 [echar] # fontSize 2.0 <> rect 2.0 2.0 # lw 0
-setTitelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 4.0 <> rect 4.0 4.0 # lw 0
+setLabel t = textSVG_ (TextOpts bitStreamFont INSIDE_H KERN False 0.75 0.75) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
+setState t = textSVG_ (TextOpts bitStreamFont INSIDE_H KERN False 2 2) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
+setTitel t = textSVG_ (TextOpts bitStreamFont INSIDE_H KERN False 4 4) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
 
 drawCMNodeTree :: String -> [Char] -> String -> Int -> CM.States -> V.Vector (Int, V.Vector (Colour Double))-> V.Vector CM.Node -> [(Int, Int, String, Int, Int)] -> (Int,Int,String,Int,Int) -> QDiagram Cairo V2 Double Any
 drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure (intervalId,parentId,intervalType,currentIndex,currentEnd) = nodeTree
@@ -635,7 +635,7 @@ makeLabel (n1,n2,weight,(xOffset,yOffset))=
     let v = location b2 .-. location b1
         midpoint = location b1 .+^ (v ^/ 2)
     in
-      Diagrams.Prelude.atop (position [((midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + yOffset)), (hcat (map setLabelLetter (show (roundPos 2 weight)))))])
+      Diagrams.Prelude.atop (position [((midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + yOffset)), (setLabel (show (roundPos 2 weight))))])
 
 makeSelfLabel (n1,n2,weight,(xOffset,yOffset))
   | weight == 0 = mempty
@@ -644,7 +644,7 @@ makeSelfLabel (n1,n2,weight,(xOffset,yOffset))
                   let v = location b2 .-. location b1
                       midpoint = location b1 .+^ (v ^/ 2)
                   in
-                    Diagrams.Prelude.atop (position [(midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + yOffset), (hcat (map setLabelLetter (show (roundPos 2 weight)))))])
+                    Diagrams.Prelude.atop (position [(midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + yOffset), setLabel (show (roundPos 2 weight)))])
 
 -------- Simple/ Flat functions
 --getNodeInfo :: (CM.Node, (CM.NodeType, [CM.State])) -> (String,String)
