@@ -15,14 +15,10 @@ module Bio.StockholmDraw
   
 import Diagrams.Prelude
 import Diagrams.Backend.Cairo
---import Data.Typeable.Internal
---import Text.Printf
---import GHC.Float
 import qualified Bio.StockholmData as S
 import qualified Data.Text as T    
 import Data.Maybe
 import qualified Data.Vector as V
---import Bio.HMMCompareResult
 import Data.List
 import Graphics.SVGFonts
 import Bio.CMFont
@@ -34,12 +30,9 @@ drawStockholmLines entriesNumberCutoff maxWidth nodeAlignmentColIndices comparis
         vectorEntries = V.map makeVectorEntries currentEntries
         maxEntryLength = V.maximum (V.map (V.length . snd) vectorEntries)
         maxIdLength = V.maximum (V.map (length . fst) vectorEntries)
-        --headerLength =  (fromIntegral maxIdLength + 3*letterWidth) 
         letterWidth = (2.0 :: Double)
         availableLettersPerRow = maxWidth / letterWidth
-        --rowNumber = floor (availableLettersPerRow / (headerLength + fromIntegral maxEntryLength))
         blocks = makeLetterIntervals entryNumber availableLettersPerRow maxEntryLength
-        --alignmentRows = vcat' with { _sep = 6.0 } (V.toList (V.map (drawStockholmEntryLine maxIdLength vectorEntries) letterIntervals))
         colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabels
         sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
         fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
@@ -171,7 +164,7 @@ drawStockholmEntry maxIdLength entry = entryDia
         entryDia = hcat (map setAlignmentLetter entryText)         
 
 setAlignmentLetter :: Char -> QDiagram Cairo V2 Double Any
-setAlignmentLetter echar = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 3 3) [echar] # fc black # fillRule EvenOdd  # lw 0.0 # translate (r2 (negate 0.75, negate 0.75)) <> rect 2 2 # lw 0.0
+setAlignmentLetter echar = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 2.5 2.5) [echar] # fc black # fillRule EvenOdd  # lw 0.0 # translate (r2 (negate 0.75, negate 0.75)) <> rect 2 2 # lw 0.0
 --setAlignmentLetter echar = alignedText 0.5 0.5 [echar] # fontSize 2.0 <> rect 2 2.5 # lw 0
 
 -- LetterInterval (SeqNr,Start,Length)
