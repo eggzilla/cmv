@@ -110,7 +110,7 @@ drawHMMER3 modelDetail entriesNumberCutoff maxWidth emissiontype (model,aln,comp
            --labelList = map makeLabel connectedNodes ++ map makeSelfLabel selfconnectedNodes
 
 makeModelHeader :: String -> Colour Double -> QDiagram Cairo V2 Double Any
-makeModelHeader mName modelColor = strutX 2 ||| hcat (map setTitelLetter mName) ||| strutX 1 ||| rect 4 4 # lw 0.1 # fc modelColor
+makeModelHeader mName modelColor = strutX 2 ||| setTitelLetter mName ||| strutX 1 ||| rect 4 4 # lw 0.1 # fc modelColor
 
 makeNodeIntervals :: Int -> Int -> V.Vector (Int,Int)
 makeNodeIntervals nodeNumberPerRow nodeNumber = rowIntervals
@@ -141,12 +141,15 @@ drawDetailedNodeRow alphabetSymbols emissiontype boxLength lastIndex allNodes co
         lastRowConnections = makeLastRowConnections boxLength lastNode
         lastRowList = V.toList (V.map makeArrow lastRowConnections V.++ V.map makeLabel lastRowConnections)   
 
-setLetter :: Char -> QDiagram Cairo V2 Double Any 
-setLetter echar = alignedText 0.5 0.5 [echar] # fontSize 2 <> rect 1.0 1.0 # lw 0 -- # translate (r2 (negate 0.5, 0))
-setLabelLetter :: Char -> QDiagram Cairo V2 Double Any
-setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0.5 # lw 0
-setTitelLetter :: Char -> QDiagram Cairo V2 Double Any
-setTitelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 4.0 <> rect 4.0 4.0 # lw 0
+setLetter :: String -> QDiagram Cairo V2 Double Any 
+--setLetter echar = alignedText 0.5 0.5 [echar] # fontSize 2 <> rect 1.0 1.0 # lw 0 -- # translate (r2 (negate 0.5, 0))
+setLetter t = textWithSize' t 2.0 
+setLabelLetter :: String -> QDiagram Cairo V2 Double Any
+--setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0.5 # lw 0
+setLabelLetter t = textWithSize' t 075
+setTitelLetter :: String -> QDiagram Cairo V2 Double Any
+--setTitelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 4.0 <> rect 4.0 4.0 # lw 0
+setTitelLetter t = textWithSize' t 4.0
 
 makeLastRowConnections :: Double -> V.Vector HM.HMMER3Node -> V.Vector ([Char], [Char], Double, (Double, Double))
 makeLastRowConnections boxlength currentnodes =  mm1A V.++ md1A V.++ im1A V.++ dm1A V.++ dd1A
@@ -203,7 +206,7 @@ makeLabel (n1,n2,weight,(xOffset,yOffset))=
     let v = location b2 .-. location b1
         midpoint = location b1 .+^ (v ^/ 2)
     in
-      atop (position [((midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + yOffset)), (hcat (map setLabelLetter (show weight))) )])
+      atop (position [((midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + yOffset)), setLabelLetter (show weight)) ])
 
 makeSelfLabel (n1,n2,weight,(xOffset,yOffset))=
   withName n1 $ \b1 ->
@@ -211,7 +214,7 @@ makeSelfLabel (n1,n2,weight,(xOffset,yOffset))=
     let v = location b2 .-. location b1
         midpoint = location b1 .+^ (v ^/ 2)
     in
-      atop (position [(midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + yOffset), (hcat (map setLabelLetter (show weight))))])
+      atop (position [(midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + yOffset), setLabelLetter (show weight))])
 
 -- | 
 --drawHMMNodeFlat :: forall t b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => HM.HMMER3Node -> b
@@ -237,8 +240,8 @@ drawHMMNodeVerbose alphabetSymbols emissiontype boxlength rowStart rowEnd lastIn
 	endBox = emptyIdBox === strutY 0.5 === emptyDeletions === strutY 1.5 === emptyInsertions  === strutY 1.5 === endState boxlength idNumber ||| strutX 4
 
 -- | idBox associates the node with its index and a tupel of  a list of modelidentifiers and the total model number
---idBox nid nodeLabels = alignedText 0 0 nid # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nid))/2)), negate 1.25))<>  wheel nodeLabels <> rect 1.5 3 # lw 0
-idBox nid nodeLabels = alignedText 0 0 nid # fontSize 2  # translate (r2 ((negate ((fromIntegral ((length nid) * 2))/2)), negate 1.25)) <>  wheel nodeLabels <> rect 1.5 3 # lw 0   
+--idBox nid nodeLabels = alignedText 0 0 nid # fontSize 2  # translate (r2 ((negate ((fromIntegral ((length nid) * 2))/2)), negate 1.25)) <>  wheel nodeLabels <> rect 1.5 3 # lw 0
+idBox nid nodeLabels = text' nid # translate (r2 ((negate ((fromIntegral ((length nid) * 2))/2)), negate 1.25)) <>  wheel nodeLabels <> rect 1.5 3 # lw 0   
 emptyIdBox = rect 1.5 1.5 # lw 0
 rowStartBox idNumber boxlength = rect 0 1.5 #lw 0.0 === rect 0 6 # lw 0.1 # named (nid ++ "d") === rect 0 6 # lw 0.1 #named (nid ++ "i") === rect 0 (boxlength + 2) # lw 0.1 # named (nid ++ "m") ||| strutX 2.5
   where nid = show (idNumber - 1)
