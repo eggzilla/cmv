@@ -68,8 +68,6 @@ import Control.Monad.State
 import qualified Data.Char as C
 import Graphics.SVGFonts
 import Bio.CMFont
---import Graphics.SVGFonts.ReadFont (loadFont')
---import qualified Data.Text as T 
 
 -- | Draw one or more CM guide trees and concatenate them vertically
 drawCMComparisons :: String -> Int -> String -> String -> Double -> [CM.CM] -> [(Maybe StockholmAlignment)] -> [CmcompareResult] -> QDiagram Cairo V2 Double Any
