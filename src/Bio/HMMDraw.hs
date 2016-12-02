@@ -146,7 +146,7 @@ setLetter :: String -> QDiagram Cairo V2 Double Any
 setLetter t = textWithSize' t 2.0 
 setLabelLetter :: String -> QDiagram Cairo V2 Double Any
 --setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0.5 # lw 0
-setLabelLetter t = textWithSize' t 075
+setLabelLetter t = textWithSize' t 0.75
 setTitelLetter :: String -> QDiagram Cairo V2 Double Any
 --setTitelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 4.0 <> rect 4.0 4.0 # lw 0
 setTitelLetter t = textWithSize' t 4.0

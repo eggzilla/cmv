@@ -37,6 +37,7 @@ library
                      Bio.StockholmData
                      Bio.HMMCompareResult
                      Bio.StockholmDraw
+                     Bio.CMFont
 
   -- compiler-options:
   ghc-options:         -Wall -O2 -fno-warn-unused-do-bind
