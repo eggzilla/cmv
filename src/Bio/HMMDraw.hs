@@ -100,7 +100,7 @@ drawHMMER3 modelDetail entriesNumberCutoff maxWidth emissiontype (model,aln,comp
            nodeWidth = (6.0 :: Double)
            nodeNumberPerRow = floor (maxWidth / nodeWidth - 2)
            nodesIntervals = makeNodeIntervals nodeNumberPerRow nodeNumber
-           verboseNodes = vcat' with { _sep = 2 } (V.toList (V.map (drawDetailedNodeRow alphabetSymbols emissiontype boxlength nodeNumber currentNodes comparisonNodeLabels) nodesIntervals))
+           verboseNodes = vcat' with { _sep = 3 } (V.toList (V.map (drawDetailedNodeRow alphabetSymbols emissiontype boxlength nodeNumber currentNodes comparisonNodeLabels) nodesIntervals))
            verboseNodesAlignment = alignTL (vcat' with { _sep = 5 }  [modelHeader,verboseNodes,alignmentDiagram])
            modelHeader = makeModelHeader (HM.name model) modelColor
            alignmentDiagram = if isJust aln then drawStockholmLines entriesNumberCutoff maxWidth nodeAlignmentColIndices comparisonNodeLabels (fromJust aln) else mempty
@@ -146,7 +146,7 @@ setLetter :: String -> QDiagram Cairo V2 Double Any
 setLetter t = textWithSize' t 2.0 
 setLabelLetter :: String -> QDiagram Cairo V2 Double Any
 --setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0.5 # lw 0
-setLabelLetter t = textWithSize' t 0.75
+setLabelLetter t = textWithSize' t 2.0
 setTitelLetter :: String -> QDiagram Cairo V2 Double Any
 --setTitelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 4.0 <> rect 4.0 4.0 # lw 0
 setTitelLetter t = textWithSize' t 4.0
@@ -180,15 +180,15 @@ makemd1A boxlength currentNode = (show ((HM.nodeId) currentNode) ++ "m", show ((
 makeim1A :: HM.HMMER3Node -> (String, String, Double, (Double, Double))
 makeim1A currentNode = (show ((HM.nodeId) currentNode) ++ "i", show ((HM.nodeId currentNode) + 1) ++ "m", maybe 0 ((roundPos 2) . exp . negate) (HM.i2m currentNode),(0,negate 0.5))
 makeiiA :: Double -> HM.HMMER3Node -> (String, String, Double, (Double, Double))
-makeiiA boxlength currentNode = (show ((HM.nodeId) currentNode) ++ "i", show ((HM.nodeId currentNode)) ++ "i", maybe 0 ((roundPos 2) . exp . negate) (HM.i2i currentNode),(0,3.0))
+makeiiA boxlength currentNode = (show ((HM.nodeId) currentNode) ++ "i", show ((HM.nodeId currentNode)) ++ "i", maybe 0 ((roundPos 2) . exp . negate) (HM.i2i currentNode),(0,4.7))
 makedm1A :: Double -> HM.HMMER3Node -> (String, String, Double, (Double, Double))
-makedm1A boxlength currentNode = (show ((HM.nodeId) currentNode) ++ "d", show ((HM.nodeId currentNode) + 1) ++ "m", maybe 0 ((roundPos 2) . exp . negate) (HM.d2m currentNode),(negate 1.5,2.0))
+makedm1A boxlength currentNode = (show ((HM.nodeId) currentNode) ++ "d", show ((HM.nodeId currentNode) + 1) ++ "m", maybe 0 ((roundPos 2) . exp . negate) (HM.d2m currentNode),(negate 1.5,3.0))
 makedd1A :: HM.HMMER3Node -> (String, String, Double, (Double, Double))
 makedd1A currentNode = (show ((HM.nodeId) currentNode) ++ "d", show ((HM.nodeId currentNode) + 1) ++ "d", maybe 0 ((roundPos 2) . exp . negate) (HM.d2d currentNode),(negate 1,1))
 
 setiayOffset :: Double -> Double
 setiayOffset boxlength
-  | boxlength <= 10 = negate 0.3
+  | boxlength <= 10 = 0.6
   | otherwise = 3.5
 
 makeArrow :: (String,String,Double,(Double,Double)) -> QDiagram Cairo V2 Double Any -> QDiagram Cairo V2 Double Any
@@ -236,7 +236,7 @@ drawHMMNodeVerbose alphabetSymbols emissiontype boxlength rowStart rowEnd lastIn
         nodeLabels = V.toList (snd (comparisonNodeLabels V.! idNumber))
         nid  = show idNumber
         beginBox = strutX 7 ||| (idBox nid nodeLabels === strutY 0.5 === emptyDeletions === strutY 1.5 === insertions nid === strutY 1.5 === beginState boxlength nid) ||| (strutX  4)
-	nodeBox = idBox nid nodeLabels === strutY 0.5 === deletions nid === strutY 1.5 === insertions nid  === strutY 1.5 === matches alphabetSymbols emissiontype boxlength node ||| (strutX 4)
+	nodeBox = idBox nid nodeLabels === strutY 0.5 === deletions nid === strutY 2.5 === insertions nid  === strutY 1.5 === matches alphabetSymbols emissiontype boxlength node ||| (strutX 4)
 	endBox = emptyIdBox === strutY 0.5 === emptyDeletions === strutY 1.5 === emptyInsertions  === strutY 1.5 === endState boxlength idNumber ||| strutX 4
 
 -- | idBox associates the node with its index and a tupel of  a list of modelidentifiers and the total model number
