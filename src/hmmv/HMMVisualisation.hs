@@ -14,7 +14,6 @@ import System.Console.CmdArgs
 import Data.Either.Unwrap
 import System.Directory
 import qualified Bio.StockholmParser as SP
-import System.FilePath
 import Paths_cmcv (version)
 import Data.Version (showVersion)
 
@@ -48,7 +47,6 @@ main :: IO ()
 main = do
   Options{..} <- cmdArgs options
   modelFileExists <- doesFileExist modelFile
-  alnFileExists <- doesFileExist alignmentFile
   if modelFileExists
      then do
        inputModels <- HM.readHMMER3 modelFile
