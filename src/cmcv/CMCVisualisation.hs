@@ -21,7 +21,7 @@ import qualified Data.Either.Unwrap as E
 import System.Directory
 import qualified Data.Text as T
 import qualified Bio.StockholmParser as SP
-import Paths_cmcv (version)
+import Paths_cmv (version)
 import Data.Version (showVersion)
 
 options :: Options

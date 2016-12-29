@@ -14,7 +14,7 @@ import System.Console.CmdArgs
 import Data.Either.Unwrap
 import System.Directory
 import qualified Bio.StockholmParser as SP
-import Paths_cmcv (version)
+import Paths_cmv (version)
 import Data.Version (showVersion)
 
 options :: Options

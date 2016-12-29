@@ -17,7 +17,7 @@ import Data.Either
 import qualified Data.Either.Unwrap as E
 import System.Directory
 import qualified Bio.StockholmParser as SP
-import Paths_cmcv (version)
+import Paths_cmv (version)
 import Data.Version (showVersion)
 
 options :: Options
@@ -67,8 +67,8 @@ main = do
         then do
           let models = E.fromRight inputModels
           hmmCResultParsed <- readHMMCompareResult hmmCompareResultFile
-	  let modelNumber = length models
-	  alnInput <- SP.readExistingStockholm alignmentFile
+          let modelNumber = length models
+          alnInput <- SP.readExistingStockholm alignmentFile
           if (isLeft alnInput) then print (E.fromLeft alnInput) else return ()
           let alns = if (isRight alnInput) then (map (\a -> Just a) (E.fromRight alnInput)) else (replicate modelNumber Nothing)
           if (isRight hmmCResultParsed)

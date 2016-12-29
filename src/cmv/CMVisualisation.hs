@@ -11,7 +11,6 @@
 
 module Main where
 
-import Bio.CMCompareResult
 import Bio.CMDraw
 import qualified Biobase.SElab.CM as CM
 import Biobase.SElab.CM.Import     
@@ -20,8 +19,7 @@ import System.Directory
 import Data.Either.Unwrap
 import qualified Bio.StockholmParser as SP
 import qualified Data.Text as T
-import qualified Data.Vector as V
-import Paths_cmcv (version)
+import Paths_cmv (version)
 import Data.Version (showVersion)    
 
 options :: Options
@@ -68,18 +66,18 @@ main = do
           alnInput <- SP.readExistingStockholm alignmentFile
           if (isLeft alnInput) then print (fromLeft alnInput) else return ()
           let outputName = diagramName "cmv" outputFormat
-	  let modelNumber = length cms
+          let modelNumber = length cms
           let alns = if (isRight alnInput) then (map (\a -> Just a) (fromRight alnInput)) else (replicate modelNumber Nothing)
-	  let structureVisInputs = secondaryStructureVisualisation secondaryStructureVisTool maxWidth cms alns []
-	  let modelFileNames = map ((++ "." ++ outputFormat) . T.unpack . CM._name) cms
-	  let structureFileNames = map ((++ "." ++ secondaryStructureVisTool) . T.unpack . CM._name) cms
-	  if oneOutputFile
+          let structureVisInputs = secondaryStructureVisualisation secondaryStructureVisTool maxWidth cms alns []
+          let modelFileNames = map ((++ "." ++ outputFormat) . T.unpack . CM._name) cms
+          let structureFileNames = map ((++ "." ++ secondaryStructureVisTool) . T.unpack . CM._name) cms
+          if oneOutputFile
             then do	      
               printCM (fromRight outputName) svgsize (drawCMs modelDetail alignmentEntries modelLayout emissionLayout maxWidth scalingFactor cms alns) 
               mapM_ (\(structureFileName,(structureVis,_)) -> writeFile structureFileName structureVis) (zip structureFileNames structureVisInputs)
               mapM_ (\(structureFileName,(_,colorScheme)) -> writeFile (structureFileName ++"Color") colorScheme) (zip structureFileNames structureVisInputs)
-	    else do
-	      let modelVis = drawSingleCMs modelDetail alignmentEntries modelLayout emissionLayout maxWidth scalingFactor cms alns
+            else do
+              let modelVis = drawSingleCMs modelDetail alignmentEntries modelLayout emissionLayout maxWidth scalingFactor cms alns
               mapM_ (\(a,b) -> printCM a svgsize b) (zip modelFileNames modelVis)
               mapM_ (\(structureFileName,(structureVis,_)) -> writeFile structureFileName structureVis) (zip structureFileNames structureVisInputs)
               mapM_ (\(structureFileName,(_,colorScheme)) -> writeFile (structureFileName ++"Color") colorScheme) (zip structureFileNames structureVisInputs)
