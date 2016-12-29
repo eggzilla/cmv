@@ -33,7 +33,8 @@ data Options = Options
     modelLayout :: String,
     emissionLayout :: String,
     alignmentEntries :: Int,
-    maxWidth :: Double,              
+    maxWidth :: Double,
+    scalingFactor :: Double,
     comparisonAlignment :: String,
     outputFormat :: String,
     outputDirectoryPath :: String,
@@ -48,8 +49,9 @@ options = Options
     modelDetail = "detailed" &= name "d" &= help "Set verbosity of drawn models: minimal, simple, detailed",
     modelLayout = "flat" &= name "l" &= help "Set layout of drawn models: flat, tree",
     emissionLayout = "box" &= name "e" &= help "Set layout of drawn models: score, probability, box (Default: box)",
-    alignmentEntries = (50 :: Int) &= name "n" &= help "Set cutoff for included stockholm alignment entries (Default: 50)",
-    maxWidth = (200 :: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)", 
+    alignmentEntries = (50 :: Int) &= name "n" &= help "Set cutoff for included stockholm alignment entries (Default: 50)", 
+    maxWidth = (200 :: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)",
+    scalingFactor = (2 :: Double) &= name "t" &= help "Set uniform scaling factor for image size (Default: 2)",
     comparisonAlignment = "model" &= name "a" &= help "Set layout of drawn models: model, comparison",
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
     outputDirectoryPath = "" &= name "p" &= help "Output directory path (Default: none)",
@@ -78,11 +80,11 @@ main = do
        let structureFileNames = map ((++ "." ++ secondaryStructureVisTool) . T.unpack . CM._name) cms
        if oneOutputFile
               then do
-                printCM (E.fromRight outputName) svgsize (drawCMComparisons modelDetail alignmentEntries modelLayout emissionLayout maxWidth cms alns comparisons)
+                printCM (E.fromRight outputName) svgsize (drawCMComparisons modelDetail alignmentEntries modelLayout emissionLayout maxWidth scalingFactor cms alns comparisons)
                 mapM_ (\(structureFileName,(structureVis,_)) -> writeFile structureFileName structureVis) (zip structureFileNames structureVisInputs)
                 mapM_ (\(structureFileName,(_,colorScheme)) -> writeFile (structureFileName ++"Color") colorScheme) (zip structureFileNames structureVisInputs)
               else do
-                let modelVis = drawSingleCMComparisons modelDetail alignmentEntries modelLayout emissionLayout maxWidth cms alns comparisons
+                let modelVis = drawSingleCMComparisons modelDetail alignmentEntries modelLayout emissionLayout maxWidth scalingFactor cms alns comparisons
                 mapM_ (\(a,b) -> printCM a svgsize b) (zip modelFileNames modelVis)
                 mapM_ (\(structureFileName,(structureVis,_)) -> writeFile (structureFileName) structureVis) (zip structureFileNames structureVisInputs)
                 mapM_ (\(structureFileName,(_,colorScheme)) -> writeFile (structureFileName ++"Color") colorScheme) (zip structureFileNames structureVisInputs)
