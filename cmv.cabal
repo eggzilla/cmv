@@ -19,11 +19,11 @@ extra-source-files:
 
 source-repository head
   type:     git
-  location: https://github.com/eggzilla/cmcv
+  location: https://github.com/eggzilla/cmv
 
 source-repository this
   type:     git
-  location: https://github.com/eggzilla/cmcv/tree/1.0.0
+  location: https://github.com/eggzilla/cmv/tree/1.0.0
   tag:      1.0.0
 
 library
