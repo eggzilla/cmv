@@ -1,4 +1,4 @@
-CMCV
+CMV
 ====
 
 Visualise RNA family models in different levels of detail and
