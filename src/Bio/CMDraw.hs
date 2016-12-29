@@ -67,11 +67,11 @@ import GHC.Float
 import Control.Monad.State
 import qualified Data.Char as C
 import Graphics.SVGFonts
-import Bio.CMFont
+import Bio.StockholmFont
 
 -- | Draw one or more CM guide trees and concatenate them vertically
-drawCMComparisons :: String -> Int -> String -> String -> Double -> [CM.CM] -> [(Maybe StockholmAlignment)] -> [CmcompareResult] -> QDiagram Cairo V2 Double Any
-drawCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cms alns comparisons = alignTL (vcat' with { _sep = 20 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput))
+drawCMComparisons :: String -> Int -> String -> String -> Double -> Double -> [CM.CM] -> [(Maybe StockholmAlignment)] -> [CmcompareResult] -> QDiagram Cairo V2 Double Any
+drawCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef cms alns comparisons = (alignTL (vcat' with { _sep = (20 *scalef)} (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef) zippedInput)))
   where zippedInput = zip4 cms alns comparisonNodeLabels (V.toList colorVector)
         modelNumber = length cms
         comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) cms
@@ -81,8 +81,8 @@ drawCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidt
 	-- comparisonsHighlightParameter = getComparisonsHighlightParameters cms comparisons
 
 -- | Draw one or more CM
-drawSingleCMComparisons :: String -> Int -> String -> String -> Double -> [CM.CM] -> [(Maybe StockholmAlignment)] -> [CmcompareResult] -> [QDiagram Cairo V2 Double Any]
-drawSingleCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cms alns comparisons = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput
+drawSingleCMComparisons :: String -> Int -> String -> String -> Double -> Double -> [CM.CM] -> [(Maybe StockholmAlignment)] -> [CmcompareResult] -> [QDiagram Cairo V2 Double Any]
+drawSingleCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef cms alns comparisons = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef) zippedInput
   where zippedInput = zip4 cms alns comparisonNodeLabels (V.toList colorVector)
         modelNumber = length cms
         comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) cms
@@ -92,22 +92,22 @@ drawSingleCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype m
 	comparisonsHighlightParameter = getComparisonsHighlightParameters cms comparisons
 
 -- | Draw one or more CM and concatenate them vertically
-drawCMs :: String -> Int -> String -> String -> Double -> [CM.CM] -> [(Maybe StockholmAlignment)] -> QDiagram Cairo V2 Double Any
-drawCMs modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cms alns = alignTL (vcat' with { _sep = 40 } (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput))
+drawCMs :: String -> Int -> String -> String -> Double -> Double -> [CM.CM] -> [(Maybe StockholmAlignment)] -> QDiagram Cairo V2 Double Any
+drawCMs modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef cms alns = (alignTL (vcat' with { _sep = 40 * scalef} (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef) zippedInput))) 
     where zippedInput = zip4 cms alns comparisonNodeLabels colorList
           comparisonNodeLabels = map getBlankComparisonNodeLabels cms
           colorList = replicate (length cms) white
 
 -- | Draw one or more CM
-drawSingleCMs :: String -> Int -> String -> String -> Double -> [CM.CM] -> [(Maybe StockholmAlignment)] -> [QDiagram Cairo V2 Double Any]
-drawSingleCMs modelDetail entryNumberCutoff modelLayout emissiontype maxWidth cms alns = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth) zippedInput
+drawSingleCMs :: String -> Int -> String -> String -> Double -> Double -> [CM.CM] -> [(Maybe StockholmAlignment)] -> [QDiagram Cairo V2 Double Any]
+drawSingleCMs modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef cms alns = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef) zippedInput
     where zippedInput = zip4 cms alns comparisonNodeLabels colorList
           comparisonNodeLabels = map getBlankComparisonNodeLabels cms
           colorList = replicate (length cms) white
 
 -- | Draw the guide Tree of a single CM
-drawCM :: String -> Int -> String -> String -> Double -> (CM.CM,Maybe StockholmAlignment,V.Vector (Int,V.Vector (Colour Double)), Colour Double) -> QDiagram Cairo V2 Double Any
-drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth (cm,aln,comparisonNodeLabels,modelColor)
+drawCM :: String -> Int -> String -> String -> Double -> Double -> (CM.CM,Maybe StockholmAlignment,V.Vector (Int,V.Vector (Colour Double)), Colour Double) -> QDiagram Cairo V2 Double Any
+drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef (cm,aln,comparisonNodeLabels,modelColor)
    | modelLayout == "tree" = modelTreeLayout
    | modelLayout == "flat" = modelFlatLayout
    | otherwise = modelTreeLayout
@@ -126,8 +126,8 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth (cm,aln,c
 	 --dummyNullModelBitscores = zip dummyLetters nullModelBitscores
 	 --nullModelBox = vcat (map (emissionEntry "score") dummyNullModelBitscores)
 	 modelName = CM._name cm
-	 modelFlatLayout = alignTL (vcat' with {_sep=5} [modelHeader,detailedNodeTransitions,alignmentDiagram])
-         modelTreeLayout = alignTL (vcat' with {_sep=5} [modelHeader,detailedNodeTreeTransitions,alignmentDiagram])
+	 modelFlatLayout = (alignTL (vcat' with {_sep=5} [modelHeader,detailedNodeTransitions,alignmentDiagram])) # scale scalef
+         modelTreeLayout = (alignTL (vcat' with {_sep=5} [modelHeader,detailedNodeTreeTransitions,alignmentDiagram])) #scale scalef
          detailedNodeTreeTransitions = applyAll (arrowList ++ labelList) detailedNodesTree
          firstInterval = fromJust (find (\(_,p,_,_,_) -> p == 0) (fst indexStructure))
 	 detailedNodesTree = drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes (fst indexStructure) firstInterval

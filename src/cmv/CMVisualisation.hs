@@ -33,6 +33,7 @@ data Options = Options
     emissionLayout :: String,
     alignmentEntries :: Int,
     maxWidth :: Double,
+    scalingFactor :: Double,
     outputFormat :: String,
     outputDirectoryPath :: String,
     secondaryStructureVisTool :: String,
@@ -47,6 +48,7 @@ options = Options
     emissionLayout = "box" &= name "e" &= help "Set layout of drawn models: score, probability, box (Default: box)",
     alignmentEntries = (50 :: Int) &= name "n" &= help "Set cutoff for included stockholm alignment entries (Default: 50)",
     maxWidth = (200 :: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)",
+    scalingFactor = (2.0 :: Double) &= name "t" &= help "Set uniform scaling factor for image size (Default: 2)",
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
     outputDirectoryPath = "" &= name "p" &= help "Output directory path (Default: none)",
     secondaryStructureVisTool = "" &= name "x" &= help "Select tool for secondary structure visualisation: forna, r2r (Default: none)",
@@ -73,11 +75,11 @@ main = do
 	  let structureFileNames = map ((++ "." ++ secondaryStructureVisTool) . T.unpack . CM._name) cms
 	  if oneOutputFile
             then do	      
-              printCM (fromRight outputName) svgsize (drawCMs modelDetail alignmentEntries modelLayout emissionLayout maxWidth cms alns)
+              printCM (fromRight outputName) svgsize (drawCMs modelDetail alignmentEntries modelLayout emissionLayout maxWidth scalingFactor cms alns) 
               mapM_ (\(structureFileName,(structureVis,_)) -> writeFile structureFileName structureVis) (zip structureFileNames structureVisInputs)
               mapM_ (\(structureFileName,(_,colorScheme)) -> writeFile (structureFileName ++"Color") colorScheme) (zip structureFileNames structureVisInputs)
 	    else do
-	      let modelVis = drawSingleCMs modelDetail alignmentEntries modelLayout emissionLayout maxWidth cms alns
+	      let modelVis = drawSingleCMs modelDetail alignmentEntries modelLayout emissionLayout maxWidth scalingFactor cms alns
               mapM_ (\(a,b) -> printCM a svgsize b) (zip modelFileNames modelVis)
               mapM_ (\(structureFileName,(structureVis,_)) -> writeFile structureFileName structureVis) (zip structureFileNames structureVisInputs)
               mapM_ (\(structureFileName,(_,colorScheme)) -> writeFile (structureFileName ++"Color") colorScheme) (zip structureFileNames structureVisInputs)
