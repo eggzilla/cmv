@@ -77,16 +77,16 @@ main = do
           if (isRight hmmCResultParsed)
             then do
               let rightHMMCResultsParsed = E.fromRight hmmCResultParsed
-              let outputName = diagramName "hmmcv" outputFormat
+              let outputName = outputDirectoryPath ++ "/" ++ "hmmcv." ++ outputFormat -- diagramName "hmmcv" outputFormat
               if oneOutputFile
                 then do
-                  printHMM (E.fromRight outputName) svgsize (drawHMMComparison modelDetail alignmentEntries emissionLayout maxWidth scalingFactor models alns rightHMMCResultsParsed)
+                  printHMM outputName svgsize (drawHMMComparison modelDetail alignmentEntries emissionLayout maxWidth scalingFactor models alns rightHMMCResultsParsed)
                 else do		  
                   let currentModelNames = map HM.name models
-		  let modelFileNames = map (++"."++outputFormat) currentModelNames
+		  let modelFilePaths = map (\m -> outputDirectoryPath ++ "/" ++ m ++"."++ outputFormat) currentModelNames
                   writeModelNameFile modelNameToggle outputDirectoryPath currentModelNames
-                  let modelVis = drawSingleHMMComparison  modelDetail alignmentEntries emissionLayout maxWidth scalingFactor models alns rightHMMCResultsParsed
-                  mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelFileNames modelVis)
+                  let modelVis = drawSingleHMMComparison modelDetail alignmentEntries emissionLayout maxWidth scalingFactor models alns rightHMMCResultsParsed
+                  mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelFilePaths modelVis)
             else print (E.fromLeft hmmCResultParsed)
         else print (E.fromLeft inputModels)
     else do

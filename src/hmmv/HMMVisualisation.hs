@@ -59,19 +59,20 @@ main = do
          then do
            alnInput <- SP.readExistingStockholm alignmentFile
            if (isLeft alnInput) then print (fromLeft alnInput) else return ()
-           let outputName = diagramName "hmmv" outputFormat
+	   -- cairo outputFormat check
+           let outputName = outputDirectoryPath ++ "/" ++ "hmmv." ++ outputFormat  -- (diagramName "hmmv" outputFormat)
            let currentModels = fromRight inputModels
            let modelNumber = length currentModels
            let alns = if (isRight alnInput) then (map (\a -> Just a) (fromRight alnInput)) else (replicate modelNumber Nothing)
            if oneOutputFile
               then do
-                printHMM (fromRight outputName) svgsize (drawHMMER3s modelDetail alignmentEntries maxWidth scalingFactor emissionLayout currentModels alns)
+                printHMM outputName svgsize (drawHMMER3s modelDetail alignmentEntries maxWidth scalingFactor emissionLayout currentModels alns)
               else do
                 let currentModelNames = map HM.name currentModels
-		let modelFileNames = map (++"."++outputFormat) currentModelNames
+		let modelFilePaths = map (\m -> outputDirectoryPath ++ "/" ++ m ++"."++outputFormat) currentModelNames
 		writeModelNameFile modelNameToggle outputDirectoryPath currentModelNames
                 let modelVis = drawSingleHMMER3s modelDetail alignmentEntries maxWidth scalingFactor emissionLayout currentModels alns
-                mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelFileNames modelVis)
+                mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelFilePaths modelVis)
          else 
            print (fromLeft inputModels)
      else do

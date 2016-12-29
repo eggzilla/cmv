@@ -75,24 +75,24 @@ main = do
        let comparisons = rights cmcResultParsed
        alnInput <- SP.readExistingStockholm alignmentFile
        if (isLeft alnInput) then print (E.fromLeft alnInput) else return ()
-       let outputName = diagramName "cmcv" outputFormat
+       let outputName = outputDirectoryPath ++ "/" ++ "cmcv." ++ outputFormat -- diagramName "cmcv" outputFormat
        let modelNumber = length cms
        let alns = if (isRight alnInput) then (map (\a -> Just a) (E.fromRight alnInput)) else (replicate modelNumber Nothing)
        let structureVisInputs = secondaryStructureVisualisation secondaryStructureVisTool maxWidth cms alns comparisons
        let currentModelNames = map (T.unpack . CM._name) cms
        writeModelNameFile modelNameToggle outputDirectoryPath currentModelNames
-       let modelFileNames = map (++ "." ++ outputFormat) currentModelNames
-       let structureFileNames = map (++ "." ++ secondaryStructureVisTool) currentModelNames
+       let modelFilePaths = map (\m -> outputDirectoryPath ++ "/" ++ m ++"."++outputFormat) currentModelNames
+       let structureFilePaths = map (\m -> outputDirectoryPath ++ "/" ++ m ++ "." ++ secondaryStructureVisTool) currentModelNames
        if oneOutputFile
               then do
-                printCM (E.fromRight outputName) svgsize (drawCMComparisons modelDetail alignmentEntries modelLayout emissionLayout maxWidth scalingFactor cms alns comparisons)
-                mapM_ (\(structureFileName,(structureVis,_)) -> writeFile structureFileName structureVis) (zip structureFileNames structureVisInputs)
-                mapM_ (\(structureFileName,(_,colorScheme)) -> writeFile (structureFileName ++"Color") colorScheme) (zip structureFileNames structureVisInputs)
+                printCM outputName svgsize (drawCMComparisons modelDetail alignmentEntries modelLayout emissionLayout maxWidth scalingFactor cms alns comparisons)
+                mapM_ (\(structureFilePath,(structureVis,_)) -> writeFile structureFilePath structureVis) (zip structureFilePaths structureVisInputs)
+                mapM_ (\(structureFilePath,(_,colorScheme)) -> writeFile (structureFilePath ++ "Color") colorScheme) (zip structureFilePaths structureVisInputs)
               else do
                 let modelVis = drawSingleCMComparisons modelDetail alignmentEntries modelLayout emissionLayout maxWidth scalingFactor cms alns comparisons
-                mapM_ (\(a,b) -> printCM a svgsize b) (zip modelFileNames modelVis)
-                mapM_ (\(structureFileName,(structureVis,_)) -> writeFile (structureFileName) structureVis) (zip structureFileNames structureVisInputs)
-                mapM_ (\(structureFileName,(_,colorScheme)) -> writeFile (structureFileName ++"Color") colorScheme) (zip structureFileNames structureVisInputs)
+                mapM_ (\(a,b) -> printCM a svgsize b) (zip modelFilePaths modelVis)
+                mapM_ (\(structureFilePath,(structureVis,_)) -> writeFile (structureFilePath) structureVis) (zip structureFilePaths structureVisInputs)
+                mapM_ (\(structureFilePath,(_,colorScheme)) -> writeFile (structureFilePath ++"Color") colorScheme) (zip structureFilePaths structureVisInputs)
      else do
        if modelFileExists then return () else putStrLn "Model file not found"
        if cmcFileExists then return () else putStrLn "Comparison file not found"
