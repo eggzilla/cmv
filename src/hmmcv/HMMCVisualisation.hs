@@ -74,19 +74,25 @@ main = do
           alnInput <- SP.readExistingStockholm alignmentFile
           if (isLeft alnInput) then print (E.fromLeft alnInput) else return ()
           let alns = if (isRight alnInput) then (map (\a -> Just a) (E.fromRight alnInput)) else (replicate modelNumber Nothing)
+	  let currentModelNames = map HM.name models
+          currentWD <- getCurrentDirectory
+          let dirPath = if null outputDirectoryPath then currentWD else outputDirectoryPath
           if (isRight hmmCResultParsed)
             then do
               let rightHMMCResultsParsed = E.fromRight hmmCResultParsed
-              let outputName = outputDirectoryPath ++ "/" ++ "hmmcv." ++ outputFormat -- diagramName "hmmcv" outputFormat
+              let outputName = diagramName "hmmcv" outputFormat
               if oneOutputFile
                 then do
-                  printHMM outputName svgsize (drawHMMComparison modelDetail alignmentEntries emissionLayout maxWidth scalingFactor models alns rightHMMCResultsParsed)
-                else do		  
-                  let currentModelNames = map HM.name models
-		  let modelFilePaths = map (\m -> outputDirectoryPath ++ "/" ++ m ++"."++ outputFormat) currentModelNames
+		  setCurrentDirectory dirPath
+                  printHMM (E.fromRight outputName) svgsize (drawHMMComparison modelDetail alignmentEntries emissionLayout maxWidth scalingFactor models alns rightHMMCResultsParsed)
+		  setCurrentDirectory currentWD
+                else do
+		  setCurrentDirectory dirPath
+		  let modelFileNames = map (\m -> m ++ "." ++ outputFormat) currentModelNames
                   writeModelNameFile modelNameToggle outputDirectoryPath currentModelNames
                   let modelVis = drawSingleHMMComparison modelDetail alignmentEntries emissionLayout maxWidth scalingFactor models alns rightHMMCResultsParsed
-                  mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelFilePaths modelVis)
+                  mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelFileNames modelVis)
+		  setCurrentDirectory currentWD
             else print (E.fromLeft hmmCResultParsed)
         else print (E.fromLeft inputModels)
     else do

@@ -59,20 +59,26 @@ main = do
          then do
            alnInput <- SP.readExistingStockholm alignmentFile
            if (isLeft alnInput) then print (fromLeft alnInput) else return ()
-	   -- cairo outputFormat check
-           let outputName = outputDirectoryPath ++ "/" ++ "hmmv." ++ outputFormat  -- (diagramName "hmmv" outputFormat)
+           -- cairo outputFormat check
+           let outputName = diagramName "hmmv" outputFormat
            let currentModels = fromRight inputModels
            let modelNumber = length currentModels
            let alns = if (isRight alnInput) then (map (\a -> Just a) (fromRight alnInput)) else (replicate modelNumber Nothing)
+	   let currentModelNames = map HM.name currentModels
+           currentWD <- getCurrentDirectory
+           let dirPath = if null outputDirectoryPath then currentWD else outputDirectoryPath
            if oneOutputFile
               then do
-                printHMM outputName svgsize (drawHMMER3s modelDetail alignmentEntries maxWidth scalingFactor emissionLayout currentModels alns)
+	        setCurrentDirectory dirPath
+                printHMM (fromRight outputName) svgsize (drawHMMER3s modelDetail alignmentEntries maxWidth scalingFactor emissionLayout currentModels alns)
+                setCurrentDirectory currentWD
               else do
-                let currentModelNames = map HM.name currentModels
-		let modelFilePaths = map (\m -> outputDirectoryPath ++ "/" ++ m ++"."++outputFormat) currentModelNames
-		writeModelNameFile modelNameToggle outputDirectoryPath currentModelNames
+	        setCurrentDirectory dirPath
+                let modelFileNames = map (\m -> m ++ "." ++ outputFormat) currentModelNames
+                writeModelNameFile modelNameToggle outputDirectoryPath currentModelNames
                 let modelVis = drawSingleHMMER3s modelDetail alignmentEntries maxWidth scalingFactor emissionLayout currentModels alns
-                mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelFilePaths modelVis)
+                mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelFileNames modelVis)
+                setCurrentDirectory currentWD 
          else 
            print (fromLeft inputModels)
      else do

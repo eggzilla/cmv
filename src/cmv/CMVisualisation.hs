@@ -68,24 +68,30 @@ main = do
         then do
           alnInput <- SP.readExistingStockholm alignmentFile
           if (isLeft alnInput) then print (fromLeft alnInput) else return ()
-          let outputName = outputDirectoryPath ++ "/" ++ "cmv." ++ outputFormat -- diagramName "cmv" outputFormat
+          let outputName = diagramName "cmv" outputFormat
           let modelNumber = length cms
           let alns = if (isRight alnInput) then (map (\a -> Just a) (fromRight alnInput)) else (replicate modelNumber Nothing)
           let structureVisInputs = secondaryStructureVisualisation secondaryStructureVisTool maxWidth cms alns []
 	  let currentModelNames = map (T.unpack . CM._name) cms
+	  currentWD <- getCurrentDirectory
+	  let dirPath = if null outputDirectoryPath then currentWD else outputDirectoryPath
           writeModelNameFile modelNameToggle outputDirectoryPath currentModelNames
-	  let modelFilePaths = map (\m -> outputDirectoryPath ++ "/" ++ m ++"."++ outputFormat) currentModelNames
+	  let modelFileNames = map (\m -> m ++ "." ++ outputFormat) currentModelNames
           let structureFilePaths = map (\m -> outputDirectoryPath ++ "/" ++ m ++ "." ++ secondaryStructureVisTool) currentModelNames
           if oneOutputFile
-            then do	      
-              printCM outputName svgsize (drawCMs modelDetail alignmentEntries modelLayout emissionLayout maxWidth scalingFactor cms alns) 
+            then do
+	      setCurrentDirectory dirPath
+              printCM (fromRight outputName) svgsize (drawCMs modelDetail alignmentEntries modelLayout emissionLayout maxWidth scalingFactor cms alns) 
               mapM_ (\(structureFilePath,(structureVis,_)) -> writeFile structureFilePath structureVis) (zip structureFilePaths structureVisInputs)
               mapM_ (\(structureFilePath,(_,colorScheme)) -> writeFile (structureFilePath ++"Color") colorScheme) (zip structureFilePaths structureVisInputs)
+              setCurrentDirectory currentWD
             else do
+              setCurrentDirectory dirPath
               let modelVis = drawSingleCMs modelDetail alignmentEntries modelLayout emissionLayout maxWidth scalingFactor cms alns
-              mapM_ (\(a,b) -> printCM a svgsize b) (zip modelFilePaths modelVis)
+              mapM_ (\(a,b) -> printCM a svgsize b) (zip modelFileNames modelVis)
               mapM_ (\(structureFileName,(structureVis,_)) -> writeFile structureFileName structureVis) (zip structureFilePaths structureVisInputs)
               mapM_ (\(structureFileName,(_,colorScheme)) -> writeFile (structureFileName ++"Color") colorScheme) (zip structureFilePaths structureVisInputs)
+              setCurrentDirectory currentWD
         else do
           print "Could not read covariance models from input file"
     else do
