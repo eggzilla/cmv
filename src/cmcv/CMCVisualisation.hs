@@ -23,6 +23,7 @@ import qualified Data.Text as T
 import qualified Bio.StockholmParser as SP
 import Paths_cmv (version)
 import Data.Version (showVersion)
+import Data.List (intercalate)
 
 options :: Options
 data Options = Options            
@@ -39,7 +40,8 @@ data Options = Options
     outputFormat :: String,
     outputDirectoryPath :: String,
     secondaryStructureVisTool :: String,
-    oneOutputFile :: Bool
+    oneOutputFile :: Bool,
+    modelNameToggle :: Bool
   } deriving (Show,Data,Typeable)
 
 options = Options
@@ -56,7 +58,8 @@ options = Options
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
     outputDirectoryPath = "" &= name "p" &= help "Output directory path (Default: none)",
     secondaryStructureVisTool = "" &= name "x" &= help "Select tool for secondary structure visualisation: forna, r2r (Default: none)",
-    oneOutputFile = False  &= name "o" &= help "Merge all output into one file (Default: False)"
+    oneOutputFile = False  &= name "o" &= help "Merge all output into one file (Default: False)",
+    modelNameToggle = False  &= name "b" &= help "Write all comma separted model names to modelNames file (Default: False)"
   } &= summary ("cmcv " ++ toolVersion) &= help "Florian Eggenhofer - 2013-2016" &= verbosity
 
 main :: IO ()
@@ -76,8 +79,10 @@ main = do
        let modelNumber = length cms
        let alns = if (isRight alnInput) then (map (\a -> Just a) (E.fromRight alnInput)) else (replicate modelNumber Nothing)
        let structureVisInputs = secondaryStructureVisualisation secondaryStructureVisTool maxWidth cms alns comparisons
-       let modelFileNames = map ((++"."++outputFormat) . T.unpack . CM._name) cms
-       let structureFileNames = map ((++ "." ++ secondaryStructureVisTool) . T.unpack . CM._name) cms
+       let currentModelNames = map (T.unpack . CM._name) cms
+       writeModelNameFile modelNameToggle outputDirectoryPath currentModelNames
+       let modelFileNames = map (++ "." ++ outputFormat) currentModelNames
+       let structureFileNames = map (++ "." ++ secondaryStructureVisTool) currentModelNames
        if oneOutputFile
               then do
                 printCM (E.fromRight outputName) svgsize (drawCMComparisons modelDetail alignmentEntries modelLayout emissionLayout maxWidth scalingFactor cms alns comparisons)
@@ -94,3 +99,11 @@ main = do
 
 toolVersion :: String
 toolVersion = showVersion version
+
+writeModelNameFile :: Bool -> String -> [String] -> IO ()
+writeModelNameFile toggle outputDirectoryPath modelNames = do
+  if toggle
+    then do
+       let modelNamesString = intercalate "," modelNames
+       writeFile (outputDirectoryPath ++ "modelNames") modelNamesString
+    else return ()
