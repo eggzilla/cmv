@@ -33,6 +33,8 @@ extra-deps:
 - diagrams-cairo-1.4
 - diagrams-core-1.4
 - optparse-applicative-0.13.0.0
+- BioHMM-1.0.2
+- StockholmAlignment-1.0.0
 # Override default flag values for local packages and extra-deps
 flags: {}
 

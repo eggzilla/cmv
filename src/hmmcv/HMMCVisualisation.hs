@@ -30,6 +30,7 @@ data Options = Options
     emissionLayout :: String,
     alignmentEntries :: Int,
     maxWidth :: Double,
+    scalingFactor :: Double,
     comparisonAlignment :: String,
     outputFormat :: String,
     outputDirectoryPath :: String,
@@ -45,6 +46,7 @@ options = Options
     emissionLayout = "box" &= name "e" &= help "Set layout of drawn models: score, probability, box (Default: box)",
     alignmentEntries = (50 :: Int) &= name "n" &= help "Set cutoff for included stockholm alignment entries (Default: 50)",
     maxWidth = (180:: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)",
+    scalingFactor = (2 :: Double) &= name "t" &= help "Set uniform scaling factor for image size (Default: 2)",
     comparisonAlignment = "model" &= name "a" &= help "Set layout of drawn models: model, comparison",
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
     outputDirectoryPath = "" &= name "p" &= help "Output directory path (Default: none)",
@@ -75,10 +77,10 @@ main = do
               let outputName = diagramName "hmmcv" outputFormat
               if oneOutputFile
                 then do
-                  printHMM (E.fromRight outputName) svgsize (drawHMMComparison modelDetail alignmentEntries emissionLayout maxWidth models alns rightHMMCResultsParsed)
+                  printHMM (E.fromRight outputName) svgsize (drawHMMComparison modelDetail alignmentEntries emissionLayout maxWidth scalingFactor models alns rightHMMCResultsParsed)
                 else do
                   let modelNames = map ((++"."++outputFormat) .  HM.name) models
-                  let modelVis = drawSingleHMMComparison  modelDetail alignmentEntries emissionLayout maxWidth models alns rightHMMCResultsParsed
+                  let modelVis = drawSingleHMMComparison  modelDetail alignmentEntries emissionLayout maxWidth scalingFactor models alns rightHMMCResultsParsed
                   mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelNames modelVis)
             else print (E.fromLeft hmmCResultParsed)
         else print (E.fromLeft inputModels)
