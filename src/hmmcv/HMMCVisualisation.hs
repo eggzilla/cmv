@@ -19,6 +19,7 @@ import System.Directory
 import qualified Bio.StockholmParser as SP
 import Paths_cmv (version)
 import Data.Version (showVersion)
+import Data.List (intercalate)
 
 options :: Options
 data Options = Options            
@@ -34,7 +35,8 @@ data Options = Options
     comparisonAlignment :: String,
     outputFormat :: String,
     outputDirectoryPath :: String,
-    oneOutputFile :: Bool
+    oneOutputFile :: Bool,
+    modelNameToggle :: Bool
   } deriving (Show,Data,Typeable)
 
 options = Options
@@ -50,7 +52,8 @@ options = Options
     comparisonAlignment = "model" &= name "a" &= help "Set layout of drawn models: model, comparison",
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
     outputDirectoryPath = "" &= name "p" &= help "Output directory path (Default: none)",
-    oneOutputFile = False  &= name "o" &= help "Merge all output into one file (Default: False)"
+    oneOutputFile = False  &= name "o" &= help "Merge all output into one file (Default: False)",
+    modelNameToggle = False  &= name "b" &= help "Write all comma separted model names to modelNames file (Default: False)"
   } &= summary ("hmmcv " ++ toolVersion) &= help "Florian Eggenhofer - 2013-2016" &= verbosity
 
 main :: IO ()
@@ -78,10 +81,12 @@ main = do
               if oneOutputFile
                 then do
                   printHMM (E.fromRight outputName) svgsize (drawHMMComparison modelDetail alignmentEntries emissionLayout maxWidth scalingFactor models alns rightHMMCResultsParsed)
-                else do
-                  let modelNames = map ((++"."++outputFormat) .  HM.name) models
+                else do		  
+                  let currentModelNames = map HM.name models
+		  let modelFileNames = map (++"."++outputFormat) currentModelNames
+                  writeModelNameFile modelNameToggle outputDirectoryPath currentModelNames
                   let modelVis = drawSingleHMMComparison  modelDetail alignmentEntries emissionLayout maxWidth scalingFactor models alns rightHMMCResultsParsed
-                  mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelNames modelVis)
+                  mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelFileNames modelVis)
             else print (E.fromLeft hmmCResultParsed)
         else print (E.fromLeft inputModels)
     else do
@@ -90,3 +95,11 @@ main = do
 
 toolVersion :: String
 toolVersion = showVersion version
+
+writeModelNameFile :: Bool -> String -> [String] -> IO ()
+writeModelNameFile toggle outputDirectoryPath modelNames = do
+  if toggle
+    then do
+       let modelNamesString = intercalate "," modelNames
+       writeFile (outputDirectoryPath ++ "modelNames") modelNamesString
+    else return ()

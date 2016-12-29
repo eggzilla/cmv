@@ -16,6 +16,7 @@ import System.Directory
 import qualified Bio.StockholmParser as SP
 import Paths_cmv (version)
 import Data.Version (showVersion)
+import Data.List (intercalate)
 
 options :: Options
 data Options = Options            
@@ -28,7 +29,8 @@ data Options = Options
     scalingFactor :: Double,
     outputFormat :: String,
     outputDirectoryPath :: String,
-    oneOutputFile :: Bool
+    oneOutputFile :: Bool,
+    modelNameToggle :: Bool
   } deriving (Show,Data,Typeable)
 
 
@@ -42,7 +44,8 @@ options = Options
     scalingFactor = (2 :: Double) &= name "t" &= help "Set uniform scaling factor for image size (Default: 2)",
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
     outputDirectoryPath = "" &= name "p" &= help "Output directory path (Default: none)",
-    oneOutputFile = False  &= name "o" &= help "Merge all output into one file (Default: False)"
+    oneOutputFile = False  &= name "o" &= help "Merge all output into one file (Default: False)",
+    modelNameToggle = False  &= name "b" &= help "Write all comma separted model names to modelNames file (Default: False)" 
   } &= summary ("hmmv " ++ toolVersion) &= help "Florian Eggenhofer - 2016" &= verbosity
 
 main :: IO ()
@@ -64,9 +67,11 @@ main = do
               then do
                 printHMM (fromRight outputName) svgsize (drawHMMER3s modelDetail alignmentEntries maxWidth scalingFactor emissionLayout currentModels alns)
               else do
-                let modelNames = map ((++"."++outputFormat) .  HM.name) currentModels
+                let currentModelNames = map HM.name currentModels
+		let modelFileNames = map (++"."++outputFormat) currentModelNames
+		writeModelNameFile modelNameToggle outputDirectoryPath currentModelNames
                 let modelVis = drawSingleHMMER3s modelDetail alignmentEntries maxWidth scalingFactor emissionLayout currentModels alns
-                mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelNames modelVis)
+                mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelFileNames modelVis)
          else 
            print (fromLeft inputModels)
      else do
@@ -74,3 +79,11 @@ main = do
 
 toolVersion :: String
 toolVersion = showVersion version
+
+writeModelNameFile :: Bool -> String -> [String] -> IO ()
+writeModelNameFile toggle outputDirectoryPath modelNames = do
+  if toggle
+    then do
+       let modelNamesString = intercalate "," modelNames
+       writeFile (outputDirectoryPath ++ "modelNames") modelNamesString
+    else return ()
