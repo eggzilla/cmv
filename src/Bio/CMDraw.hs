@@ -329,13 +329,14 @@ getIndexEnd nodes indices
 
 --TODO swap with SVGFont
 makeModelHeader :: String -> Colour Double -> QDiagram Cairo V2 Double Any
-makeModelHeader mName modelColor = strutX 2 ||| setTitel mName ||| strutX 1 ||| rect 4 4 # lw 0.1 # fc modelColor
+makeModelHeader mName modelColor = strutX 2 ||| setModelName mName ||| strutX 1 ||| rect 20 20 # lw 0.1 # fc modelColor # translate (r2 (negate 0.75, negate 0.75))
 --setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0.5 # lw 0
 --setStateLetter echar = alignedText 1 1 [echar] # fontSize 2.0 <> rect 2.0 2.0 # lw 0
 --setTitelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 4.0 <> rect 4.0 4.0 # lw 0
-setLabel t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 0.75 0.75) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
-setState t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 2 2) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
-setTitel t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 4 4) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
+setLabel t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 2 2) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
+setState t x y = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 3 3) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (x, y))
+setNode t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 7 7) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 2, 3))
+setModelName t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 20 20) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
 
 drawCMNodeTree :: String -> [Char] -> String -> Int -> CM.States -> V.Vector (Int, V.Vector (Colour Double))-> V.Vector CM.Node -> [(Int, Int, String, Int, Int)] -> (Int,Int,String,Int,Int) -> QDiagram Cairo V2 Double Any
 drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure (intervalId,parentId,intervalType,currentIndex,currentEnd) = nodeTree
@@ -428,24 +429,25 @@ drawCMNodeBox alphabetSymbols emissiontype boxlength currentStates comparisonNod
           splitStatesBox = hcat' with { _sep = 0.01 } (map (drawCMSplitStateBox nId alphabetSymbols emissiontype boxlength currentStates) stateIndices)
 	  insertStatesBox = hcat (map (drawCMInsertStateBox nId alphabetSymbols emissiontype boxlength currentStates) stateIndices)
           -- bif b
-          bifNode = ((idBox nId "BIF" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          bifNode = ((idBox nId "BIF" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 17)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- matP mp ml mr d il ir
-          matPNode = ((idBox nId "MATP" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          matPNode = ((idBox nId "MATP" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 17)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- matL ml d il
-          matLNode = ((idBox nId "MATL" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          matLNode = ((idBox nId "MATL" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 17)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- matR mr d ir
-          matRNode = ((idBox nId "MATR" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          matRNode = ((idBox nId "MATR" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 17)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- begL s
-          begLNode = ((idBox nId "BEGL" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          begLNode = ((idBox nId "BEGL" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 17)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- begR s il
-          begRNode = ((idBox nId "BEGR" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          begRNode = ((idBox nId "BEGR" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 17)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- root s il ir
-          rootNode = ((idBox nId "ROOT" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          rootNode = ((idBox nId "ROOT" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 17)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- end e
-          endNode = ((idBox nId "END" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 10)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          endNode = ((idBox nId "END" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 17)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
 
 idBox :: String -> String -> [(Colour Double)] -> QDiagram Cairo V2 Double Any
-idBox nId nType nodeLabels = (alignedText 0 0 nId # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nId))/2)), negate 1.25)) <>  wheel nodeLabels # lw 0.1 <> rect 1.5 3 # lw 0) ||| strutX 2.0 ||| text' nType
+--idBox nId nType nodeLabels = (alignedText 0 0 nId # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nId))/2)), negate 1.25)) <>  wheel nodeLabels # lw 0.1 <> rect 1.5 3 # lw 0) ||| strutX 2.0 ||| text' nType
+idBox nId nType nodeLabels = (setNode nId # translate (r2 ((negate ((fromIntegral (length nId))/2)), negate 3)) <>  wheel nodeLabels # lw 0.1 <> rect 3 3 # lw 0) ||| strutX 1.0 ||| setNode nType
 nodeBox :: QDiagram Cairo V2 Double Any
 nodeBox = rect 60 60 # lw 0.1
 
@@ -455,19 +457,19 @@ wheel colors = wheel' # rotate r
      wheel' = mconcat $ zipWith fc colors (iterateN n (rotate a) w)
      n = length colors
      a = 1 / (fromIntegral n) @@ turn
-     w = wedge 3 xDir a # lwG 0
+     w = wedge 4 xDir a # lwG 0
      r = (1/4 @@ turn)  ^-^  (1/(2*(fromIntegral n)) @@ turn)
 
 --drawCMSplitStateBox :: Int -> [Char] -> String -> Double -> CM.States -> PI.PInt () CM.StateIndex -> QDiagram Cairo V2 Double Any
 drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIndex
-  | stype == CM.StateType 0 = dState # translate (r2 (negate 3,negate 3)) <> statebox 8.0 20.0 stateIndx 
-  | stype == CM.StateType 1 = mpState # translate (r2 (negate 7,negate 3)) <> statebox 16.0 20.0 stateIndx
-  | stype == CM.StateType 2 = mlState # translate (r2 (negate 3,negate 3)) <> statebox 8.0 20.0 stateIndx
-  | stype == CM.StateType 3 = mrState # translate (r2 (negate 3,negate 3)) <> statebox 8.0 20.0 stateIndx
-  | stype == CM.StateType 6 = sState # translate (r2 (negate 3,negate 3)) <> statebox 8.0 20.0 stateIndx
-  | stype == CM.StateType 7 = eState # translate (r2 (negate 3,negate 3)) <> statebox 8.0 20.0 stateIndx
-  | stype == CM.StateType 8 = bState # translate (r2 (negate 3,negate 3)) <> statebox 8.0 20.0 stateIndx
-  | stype == CM.StateType 9 = elState # translate (r2 (negate 3,negate 3)) <> statebox 8.0 20.0 stateIndx
+  | stype == CM.StateType 0 = dState # translate (r2 (negate 3,negate 1)) <> statebox 8.0 20.0 stateIndx 
+  | stype == CM.StateType 1 = mpState # translate (r2 (negate 7,negate 1)) <> statebox 16.0 20.0 stateIndx
+  | stype == CM.StateType 2 = mlState # translate (r2 (negate 3,negate 1)) <> statebox 8.0 20.0 stateIndx
+  | stype == CM.StateType 3 = mrState # translate (r2 (negate 3,negate 1)) <> statebox 8.0 20.0 stateIndx
+  | stype == CM.StateType 6 = sState # translate (r2 (negate 3,negate 1)) <> statebox 8.0 20.0 stateIndx
+  | stype == CM.StateType 7 = eState # translate (r2 (negate 3,negate 1)) <> statebox 8.0 20.0 stateIndx
+  | stype == CM.StateType 8 = bState # translate (r2 (negate 3,negate 1)) <> statebox 8.0 20.0 stateIndx
+  | stype == CM.StateType 9 = elState # translate (r2 (negate 3,negate 1)) <> statebox 8.0 20.0 stateIndx
   | otherwise = mempty
     where stype = (CM._sStateType currentStates) PA.! sIndex
           stateIndx = show (PI.getPInt sIndex)
@@ -479,26 +481,34 @@ drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIn
 	  pairSymbolsAndEmissions = zip ["AA","AU","AG","AC","UU","UA","UG","UC","GG","GA","GU","GC","CC","CA","CU","CG"] (V.toList pairEmissionEntries)
 	  pairSymbolsAndEmissions1 = take 8 pairSymbolsAndEmissions
 	  pairSymbolsAndEmissions2 = drop 8 pairSymbolsAndEmissions
-          dState = textWithSize' ("D" ++ stateIndx) 1.5  # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          mpState = textWithSize' ("MP" ++ stateIndx) 1.5 # translate (r2 (7,0.5)) === strutY 1 === (vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions1) ||| strutX 0.5 ||| vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions2))
-          mlState = textWithSize' ("ML" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          mrState = textWithSize' ("MR" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          sState = textWithSize' ("S" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions)
-          eState = textWithSize' ("E" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          bState = textWithSize' ("B" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          elState = textWithSize' ("EL" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          -- dState = textWithSize' ("D" ++ stateIndx) 1.5  # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          -- mpState = textWithSize' ("MP" ++ stateIndx) 1.5 # translate (r2 (7,0.5)) === strutY 1 === (vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions1) ||| strutX 0.5 ||| vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions2))
+          -- mlState = textWithSize' ("ML" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          -- mrState = textWithSize' ("MR" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          -- sState = textWithSize' ("S" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions)
+          -- eState = textWithSize' ("E" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          -- bState = textWithSize' ("B" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          -- elState = textWithSize' ("EL" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions)
+          dState = setState ("D" ++ stateIndx) (negate 0.5) (negate 1)  === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          mpState = setState ("MP" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === (vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions1) ||| strutX 0.5 ||| vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions2))
+          mlState = setState ("ML" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          mrState = setState ("MR" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          sState = setState ("S" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions)
+          eState = setState ("E" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          bState = setState ("B" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          elState = setState ("EL" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
           
 drawCMInsertStateBox nid alphabetSymbols emissiontype boxlength currentStates sIndex
-  | stype == CM.StateType 4 = ((ilState # translate (r2 (negate 3,negate 2))) <> statebox 8.0 20.0 stateIndx) ||| strutX 38
-  | stype == CM.StateType 5 = (irState # translate (r2 (negate 3,negate 2))) <> inverseStatebox 8.0 20.0 stateIndx   
+  | stype == CM.StateType 4 = ((ilState # translate (r2 (negate 3,negate 1))) <> statebox 8.0 20.0 stateIndx) ||| strutX 38
+  | stype == CM.StateType 5 = (irState # translate (r2 (negate 3,negate 1))) <> inverseStatebox 8.0 20.0 stateIndx   
   | otherwise = mempty
     where stype = (CM._sStateType currentStates) PA.! sIndex
           stateIndx = show (PI.getPInt sIndex)
           singleEmissionBitscores = V.map ((score2Prob 1.0) . ((CM._sSingleEmissions currentStates) PA.!)) (makeSingleEmissionIndices sIndex)
           singleEmissionEntries = setEmissions emissiontype singleEmissionBitscores
           singleSymbolsAndEmissions = zip ["A","U","G","C"] (V.toList singleEmissionEntries)
-          ilState = textWithSize' ("IL" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          irState = textWithSize' ("IR" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          ilState = setState ("IL" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          irState = setState ("IR" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
 
 setEmissions :: String -> V.Vector Double -> V.Vector Double
 setEmissions emissiontype emissions
