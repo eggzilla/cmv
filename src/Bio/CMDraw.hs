@@ -335,7 +335,7 @@ makeModelHeader mName modelColor = strutX 2 ||| setModelName mName ||| strutX 1 
 --setTitelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 4.0 <> rect 4.0 4.0 # lw 0
 setLabel t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 2 2) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
 setState t x y = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 3 3) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (x, y))
-setNode t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 7 7) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 2, 3))
+setNode t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 7 7) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 2, 0))
 setModelName t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 20 20) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
 
 drawCMNodeTree :: String -> [Char] -> String -> Int -> CM.States -> V.Vector (Int, V.Vector (Colour Double))-> V.Vector CM.Node -> [(Int, Int, String, Int, Int)] -> (Int,Int,String,Int,Int) -> QDiagram Cairo V2 Double Any
@@ -429,25 +429,25 @@ drawCMNodeBox alphabetSymbols emissiontype boxlength currentStates comparisonNod
           splitStatesBox = hcat' with { _sep = 0.01 } (map (drawCMSplitStateBox nId alphabetSymbols emissiontype boxlength currentStates) stateIndices)
 	  insertStatesBox = hcat (map (drawCMInsertStateBox nId alphabetSymbols emissiontype boxlength currentStates) stateIndices)
           -- bif b
-          bifNode = ((idBox nId "BIF" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 17)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          bifNode = ((idBox nId "BIF" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- matP mp ml mr d il ir
-          matPNode = ((idBox nId "MATP" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 17)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          matPNode = ((idBox nId "MATP" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- matL ml d il
-          matLNode = ((idBox nId "MATL" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 17)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          matLNode = ((idBox nId "MATL" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- matR mr d ir
-          matRNode = ((idBox nId "MATR" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 17)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          matRNode = ((idBox nId "MATR" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- begL s
-          begLNode = ((idBox nId "BEGL" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 17)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          begLNode = ((idBox nId "BEGL" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- begR s il
-          begRNode = ((idBox nId "BEGR" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 17)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          begRNode = ((idBox nId "BEGR" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- root s il ir
-          rootNode = ((idBox nId "ROOT" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 17)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          rootNode = ((idBox nId "ROOT" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- end e
-          endNode = ((idBox nId "END" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (0, negate 17)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          endNode = ((idBox nId "END" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
 
 idBox :: String -> String -> [(Colour Double)] -> QDiagram Cairo V2 Double Any
 --idBox nId nType nodeLabels = (alignedText 0 0 nId # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nId))/2)), negate 1.25)) <>  wheel nodeLabels # lw 0.1 <> rect 1.5 3 # lw 0) ||| strutX 2.0 ||| text' nType
-idBox nId nType nodeLabels = (setNode nId # translate (r2 ((negate ((fromIntegral (length nId))/2)), negate 3)) <>  wheel nodeLabels # lw 0.1 <> rect 3 3 # lw 0) ||| strutX 1.0 ||| setNode nType
+idBox nId nType nodeLabels = (setNode nId # translate (r2 ((negate ((fromIntegral (length nId))/2)), 0)) <>  wheel nodeLabels # lw 0.1 <> rect 3 3 # lw 0) ||| strutX 1.0 ||| setNode nType
 nodeBox :: QDiagram Cairo V2 Double Any
 nodeBox = rect 60 60 # lw 0.1
 
