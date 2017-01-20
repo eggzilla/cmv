@@ -71,7 +71,7 @@ import Bio.StockholmFont
 
 -- | Draw one or more CM guide trees and concatenate them vertically
 drawCMComparisons :: String -> Int -> String -> String -> Double -> Double -> [CM.CM] -> [(Maybe StockholmAlignment)] -> [CmcompareResult] -> QDiagram Cairo V2 Double Any
-drawCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef cms alns comparisons = (alignTL (vcat' with { _sep = (20 *scalef)} (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef) zippedInput)))
+drawCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef cms alns comparisons = (alignTL (vcat' with { _sep = (20 *scalef)} (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef nameColorVector) zippedInput)))
   where zippedInput = zip4 cms alns comparisonNodeLabels (V.toList colorVector)
         modelNumber = length cms
         comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) cms
@@ -82,7 +82,7 @@ drawCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidt
 
 -- | Draw one or more CM
 drawSingleCMComparisons :: String -> Int -> String -> String -> Double -> Double -> [CM.CM] -> [(Maybe StockholmAlignment)] -> [CmcompareResult] -> [QDiagram Cairo V2 Double Any]
-drawSingleCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef cms alns comparisons = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef) zippedInput
+drawSingleCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef cms alns comparisons = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef nameColorVector) zippedInput
   where zippedInput = zip4 cms alns comparisonNodeLabels (V.toList colorVector)
         modelNumber = length cms
         comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) cms
@@ -93,21 +93,23 @@ drawSingleCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype m
 
 -- | Draw one or more CM and concatenate them vertically
 drawCMs :: String -> Int -> String -> String -> Double -> Double -> [CM.CM] -> [(Maybe StockholmAlignment)] -> QDiagram Cairo V2 Double Any
-drawCMs modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef cms alns = (alignTL (vcat' with { _sep = 40 * scalef} (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef) zippedInput))) 
+drawCMs modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef cms alns = (alignTL (vcat' with { _sep = 40 * scalef} (map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef emptyColorNameVector) zippedInput))) 
     where zippedInput = zip4 cms alns comparisonNodeLabels colorList
           comparisonNodeLabels = map getBlankComparisonNodeLabels cms
           colorList = replicate (length cms) white
+          emptyColorNameVector = V.empty
 
 -- | Draw one or more CM
 drawSingleCMs :: String -> Int -> String -> String -> Double -> Double -> [CM.CM] -> [(Maybe StockholmAlignment)] -> [QDiagram Cairo V2 Double Any]
-drawSingleCMs modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef cms alns = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef) zippedInput
+drawSingleCMs modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef cms alns = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef emptyColorNameVector) zippedInput
     where zippedInput = zip4 cms alns comparisonNodeLabels colorList
           comparisonNodeLabels = map getBlankComparisonNodeLabels cms
           colorList = replicate (length cms) white
+          emptyColorNameVector = V.empty
 
 -- | Draw the guide Tree of a single CM
-drawCM :: String -> Int -> String -> String -> Double -> Double -> (CM.CM,Maybe StockholmAlignment,V.Vector (Int,V.Vector (Colour Double)), Colour Double) -> QDiagram Cairo V2 Double Any
-drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef (cm,aln,comparisonNodeLabels,modelColor)
+drawCM :: String -> Int -> String -> String -> Double -> Double -> V.Vector (String,Colour Double) -> (CM.CM,Maybe StockholmAlignment,V.Vector (Int,V.Vector (Colour Double)), Colour Double) -> QDiagram Cairo V2 Double Any
+drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef nameColorVector (cm,aln,comparisonNodeLabels,modelColor)
    | modelLayout == "tree" = modelTreeLayout
    | modelLayout == "flat" = modelFlatLayout
    | otherwise = modelTreeLayout
@@ -131,7 +133,7 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef (c
          detailedNodeTreeTransitions = applyAll (arrowList ++ labelList) detailedNodesTree
          firstInterval = fromJust (find (\(_,p,_,_,_) -> p == 0) (fst indexStructure))
 	 detailedNodesTree = drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes (fst indexStructure) firstInterval
-	 modelHeader = makeModelHeader (T.unpack modelName) modelColor
+	 modelHeader = makeModelHeader (T.unpack modelName) modelColor nameColorVector
 	 nodeIndices = V.iterateN nodeNumber (1+) 0
 	 detailedNodeTransitions = applyAll (arrowList ++ labelList) detailedNodes
 	 detailedNodes = vcat (V.toList (V.map (drawCMNode modelDetail alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) nodeIndices))
@@ -260,7 +262,6 @@ buildRowIndexStructure :: Int -> V.Vector CM.Node -> [Int] -> State ([(Int,Int,S
 buildRowIndexStructure row nodes [] = do
   (a,b) <- get
   return (a,b)
-
 buildRowIndexStructure row nodes (currentIndex:xs) = do
   (interval,parentId) <- get
   let currentNode = nodes V.! currentIndex
@@ -285,7 +286,6 @@ buildTreeIndexStructure :: Int -> V.Vector CM.Node -> [Int] -> State ([(Int,Int,
 buildTreeIndexStructure row nodes [] = do
   (a,b) <- get
   return (a,b)
-                      
 buildTreeIndexStructure intervalId nodes (currentIndex:xs) = do
   (interval,parentId) <- get
   let currentNode = nodes V.! currentIndex
@@ -328,15 +328,31 @@ getIndexEnd nodes indices
          ntype = CM._ntype currentNode
 
 --TODO swap with SVGFont
-makeModelHeader :: String -> Colour Double -> QDiagram Cairo V2 Double Any
-makeModelHeader mName modelColor = strutX 2 ||| setModelName mName ||| strutX 1 ||| rect 20 20 # lw 0.1 # fc modelColor # translate (r2 (negate 0.75, negate 0.75))
---setLabelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 0.75 <> rect 0.4 0.5 # lw 0
---setStateLetter echar = alignedText 1 1 [echar] # fontSize 2.0 <> rect 2.0 2.0 # lw 0
---setTitelLetter echar = alignedText 0.5 0.5 [echar] # fontSize 4.0 <> rect 4.0 4.0 # lw 0
+makeModelHeader :: String -> Colour Double -> V.Vector (String,Colour Double) -> QDiagram Cairo V2 Double Any
+makeModelHeader mName modelColor nameColorVector = strutX 2 ||| setModelName mName ||| strutX 1 ||| rect 12 12 # lw 0.1 # fc modelColor # translate (r2 (negate 0, 5)) ||| strutX 30 ||| modelLegend
+  where modelLegend = makeModelLegend otherModelsNameColorVector
+        otherModelsNameColorVector = V.filter ((/=mName) . fst) nameColorVector
+
+makeModelLegend :: V.Vector (String,Colour Double) -> QDiagram Cairo V2 Double Any
+makeModelLegend nameColorVector
+  | V.null nameColorVector = mempty
+  | otherwise = (legendHead === legendBody) <> rect boxX boxY # lw 0.1 # translate (r2 (negate (boxX/2), negate (boxY/2))
+  where legendHead = setLegendLabel "Legend:"
+        legendBody = vcat (V.toList (V.map makeLegendEntry nameColorVector))
+        nameLengths = V.map (length . fst) nameColorVector
+        maxNameLength = fromIntegral $ V.maximum nameLengths
+        entryNumber = fromIntegral $ V.length nameColorVector
+        boxX = maxNameLength * 2 + 15
+        boxY = entryNumber * 10
+        
+        
+makeLegendEntry (mName,mColor) = setLegendLabel mName ||| strutX 0.5 ||| rect 4 4 # lw 0.1 # fc mColor # translate (r2 (negate 0, 2))
+
 setLabel t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 2 2) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
 setState t x y = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 3 3) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (x, y))
 setNodeNumber t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 5 5) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 2, 0))
 setNodeLabel t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 6 6) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 2, 0))
+setLegendLabel t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 10 10) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
 setModelName t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 20 20) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
 
 drawCMNodeTree :: String -> [Char] -> String -> Int -> CM.States -> V.Vector (Int, V.Vector (Colour Double))-> V.Vector CM.Node -> [(Int, Int, String, Int, Int)] -> (Int,Int,String,Int,Int) -> QDiagram Cairo V2 Double Any
@@ -461,7 +477,7 @@ wheel colors = wheel' # rotate r
      w = wedge 4 xDir a # lwG 0
      r = (1/4 @@ turn)  ^-^  (1/(2*(fromIntegral n)) @@ turn)
 
---drawCMSplitStateBox :: Int -> [Char] -> String -> Double -> CM.States -> PI.PInt () CM.StateIndex -> QDiagram Cairo V2 Double Any
+drawCMSplitStateBox :: String -> [Char] -> String -> Int -> CM.States -> PI.PInt () CM.StateIndex -> QDiagram Cairo V2 Double Any
 drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIndex
   | stype == CM.StateType 0 = dState # translate (r2 (negate 3,negate 1)) <> statebox 8.0 20.0 stateIndx 
   | stype == CM.StateType 1 = mpState # translate (r2 (negate 7,negate 1)) <> statebox 16.0 20.0 stateIndx
@@ -482,14 +498,6 @@ drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIn
 	  pairSymbolsAndEmissions = zip ["AA","AU","AG","AC","UU","UA","UG","UC","GG","GA","GU","GC","CC","CA","CU","CG"] (V.toList pairEmissionEntries)
 	  pairSymbolsAndEmissions1 = take 8 pairSymbolsAndEmissions
 	  pairSymbolsAndEmissions2 = drop 8 pairSymbolsAndEmissions
-          -- dState = textWithSize' ("D" ++ stateIndx) 1.5  # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          -- mpState = textWithSize' ("MP" ++ stateIndx) 1.5 # translate (r2 (7,0.5)) === strutY 1 === (vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions1) ||| strutX 0.5 ||| vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions2))
-          -- mlState = textWithSize' ("ML" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          -- mrState = textWithSize' ("MR" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          -- sState = textWithSize' ("S" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions)
-          -- eState = textWithSize' ("E" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          -- bState = textWithSize' ("B" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          -- elState = textWithSize' ("EL" ++ stateIndx) 1.5 # translate (r2 (3,0.5)) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions)
           dState = setState ("D" ++ stateIndx) (negate 0.5) (negate 1)  === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
           mpState = setState ("MP" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === (vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions1) ||| strutX 0.5 ||| vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions2))
           mlState = setState ("ML" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
@@ -498,7 +506,8 @@ drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIn
           eState = setState ("E" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
           bState = setState ("B" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
           elState = setState ("EL" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          
+
+drawCMInsertStateBox :: String -> [Char] -> String -> Int -> CM.States -> PI.PInt () CM.StateIndex -> QDiagram Cairo V2 Double Any
 drawCMInsertStateBox nid alphabetSymbols emissiontype boxlength currentStates sIndex
   | stype == CM.StateType 4 = ((ilState # translate (r2 (negate 3,negate 1))) <> statebox 8.0 20.0 stateIndx) ||| strutX 38
   | stype == CM.StateType 5 = (irState # translate (r2 (negate 3,negate 1))) <> inverseStatebox 8.0 20.0 stateIndx   
@@ -521,9 +530,10 @@ setEmissions emissiontype emissions
           propentries = V.map (exp . negate) emissions
           barentries = V.map (exp . negate) emissions
 
+wrap :: a -> [a]
 wrap x = [x]
          
---emissionEntry :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => String -> (String,Double) -> QDiagram b V2 n Any
+emissionEntry :: String -> (String,Double) -> QDiagram Cairo V2 Double Any
 emissionEntry emissiontype (symbol,emission) 
   | emissiontype == "probability" = textentry
   | emissiontype == "score" = textentry
@@ -532,15 +542,17 @@ emissionEntry emissiontype (symbol,emission)
     where textentry = alignedText 0 0.1 (symbol ++ " " ++ printf "%.3f" emission) # translate (r2 (negate 0.5,0)) <> (rect 3 2 # lw 0 ) 
           barentry = (alignedText 0 0.01 symbol  # translate (r2 (negate 0.5,negate 0.3)) <> (rect 3 2 # lw 0)) ||| bar emission
 
---bar :: forall b n. (Read n, RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => Double -> QDiagram b V2 n Any
+bar :: Double -> QDiagram Cairo V2 Double Any
 bar emission = (rect (4 * emission) 1 # lw 0 # fc black # translate (r2 (negate (2 - (4 * emission/2)),0)) <> rect 4 1 # lw 0.03 )
                     
 makeSingleEmissionIndices index = V.fromList [(PAI.Z  PAI.:. index PAI.:. A),(PAI.Z  PAI.:. index PAI.:. U),(PAI.Z  PAI.:. index PAI.:. G),(PAI.Z  PAI.:. index PAI.:. C)]
 
 makePairEmissionIndices index = V.fromList [(PAI.Z  PAI.:. index PAI.:. A PAI.:. A),(PAI.Z  PAI.:. index PAI.:. A PAI.:. U),(PAI.Z  PAI.:. index PAI.:. A PAI.:. G),(PAI.Z  PAI.:. index PAI.:. A PAI.:. C),(PAI.Z  PAI.:. index PAI.:. U PAI.:. U),(PAI.Z  PAI.:. index PAI.:. U PAI.:. A),(PAI.Z  PAI.:. index PAI.:. U PAI.:. G),(PAI.Z  PAI.:. index PAI.:. U PAI.:. C),(PAI.Z  PAI.:. index PAI.:. G PAI.:. G),(PAI.Z  PAI.:. index PAI.:. G PAI.:. A),(PAI.Z  PAI.:. index PAI.:. G PAI.:. U),(PAI.Z  PAI.:. index PAI.:. G PAI.:. C),(PAI.Z  PAI.:. index PAI.:. C PAI.:. C),(PAI.Z  PAI.:. index PAI.:. C PAI.:. A),(PAI.Z  PAI.:. index PAI.:. C PAI.:. U),(PAI.Z  PAI.:. index PAI.:. C PAI.:.G)]
 
+statebox :: Double -> Double -> String -> QDiagram Cairo V2 Double Any
 statebox x y si = ((rect 0.05 0.1 # lw 0 # named ("s" ++ si) ||| rect 1 0.1 # lw 0 # named ("a" ++ si) ||| rect 2 0.1 # lw 0 ||| rect 0.05 0.1 # lw 0 # named ("z" ++ si))) === rect x y  # lw 0.1 === rect 1 0 # lw 0 # named ("e" ++ si)
 
+inverseStatebox :: Double -> Double -> String -> QDiagram Cairo V2 Double Any
 inverseStatebox x y si = ((rect 0.05 0.1 # lw 0 # named ("s" ++ si) ||| rect 1 0.1 # lw 0 # named ("a" ++ si) ||| rect 2 0.1 # lw 0  ||| rect 0.05 0.1 # lw 0 # named ("z" ++ si))) === rect x y  # lw 0.1 === rect 1 0 # lw 0 # named ("e" ++ si)                  
                   
 --scaling
@@ -604,14 +616,14 @@ makeColorVector modelNumber = V.map (\(a,b,c) -> R.rgb a b c) modelRGBTupel
          stepSize = (765 :: Double) / (fromIntegral modelNumber)
 	 modelRGBTupel = V.map (makeRGBTupel stepSize) indexVector
 
---makeRGBTupel :: Double -> Int -> (Double,Double,Double)
+makeRGBTupel :: Double -> Int -> (Double,Double,Double)
 makeRGBTupel stepSize modelNumber = (a,b,c)
   where  totalSize = (fromIntegral modelNumber) * stepSize 
          a = (rgbBoundries (totalSize  - 255))/255
 	 b = (rgbBoundries (totalSize - a - 255))/255
 	 c = (rgbBoundries (totalSize - a - b))/255
 
---rgbBoundries :: Double -> Double	     
+rgbBoundries :: Double -> Double	     
 rgbBoundries rgbValue
   | rgbValue>210 = 210
   | rgbValue<50 = 50
