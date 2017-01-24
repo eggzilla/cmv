@@ -336,14 +336,14 @@ makeModelHeader mName modelColor nameColorVector = strutX 2 ||| setModelName mNa
 makeModelLegend :: V.Vector (String,Colour Double) -> QDiagram Cairo V2 Double Any
 makeModelLegend nameColorVector
   | V.null nameColorVector = mempty
-  | otherwise = (legendHead === legendBody) <> rect boxX boxY # lw 0.1 # translate (r2 (negate (boxX/2), negate (boxY/2))
+  | otherwise = (legendHead === legendBody) <> rect boxX boxY # lw 0.1 # translate (r2 ((boxX/2), negate (boxY/2)))
   where legendHead = setLegendLabel "Legend:"
         legendBody = vcat (V.toList (V.map makeLegendEntry nameColorVector))
         nameLengths = V.map (length . fst) nameColorVector
         maxNameLength = fromIntegral $ V.maximum nameLengths
         entryNumber = fromIntegral $ V.length nameColorVector
-        boxX = maxNameLength * 2 + 15
-        boxY = entryNumber * 10
+        boxX = maxNameLength * 5 + 5
+        boxY = (entryNumber - 1) * 15 
         
         
 makeLegendEntry (mName,mColor) = setLegendLabel mName ||| strutX 0.5 ||| rect 4 4 # lw 0.1 # fc mColor # translate (r2 (negate 0, 2))
