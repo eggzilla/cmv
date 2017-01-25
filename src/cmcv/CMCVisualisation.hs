@@ -87,11 +87,11 @@ main = do
        let structureFilePaths = map (\m -> outputDirectoryPath ++ "/" ++ m ++ "." ++ secondaryStructureVisTool) currentModelNames
        if oneOutputFile
               then do
-	        setCurrentDirectory dirPath
+                setCurrentDirectory dirPath
                 printCM (E.fromRight outputName) svgsize (drawCMComparisons modelDetail alignmentEntries modelLayout emissionLayout maxWidth scalingFactor cms alns comparisons)
                 mapM_ (\(structureFilePath,(structureVis,_)) -> writeFile structureFilePath structureVis) (zip structureFilePaths structureVisInputs)
                 mapM_ (\(structureFilePath,(_,colorScheme)) -> writeFile (structureFilePath ++ "Color") colorScheme) (zip structureFilePaths structureVisInputs)
-		setCurrentDirectory currentWD
+                setCurrentDirectory currentWD
               else do
 	        setCurrentDirectory dirPath
                 let modelVis = drawSingleCMComparisons modelDetail alignmentEntries modelLayout emissionLayout maxWidth scalingFactor cms alns comparisons

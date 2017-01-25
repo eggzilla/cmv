@@ -72,15 +72,15 @@ main = do
           let modelNumber = length cms
           let alns = if (isRight alnInput) then (map (\a -> Just a) (fromRight alnInput)) else (replicate modelNumber Nothing)
           let structureVisInputs = secondaryStructureVisualisation secondaryStructureVisTool maxWidth cms alns []
-	  let currentModelNames = map (T.unpack . CM._name) cms
-	  currentWD <- getCurrentDirectory
-	  let dirPath = if null outputDirectoryPath then currentWD else outputDirectoryPath
+          let currentModelNames = map (T.unpack . CM._name) cms
+          currentWD <- getCurrentDirectory
+          let dirPath = if null outputDirectoryPath then currentWD else outputDirectoryPath
           writeModelNameFile modelNameToggle outputDirectoryPath currentModelNames
-	  let modelFileNames = map (\m -> m ++ "." ++ outputFormat) currentModelNames
+          let modelFileNames = map (\m -> m ++ "." ++ outputFormat) currentModelNames
           let structureFilePaths = map (\m -> outputDirectoryPath ++ "/" ++ m ++ "." ++ secondaryStructureVisTool) currentModelNames
           if oneOutputFile
             then do
-	      setCurrentDirectory dirPath
+              setCurrentDirectory dirPath
               printCM (fromRight outputName) svgsize (drawCMs modelDetail alignmentEntries modelLayout emissionLayout maxWidth scalingFactor cms alns) 
               mapM_ (\(structureFilePath,(structureVis,_)) -> writeFile structureFilePath structureVis) (zip structureFilePaths structureVisInputs)
               mapM_ (\(structureFilePath,(_,colorScheme)) -> writeFile (structureFilePath ++"Color") colorScheme) (zip structureFilePaths structureVisInputs)
