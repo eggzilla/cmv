@@ -55,7 +55,7 @@ import Diagrams.Backend.Cairo
 import qualified Data.Vector.Unboxed as VU
 import qualified Data.PrimitiveArray.Index.PhantomInt as PI
 import qualified Data.PrimitiveArray.Class as PA
-import Biobase.SElab.Bitscore
+import Biobase.SElab.Bitscore (Bitscore(..), score2Prob)
 import Biobase.Primary.Nuc.RNA
 import qualified Data.PrimitiveArray.Index.Class as PAI
 import Text.Printf
@@ -345,9 +345,9 @@ makeModelLegend nameColorVector
         boxX = maxNameLength * 6 
         boxY = (entryNumber) * 15 
         
-        
 makeLegendEntry (mName,mColor) = setLegendLabel mName ||| strutX 0.5 ||| rect 4 4 # lw 0.1 # fc mColor # translate (r2 (negate 0, 2))
 
+setEmissionText t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 1 1) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.5, negate 0.5))
 setLabel t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 2 2) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
 setState t x y = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 3 3) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (x, y))
 setNodeNumber t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 5 5) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 2, 0))
@@ -490,22 +490,22 @@ drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIn
   | otherwise = mempty
     where stype = (CM._sStateType currentStates) PA.! sIndex
           stateIndx = show (PI.getPInt sIndex)
-          singleEmissionBitscores = V.map ((score2Prob 1) . ((CM._sSingleEmissions currentStates) PA.!)) (makeSingleEmissionIndices sIndex)
-          singleEmissionEntries = setEmissions emissiontype singleEmissionBitscores
+          singleEmissionBitscores = V.map ((CM._sSingleEmissions currentStates) PA.!) (makeSingleEmissionIndices sIndex)
+          singleEmissionEntries = setEmissions emissiontype 4 singleEmissionBitscores
           singleSymbolsAndEmissions = zip ["A","U","G","C"] (V.toList singleEmissionEntries)
-	  pairEmissionBitscores = V.map ((score2Prob 1). ((CM._sPairEmissions currentStates) PA.!)) (makePairEmissionIndices sIndex)
-          pairEmissionEntries = setEmissions emissiontype pairEmissionBitscores
+	  pairEmissionBitscores = V.map  (((CM._sPairEmissions currentStates) PA.!)) (makePairEmissionIndices sIndex)
+          pairEmissionEntries = setEmissions emissiontype 16 pairEmissionBitscores
 	  pairSymbolsAndEmissions = zip ["AA","AU","AG","AC","UU","UA","UG","UC","GG","GA","GU","GC","CC","CA","CU","CG"] (V.toList pairEmissionEntries)
 	  pairSymbolsAndEmissions1 = take 8 pairSymbolsAndEmissions
 	  pairSymbolsAndEmissions2 = drop 8 pairSymbolsAndEmissions
-          dState = setState ("D" ++ stateIndx) (negate 0.5) (negate 1)  === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          dState = setState ("D" ++ stateIndx) (negate 0.5) (negate 1)  === strutY 1 --- === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
           mpState = setState ("MP" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === (vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions1) ||| strutX 0.5 ||| vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions2))
           mlState = setState ("ML" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
           mrState = setState ("MR" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          sState = setState ("S" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions)
-          eState = setState ("E" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          bState = setState ("B" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          elState = setState ("EL" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          sState = setState ("S" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 -- === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions)
+          eState = setState ("E" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 -- === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          bState = setState ("B" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 -- === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          elState = setState ("EL" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 -- === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
 
 drawCMInsertStateBox :: String -> [Char] -> String -> Int -> CM.States -> PI.PInt () CM.StateIndex -> QDiagram Cairo V2 Double Any
 drawCMInsertStateBox nid alphabetSymbols emissiontype boxlength currentStates sIndex
@@ -514,21 +514,22 @@ drawCMInsertStateBox nid alphabetSymbols emissiontype boxlength currentStates sI
   | otherwise = mempty
     where stype = (CM._sStateType currentStates) PA.! sIndex
           stateIndx = show (PI.getPInt sIndex)
-          singleEmissionBitscores = V.map ((score2Prob 1.0) . ((CM._sSingleEmissions currentStates) PA.!)) (makeSingleEmissionIndices sIndex)
-          singleEmissionEntries = setEmissions emissiontype singleEmissionBitscores
+          singleEmissionBitscores = V.map (((CM._sSingleEmissions currentStates) PA.!)) (makeSingleEmissionIndices sIndex)
+          singleEmissionEntries = setEmissions emissiontype 4 singleEmissionBitscores
           singleSymbolsAndEmissions = zip ["A","U","G","C"] (V.toList singleEmissionEntries)
           ilState = setState ("IL" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
           irState = setState ("IR" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
 
-setEmissions :: String -> V.Vector Double -> V.Vector Double
-setEmissions emissiontype emissions
+setEmissions :: String -> Double -> V.Vector Bitscore -> V.Vector Double
+setEmissions emissiontype normalizationFactor emissions
   | emissiontype == "score" = scoreentries
   | emissiontype == "probability" = propentries
   | emissiontype == "bar" = barentries
   | otherwise = barentries
-    where scoreentries = emissions      
-          propentries = V.map (exp . negate) emissions
-          barentries = V.map (exp . negate) emissions
+    where scoreentries = V.map bitScore2Double emissions      
+          propentries = V.map ((/normalizationFactor) . (score2Prob 1)) emissions
+          barentries = V.map ((/normalizationFactor) . (score2Prob 1)) emissions
+
 
 wrap :: a -> [a]
 wrap x = [x]
@@ -539,8 +540,8 @@ emissionEntry emissiontype (symbol,emission)
   | emissiontype == "score" = textentry
   | emissiontype == "bar" = barentry
   | otherwise = barentry
-    where textentry = alignedText 0 0.1 (symbol ++ " " ++ printf "%.3f" emission) # translate (r2 (negate 0.5,0)) <> (rect 3 2 # lw 0 ) 
-          barentry = (alignedText 0 0.01 symbol  # translate (r2 (negate 0.5,negate 0.3)) <> (rect 3 2 # lw 0)) ||| bar emission
+    where textentry = setLabel (symbol ++ " " ++ printf "%.3f" emission)  
+          barentry = setLabel symbol  ||| bar emission
 
 bar :: Double -> QDiagram Cairo V2 Double Any
 bar emission = (rect (4 * emission) 1 # lw 0 # fc black # translate (r2 (negate (2 - (4 * emission/2)),0)) <> rect 4 1 # lw 0.03 )
@@ -784,3 +785,5 @@ paralellogram a b c d = pathFromTrailAt (closeTrail (trailFromVertices [a,b,d,c,
 roundPos :: (RealFrac a) => Int -> a -> a
 roundPos positions number  = (fromInteger $ round $ number * (10^positions)) / (10.0^^positions)
 
+bitScore2Double :: Bitscore -> Double
+bitScore2Double (Bitscore x) = x
