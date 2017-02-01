@@ -348,7 +348,8 @@ makeModelLegend nameColorVector
 makeLegendEntry (mName,mColor) = setLegendLabel mName ||| strutX 0.5 ||| rect 4 4 # lw 0.1 # fc mColor # translate (r2 (negate 0, 2))
 
 setEmissionText t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 1 1) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.5, negate 0.5))
-setLabel t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 2 2) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
+setLabel t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 2 2) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.25)) 
+setTransition t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 2 2) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))   # rotate (1/4 @@ turn)
 setState t x y = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 3 3) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (x, y))
 setNodeNumber t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 5 5) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 2, 0))
 setNodeLabel t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 6 6) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 2, 0))
@@ -541,7 +542,7 @@ emissionEntry emissiontype (symbol,emission)
   | emissiontype == "bar" = barentry
   | otherwise = barentry
     where textentry = setLabel (symbol ++ " " ++ printf "%.3f" emission)  
-          barentry = setLabel symbol  ||| bar emission
+          barentry = setLabel symbol  ||| strutX 0.2 ||| bar emission
 
 bar :: Double -> QDiagram Cairo V2 Double Any
 bar emission = (rect (4 * emission) 1 # lw 0 # fc black # translate (r2 (negate (2 - (4 * emission/2)),0)) <> rect 4 1 # lw 0.03 )
@@ -660,16 +661,16 @@ makeLabel (n1,n2,weight,(xOffset,yOffset))=
     let v = location b2 .-. location b1
         midpoint = location b1 .+^ (v ^/ 2)
     in
-      Diagrams.Prelude.atop (position [((midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + yOffset)), (setLabel (show (roundPos 2 weight))))])
+      Diagrams.Prelude.atop (position [((midpoint # translateX (negate 0.25 + xOffset) # translateY (0 - 10)), (setTransition ((show (roundPos 2 weight)))))]) --n1 ++ "," ++ n2 ++"," ++
 
 makeSelfLabel (n1,n2,weight,(xOffset,yOffset))
   | weight == 0 = mempty
   | otherwise = withName ("e" ++ n1) $ \b1 ->
                 withName ("e" ++ n2) $ \b2 ->
                   let v = location b2 .-. location b1
-                      midpoint = location b1 .+^ (v ^/ 2)
+                      midpoint = location b1 -- .+^ (v ^/ 2)
                   in
-                    Diagrams.Prelude.atop (position [(midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + yOffset), setLabel (show (roundPos 2 weight)))])
+                    Diagrams.Prelude.atop (position [(midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + 22), setTransition (show (roundPos 2 weight)))])
 
 -------- Simple/ Flat functions
 --getNodeInfo :: (CM.Node, (CM.NodeType, [CM.State])) -> (String,String)
