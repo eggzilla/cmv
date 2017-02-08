@@ -75,10 +75,12 @@ main = do
           let dirPath = if null outputDirectoryPath then currentWD else outputDirectoryPath
           writeModelNameFile modelNameToggle outputDirectoryPath currentModelNames
           let modelFileNames = map (\m -> m ++ "." ++ outputFormat) currentModelNames
+          let alignmentFileNames = map (\m -> m ++ ".aln" ++ "." ++ outputFormat) currentModelNames
           let structureFilePaths = map (\m -> outputDirectoryPath ++ "/" ++ m ++ "." ++ secondaryStructureVisTool) currentModelNames
           setCurrentDirectory dirPath
           let (modelVis,alignmentVis)= unzip $ drawSingleCMs modelDetail alignmentEntries modelLayout emissionLayout maxWidth scalingFactor cms alns
           mapM_ (\(a,b) -> printCM a svgsize b) (zip modelFileNames modelVis)
+          mapM_ (\(a,b) -> printCM a svgsize b) (zip alignmentFileNames alignmentVis)
           mapM_ (\(structureFileName,(structureVis,_)) -> writeFile structureFileName structureVis) (zip structureFilePaths structureVisInputs)
           mapM_ (\(structureFileName,(_,colorScheme)) -> writeFile (structureFileName ++"Color") colorScheme) (zip structureFilePaths structureVisInputs)
           setCurrentDirectory currentWD
