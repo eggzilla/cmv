@@ -40,7 +40,6 @@ data Options = Options
     outputFormat :: String,
     outputDirectoryPath :: String,
     secondaryStructureVisTool :: String,
-    oneOutputFile :: Bool,
     modelNameToggle :: Bool
   } deriving (Show,Data,Typeable)
 
