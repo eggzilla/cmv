@@ -58,7 +58,6 @@ options = Options
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
     outputDirectoryPath = "" &= name "p" &= help "Output directory path (Default: none)",
     secondaryStructureVisTool = "" &= name "x" &= help "Select tool for secondary structure visualisation: forna, r2r (Default: none)",
-    oneOutputFile = False  &= name "o" &= help "Merge all output into one file (Default: False)",
     modelNameToggle = False  &= name "b" &= help "Write all comma separted model names to modelNames file (Default: False)"
   } &= summary ("cmcv " ++ toolVersion) &= help "Florian Eggenhofer - 2013-2016" &= verbosity
 
@@ -85,20 +84,12 @@ main = do
        writeModelNameFile modelNameToggle outputDirectoryPath currentModelNames
        let modelFileNames = map (\m -> m ++ "." ++ outputFormat) currentModelNames
        let structureFilePaths = map (\m -> outputDirectoryPath ++ "/" ++ m ++ "." ++ secondaryStructureVisTool) currentModelNames
-       if oneOutputFile
-              then do
-                setCurrentDirectory dirPath
-                printCM (E.fromRight outputName) svgsize (drawCMComparisons modelDetail alignmentEntries modelLayout emissionLayout maxWidth scalingFactor cms alns comparisons)
-                mapM_ (\(structureFilePath,(structureVis,_)) -> writeFile structureFilePath structureVis) (zip structureFilePaths structureVisInputs)
-                mapM_ (\(structureFilePath,(_,colorScheme)) -> writeFile (structureFilePath ++ "Color") colorScheme) (zip structureFilePaths structureVisInputs)
-                setCurrentDirectory currentWD
-              else do
-	        setCurrentDirectory dirPath
-                let modelVis = drawSingleCMComparisons modelDetail alignmentEntries modelLayout emissionLayout maxWidth scalingFactor cms alns comparisons
-                mapM_ (\(a,b) -> printCM a svgsize b) (zip modelFileNames modelVis)
-                mapM_ (\(structureFilePath,(structureVis,_)) -> writeFile (structureFilePath) structureVis) (zip structureFilePaths structureVisInputs)
-                mapM_ (\(structureFilePath,(_,colorScheme)) -> writeFile (structureFilePath ++"Color") colorScheme) (zip structureFilePaths structureVisInputs)
-                setCurrentDirectory currentWD
+       setCurrentDirectory dirPath
+       let (modelVis,alignmentVis) = unzip $ drawSingleCMComparisons modelDetail alignmentEntries modelLayout emissionLayout maxWidth scalingFactor cms alns comparisons
+       mapM_ (\(a,b) -> printCM a svgsize b) (zip modelFileNames modelVis)
+       mapM_ (\(structureFilePath,(structureVis,_)) -> writeFile (structureFilePath) structureVis) (zip structureFilePaths structureVisInputs)
+       mapM_ (\(structureFilePath,(_,colorScheme)) -> writeFile (structureFilePath ++"Color") colorScheme) (zip structureFilePaths structureVisInputs)
+       setCurrentDirectory currentWD
      else do
        if modelFileExists then return () else putStrLn "Model file not found"
        if cmcFileExists then return () else putStrLn "Comparison file not found"
