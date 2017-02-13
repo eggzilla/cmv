@@ -29,7 +29,6 @@ data Options = Options
     scalingFactor :: Double,
     outputFormat :: String,
     outputDirectoryPath :: String,
-    oneOutputFile :: Bool,
     modelNameToggle :: Bool
   } deriving (Show,Data,Typeable)
 
@@ -44,7 +43,6 @@ options = Options
     scalingFactor = (2 :: Double) &= name "t" &= help "Set uniform scaling factor for image size (Default: 2)",
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
     outputDirectoryPath = "" &= name "p" &= help "Output directory path (Default: none)",
-    oneOutputFile = False  &= name "o" &= help "Merge all output into one file (Default: False)",
     modelNameToggle = False  &= name "b" &= help "Write all comma separted model names to modelNames file (Default: False)" 
   } &= summary ("hmmv " ++ toolVersion) &= help "Florian Eggenhofer - 2016" &= verbosity
 
@@ -67,18 +65,14 @@ main = do
 	   let currentModelNames = map HM.name currentModels
            currentWD <- getCurrentDirectory
            let dirPath = if null outputDirectoryPath then currentWD else outputDirectoryPath
-           if oneOutputFile
-              then do
-	        setCurrentDirectory dirPath
-                printHMM (fromRight outputName) svgsize (drawHMMER3s modelDetail alignmentEntries maxWidth scalingFactor emissionLayout currentModels alns)
-                setCurrentDirectory currentWD
-              else do
-	        setCurrentDirectory dirPath
-                let modelFileNames = map (\m -> m ++ "." ++ outputFormat) currentModelNames
-                writeModelNameFile modelNameToggle outputDirectoryPath currentModelNames
-                let modelVis = drawSingleHMMER3s modelDetail alignmentEntries maxWidth scalingFactor emissionLayout currentModels alns
-                mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelFileNames modelVis)
-                setCurrentDirectory currentWD 
+	   setCurrentDirectory dirPath
+           let modelFileNames = map (\m -> m ++ "." ++ outputFormat) currentModelNames
+           let alignmentFileNames = map (\m -> m ++ ".aln" ++ "." ++ outputFormat) currentModelNames
+           writeModelNameFile modelNameToggle outputDirectoryPath currentModelNames
+           let (modelVis,alignmentVis) = unzip $ drawSingleHMMER3s modelDetail alignmentEntries maxWidth scalingFactor emissionLayout currentModels alns
+           mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelFileNames modelVis)
+           mapM_ (\(a,b) -> printHMM a svgsize b) (zip alignmentFileNames alignmentVis)
+           setCurrentDirectory currentWD 
          else 
            print (fromLeft inputModels)
      else do

@@ -35,7 +35,6 @@ data Options = Options
     comparisonAlignment :: String,
     outputFormat :: String,
     outputDirectoryPath :: String,
-    oneOutputFile :: Bool,
     modelNameToggle :: Bool
   } deriving (Show,Data,Typeable)
 
@@ -52,7 +51,6 @@ options = Options
     comparisonAlignment = "model" &= name "a" &= help "Set layout of drawn models: model, comparison",
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
     outputDirectoryPath = "" &= name "p" &= help "Output directory path (Default: none)",
-    oneOutputFile = False  &= name "o" &= help "Merge all output into one file (Default: False)",
     modelNameToggle = False  &= name "b" &= help "Write all comma separted model names to modelNames file (Default: False)"
   } &= summary ("hmmcv " ++ toolVersion) &= help "Florian Eggenhofer - 2013-2016" &= verbosity
 
@@ -81,18 +79,14 @@ main = do
             then do
               let rightHMMCResultsParsed = E.fromRight hmmCResultParsed
               let outputName = diagramName "hmmcv" outputFormat
-              if oneOutputFile
-                then do
-		  setCurrentDirectory dirPath
-                  printHMM (E.fromRight outputName) svgsize (drawHMMComparison modelDetail alignmentEntries emissionLayout maxWidth scalingFactor models alns rightHMMCResultsParsed)
-		  setCurrentDirectory currentWD
-                else do
-		  setCurrentDirectory dirPath
-		  let modelFileNames = map (\m -> m ++ "." ++ outputFormat) currentModelNames
-                  writeModelNameFile modelNameToggle outputDirectoryPath currentModelNames
-                  let modelVis = drawSingleHMMComparison modelDetail alignmentEntries emissionLayout maxWidth scalingFactor models alns rightHMMCResultsParsed
-                  mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelFileNames modelVis)
-		  setCurrentDirectory currentWD
+	      setCurrentDirectory dirPath
+              let modelFileNames = map (\m -> m ++ "." ++ outputFormat) currentModelNames
+              let alignmentFileNames = map (\m -> m ++ ".aln" ++ "." ++ outputFormat) currentModelNames
+              writeModelNameFile modelNameToggle outputDirectoryPath currentModelNames
+              let (modelVis,alignmentVis) = unzip $ drawSingleHMMComparison modelDetail alignmentEntries emissionLayout maxWidth scalingFactor models alns rightHMMCResultsParsed
+              mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelFileNames modelVis)
+              mapM_ (\(a,b) -> printHMM a svgsize b) (zip alignmentFileNames alignmentVis)
+              setCurrentDirectory currentWD
             else print (E.fromLeft hmmCResultParsed)
         else print (E.fromLeft inputModels)
     else do
