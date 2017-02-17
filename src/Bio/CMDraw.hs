@@ -90,8 +90,8 @@ drawSingleCMs modelDetail entryNumberCutoff modelLayout emissiontype maxWidth sc
 -- | Draw the guide Tree of a single CM
 drawCM :: String -> Int -> String -> String -> Double -> Double -> V.Vector (String,Colour Double) -> (CM.CM,Maybe StockholmAlignment,V.Vector (Int,V.Vector (Colour Double)), Colour Double) -> (QDiagram Cairo V2 Double Any,QDiagram Cairo V2 Double Any)
 drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef nameColorVector (cm,aln,comparisonNodeLabels,modelColor)
-   | modelLayout == "tree" = (modelTreeLayout,alignmentDiagram)
-   | modelLayout == "flat" = (modelFlatLayout,alignmentDiagram)
+   | modelLayout == "tree" = ((applyAll ([bg white]) modelTreeLayout),alignmentDiagram)
+   | modelLayout == "flat" = ((applyAll ([bg white]) modelFlatLayout),alignmentDiagram)
    | otherwise = (modelTreeLayout,alignmentDiagram)
    where nodes = CM._nodes cm
          nodeNumber = V.length nodes
