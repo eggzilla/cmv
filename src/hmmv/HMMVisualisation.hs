@@ -17,11 +17,12 @@ import qualified Bio.StockholmParser as SP
 import Paths_cmv (version)
 import Data.Version (showVersion)
 import Data.List (intercalate)
+import Control.Monad
 
 options :: Options
-data Options = Options            
+data Options = Options
   { modelFile :: String,
-    alignmentFile :: String,             
+    alignmentFile :: String,
     modelDetail :: String,
     emissionLayout :: String,
     alignmentEntries :: Int,
@@ -43,7 +44,7 @@ options = Options
     scalingFactor = (2 :: Double) &= name "t" &= help "Set uniform scaling factor for image size (Default: 2)",
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
     outputDirectoryPath = "" &= name "p" &= help "Output directory path (Default: none)",
-    modelNameToggle = False  &= name "b" &= help "Write all comma separted model names to modelNames file (Default: False)" 
+    modelNameToggle = False  &= name "b" &= help "Write all comma separted model names to modelNames file (Default: False)"
   } &= summary ("hmmv " ++ toolVersion) &= help "Florian Eggenhofer - 2016" &= verbosity
 
 main :: IO ()
@@ -56,33 +57,33 @@ main = do
        if isRight inputModels
          then do
            alnInput <- SP.readExistingStockholm alignmentFile
-           if (isLeft alnInput) then print (fromLeft alnInput) else return ()
+           Control.Monad.when (isLeft alnInput) $ print (fromLeft alnInput)
            -- cairo outputFormat check
            let outputName = diagramName "hmmv" outputFormat
            let currentModels = fromRight inputModels
            let modelNumber = length currentModels
-           let alns = if (isRight alnInput) then (map (\a -> Just a) (fromRight alnInput)) else (replicate modelNumber Nothing)
-	   let currentModelNames = map HM.name currentModels
+           let alns = if isRight alnInput then map (\a -> Just a) (fromRight alnInput) else replicate modelNumber Nothing
+           let currentModelNames = map HM.name currentModels
            currentWD <- getCurrentDirectory
            let dirPath = if null outputDirectoryPath then currentWD else outputDirectoryPath
-	   setCurrentDirectory dirPath
+           setCurrentDirectory dirPath
            let modelFileNames = map (\m -> m ++ "." ++ outputFormat) currentModelNames
            let alignmentFileNames = map (\m -> m ++ ".aln" ++ "." ++ outputFormat) currentModelNames
            writeModelNameFile modelNameToggle outputDirectoryPath currentModelNames
            let (modelVis,alignmentVis) = unzip $ drawSingleHMMER3s modelDetail alignmentEntries maxWidth scalingFactor emissionLayout currentModels alns
            mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelFileNames modelVis)
            mapM_ (\(a,b) -> printHMM a svgsize b) (zip alignmentFileNames alignmentVis)
-           setCurrentDirectory currentWD 
-         else 
+           setCurrentDirectory currentWD
+         else
            print (fromLeft inputModels)
-     else do
+     else
        putStrLn "Input model file not found"
 
 toolVersion :: String
 toolVersion = showVersion version
 
 writeModelNameFile :: Bool -> String -> [String] -> IO ()
-writeModelNameFile toggle outputDirectoryPath modelNames = do
+writeModelNameFile toggle outputDirectoryPath modelNames =
   if toggle
     then do
        let modelNamesString = intercalate "," modelNames

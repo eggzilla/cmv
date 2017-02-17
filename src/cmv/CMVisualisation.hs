@@ -13,7 +13,7 @@ module Main where
 
 import Bio.CMDraw
 import qualified Biobase.SElab.CM as CM
-import Biobase.SElab.CM.Import     
+import Biobase.SElab.CM.Import
 import System.Console.CmdArgs
 import System.Directory
 import Data.Either.Unwrap
@@ -22,11 +22,12 @@ import qualified Data.Text as T
 import Paths_cmv (version)
 import Data.Version (showVersion)
 import Data.List (intercalate)
+import Control.Monad
 
 options :: Options
-data Options = Options            
+data Options = Options
   { modelFile :: String,
-    alignmentFile :: String, 
+    alignmentFile :: String,
     modelDetail :: String,
     modelLayout :: String,
     emissionLayout :: String,
@@ -62,13 +63,13 @@ main = do
   if modelFileExists
     then do
       cms <- fromFile modelFile
-      if (not (null cms))
+      if not (null cms)
         then do
           alnInput <- SP.readExistingStockholm alignmentFile
-          if (isLeft alnInput) then print (fromLeft alnInput) else return ()
+          Control.Monad.when (isLeft alnInput) $ print (fromLeft alnInput)
           let outputName = diagramName "cmv" outputFormat
           let modelNumber = length cms
-          let alns = if (isRight alnInput) then (map (\a -> Just a) (fromRight alnInput)) else (replicate modelNumber Nothing)
+          let alns = if isRight alnInput then map (\a -> Just a) (fromRight alnInput) else replicate modelNumber Nothing
           let structureVisInputs = secondaryStructureVisualisation secondaryStructureVisTool maxWidth cms alns []
           let currentModelNames = map (T.unpack . CM._name) cms
           currentWD <- getCurrentDirectory
@@ -84,16 +85,16 @@ main = do
           mapM_ (\(structureFileName,(structureVis,_)) -> writeFile structureFileName structureVis) (zip structureFilePaths structureVisInputs)
           mapM_ (\(structureFileName,(_,colorScheme)) -> writeFile (structureFileName ++"Color") colorScheme) (zip structureFilePaths structureVisInputs)
           setCurrentDirectory currentWD
-        else do
+        else
           print "Could not read covariance models from input file"
-    else do
+    else
       putStrLn "Input model file not found"
 
 toolVersion :: String
 toolVersion = showVersion version
-  
+
 writeModelNameFile :: Bool -> String -> [String] -> IO ()
-writeModelNameFile toggle outputDirectoryPath modelNames = do
+writeModelNameFile toggle outputDirectoryPath modelNames =
   if toggle
     then do
        let modelNamesString = intercalate "," modelNames

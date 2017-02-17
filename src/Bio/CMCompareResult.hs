@@ -7,7 +7,7 @@ module Bio.CMCompareResult
      CmcompareResult,
      model1Name,
      model2Name,
-     linkscore1, 
+     linkscore1,
      linkscore2,
      linksequence,
      model1structure,
@@ -19,13 +19,13 @@ module Bio.CMCompareResult
      getModelNames
     ) where
 
-import Text.ParserCombinators.Parsec 
+import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Token
-import Text.ParserCombinators.Parsec.Language (emptyDef)    
+import Text.ParserCombinators.Parsec.Language (emptyDef)
 import Control.Monad
 
 -- | Datastructure for result strings of comparisons between covariance models by CMCompare
-data CmcompareResult = CmcompareResult           
+data CmcompareResult = CmcompareResult
   { model1Name :: String,
     model2Name :: String,
     linkscore1 :: Double,
@@ -40,7 +40,7 @@ data CmcompareResult = CmcompareResult
 -- | Type alias for matched nodes
 
 readDouble :: String -> Double
-readDouble = read              
+readDouble = read
 
 readInt :: String -> Int
 readInt = read
@@ -79,26 +79,26 @@ parseCmcompareResult = do
     return $ CmcompareResult name1 name2 (readDouble score1) (readDouble score2) linkseq structure1 structure2 nodes1 nodes2
 
 -- | Parse indices of matched nodes between models as integers
-parseMatchedNodes :: GenParser Char st Int 
+parseMatchedNodes :: GenParser Char st Int
 parseMatchedNodes = do
     nodeNumber <- many1 digit
     optional (char ',')
-    return $ (readInt nodeNumber)
+    return (readInt nodeNumber)
 
 -- | Parser for CMCompare result strings
-getCmcompareResults :: FilePath -> IO [Either ParseError CmcompareResult]    
+getCmcompareResults :: FilePath -> IO [Either ParseError CmcompareResult]
 getCmcompareResults filePath = let
         fp = filePath
         doParseLine' = parse parseCmcompareResult "parseCMCompareResults"
-        doParseLine l = case (doParseLine' l) of
+        doParseLine l = case doParseLine' l of
             Right x -> x
             Left _  -> error "Failed to parse line"
     in do
-        fileContent <- liftM lines $ readFile fp
+        fileContent <- fmap lines $ readFile fp
         return $ map doParseLine' fileContent
 
 getModelsNames :: [CmcompareResult] -> [String]
-getModelsNames models = concat (map getModelNames models)
+getModelsNames models = concatMap getModelNames models
 
 getModelNames :: CmcompareResult -> [String]
 getModelNames model = [model1Name model,model2Name model]

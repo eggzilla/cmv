@@ -20,9 +20,10 @@ import qualified Bio.StockholmParser as SP
 import Paths_cmv (version)
 import Data.Version (showVersion)
 import Data.List (intercalate)
+import Control.Monad
 
 options :: Options
-data Options = Options            
+data Options = Options
   { hmmCompareResultFile :: String,
     modelsFile :: String,
     alignmentFile :: String,
@@ -61,25 +62,25 @@ main = do
   modelFileExists <- doesFileExist modelsFile
   hmmCFileExists <- doesFileExist hmmCompareResultFile
   alnFileExists <- doesFileExist alignmentFile
-  if (modelFileExists && hmmCFileExists && alnFileExists)
+  if modelFileExists && hmmCFileExists && alnFileExists
     then do
       inputModels <- HM.readHMMER3 modelsFile
-      if (isRight inputModels)
+      if isRight inputModels
         then do
           let models = E.fromRight inputModels
           hmmCResultParsed <- readHMMCompareResult hmmCompareResultFile
           let modelNumber = length models
           alnInput <- SP.readExistingStockholm alignmentFile
-          if (isLeft alnInput) then print (E.fromLeft alnInput) else return ()
-          let alns = if (isRight alnInput) then (map (\a -> Just a) (E.fromRight alnInput)) else (replicate modelNumber Nothing)
-	  let currentModelNames = map HM.name models
+          Control.Monad.when (isLeft alnInput) $ print (E.fromLeft alnInput)
+          let alns = if isRight alnInput then map (\a -> Just a) (E.fromRight alnInput) else replicate modelNumber Nothing
+          let currentModelNames = map HM.name models
           currentWD <- getCurrentDirectory
           let dirPath = if null outputDirectoryPath then currentWD else outputDirectoryPath
-          if (isRight hmmCResultParsed)
+          if isRight hmmCResultParsed
             then do
               let rightHMMCResultsParsed = E.fromRight hmmCResultParsed
               let outputName = diagramName "hmmcv" outputFormat
-	      setCurrentDirectory dirPath
+              setCurrentDirectory dirPath
               let modelFileNames = map (\m -> m ++ "." ++ outputFormat) currentModelNames
               let alignmentFileNames = map (\m -> m ++ ".aln" ++ "." ++ outputFormat) currentModelNames
               writeModelNameFile modelNameToggle outputDirectoryPath currentModelNames
@@ -90,14 +91,14 @@ main = do
             else print (E.fromLeft hmmCResultParsed)
         else print (E.fromLeft inputModels)
     else do
-      if modelFileExists then return () else putStrLn "Model file not found"
-      if hmmCFileExists then return () else putStrLn "Comparison file not found"
+      Control.Monad.unless modelFileExists $ putStrLn "Model file not found"
+      Control.Monad.unless hmmCFileExists $ putStrLn "Comparison file not found"
 
 toolVersion :: String
 toolVersion = showVersion version
 
 writeModelNameFile :: Bool -> String -> [String] -> IO ()
-writeModelNameFile toggle outputDirectoryPath modelNames = do
+writeModelNameFile toggle outputDirectoryPath modelNames =
   if toggle
     then do
        let modelNamesString = intercalate "," modelNames

@@ -37,7 +37,7 @@ module Bio.CMDraw
      getIndexEnd,
      secondaryStructureVisualisation
     ) where
-  
+
 import Diagrams.Prelude
 import Data.Typeable.Internal
 import Bio.CMCompareResult
@@ -68,19 +68,19 @@ import Graphics.SVGFonts
 import Bio.StockholmFont
 
 -- | Draw one or more CM
-drawSingleCMComparisons :: String -> Int -> String -> String -> Double -> Double -> [CM.CM] -> [(Maybe StockholmAlignment)] -> [CmcompareResult] -> [(QDiagram Cairo V2 Double Any,QDiagram Cairo V2 Double Any)]
+drawSingleCMComparisons :: String -> Int -> String -> String -> Double -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [CmcompareResult] -> [(QDiagram Cairo V2 Double Any,QDiagram Cairo V2 Double Any)]
 drawSingleCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef cms alns comparisons = diagrams
   where diagrams = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef nameColorVector) zippedInput
         zippedInput = zip4 cms alns comparisonNodeLabels (V.toList colorVector)
         modelNumber = length cms
         comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) cms
-	colorVector = makeColorVector modelNumber
-	modelNames =  V.fromList (map (T.unpack . CM._name) cms)
-	nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
-	comparisonsHighlightParameter = getComparisonsHighlightParameters cms comparisons
+        colorVector = makeColorVector modelNumber
+        modelNames =  V.fromList (map (T.unpack . CM._name) cms)
+        nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
+        comparisonsHighlightParameter = getComparisonsHighlightParameters cms comparisons
 
 -- | Draw one or more CM
-drawSingleCMs :: String -> Int -> String -> String -> Double -> Double -> [CM.CM] -> [(Maybe StockholmAlignment)] -> [(QDiagram Cairo V2 Double Any,QDiagram Cairo V2 Double Any)]
+drawSingleCMs :: String -> Int -> String -> String -> Double -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [(QDiagram Cairo V2 Double Any,QDiagram Cairo V2 Double Any)]
 drawSingleCMs modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef cms alns = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef emptyColorNameVector) zippedInput
     where zippedInput = zip4 cms alns comparisonNodeLabels colorList
           comparisonNodeLabels = map getBlankComparisonNodeLabels cms
@@ -98,55 +98,55 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef na
          allStates = CM._states cm
          boxlength = fromIntegral (length alphabetSymbols) + 2
          alphabetSymbols = ['A','U','C','G']
-	 nodeAlignmentColIndices = V.map (CM._nColL) nodes
+         nodeAlignmentColIndices = V.map CM._nColL nodes
          indices = V.toList (V.iterateN (nodeNumber-1) (1+) 0)
-         (indexStructure,finalState)= runState (buildTreeIndexStructure 1 nodes indices) startState 
+         (indexStructure,finalState)= runState (buildTreeIndexStructure 1 nodes indices) startState
          --indexStructureGroupedByParent = groupBy indexStructureParent (fst indexStructure)
-	 --nullModel = CM._nullModel cm
-	 --nullModelBitscores = VU.toList (VU.map (getBitscore) nullModel)
-	 --dummyLetters = replicate (length nullModelBitscores) "I"
-	 --dummyNullModelBitscores = zip dummyLetters nullModelBitscores
-	 --nullModelBox = vcat (map (emissionEntry "score") dummyNullModelBitscores)
-	 modelName = CM._name cm
-	 modelFlatLayout = (alignTL (vcat' with {_sep=5} [modelHeader,detailedNodeTransitions])) # scale scalef
-         modelTreeLayout = (alignTL (vcat' with {_sep=5} [modelHeader,detailedNodeTreeTransitions])) #scale scalef
+         --nullModel = CM._nullModel cm
+         --nullModelBitscores = VU.toList (VU.map (getBitscore) nullModel)
+         --dummyLetters = replicate (length nullModelBitscores) "I"
+         --dummyNullModelBitscores = zip dummyLetters nullModelBitscores
+         --nullModelBox = vcat (map (emissionEntry "score") dummyNullModelBitscores)
+         modelName = CM._name cm
+         modelFlatLayout = alignTL (vcat' with {_sep=5} [modelHeader,detailedNodeTransitions]) # scale scalef
+         modelTreeLayout = alignTL (vcat' with {_sep=5} [modelHeader,detailedNodeTreeTransitions]) #scale scalef
          detailedNodeTreeTransitions = applyAll (arrowList ++ labelList) detailedNodesTree
          firstInterval = fromJust (find (\(_,p,_,_,_) -> p == 0) (fst indexStructure))
-	 detailedNodesTree = drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes (fst indexStructure) firstInterval
-	 modelHeader = makeModelHeader (T.unpack modelName) modelColor nameColorVector
-	 nodeIndices = V.iterateN nodeNumber (1+) 0
-	 detailedNodeTransitions = applyAll (arrowList ++ labelList) detailedNodes
-	 detailedNodes = vcat (V.toList (V.map (drawCMNode modelDetail alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) nodeIndices))
+         detailedNodesTree = drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes (fst indexStructure) firstInterval
+         modelHeader = makeModelHeader (T.unpack modelName) modelColor nameColorVector
+         nodeIndices = V.iterateN nodeNumber (1+) 0
+         detailedNodeTransitions = applyAll (arrowList ++ labelList) detailedNodes
+         detailedNodes = vcat (V.toList (V.map (drawCMNode modelDetail alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) nodeIndices))
          trans = CM._sTransitions (CM._states cm)
          (lo,up) = PA.bounds trans
          (transitionIndexTuple,transitionPAIndices) = unzip $ makeTransitionIndices (deConstr up)
-         transitionBitscores = map ((\(a,b) ->((show (PI.getPInt a)),(score2Prob 1 b))) . (trans PA.!)) transitionPAIndices
+         transitionBitscores = map ((\(a,b) ->(show (PI.getPInt a),score2Prob 1 b)) . (trans PA.!)) transitionPAIndices
          allConnectedStates = V.map (\((stateId,targetId),(targetStateIndex,bitS)) -> (stateId,targetStateIndex,bitS,(0,0))) (V.fromList (zip transitionIndexTuple transitionBitscores))
-	 connectedStates = V.filter (\(stateId,targetStateIndex,_,_) -> stateId /= targetStateIndex) allConnectedStates
-	 selfConnectedStates = V.filter (\(stateId,targetStateIndex,_,_) -> stateId == targetStateIndex) allConnectedStates
-	 arrowList = case modelDetail of
+         connectedStates = V.filter (\(stateId,targetStateIndex,_,_) -> stateId /= targetStateIndex) allConnectedStates
+         selfConnectedStates = V.filter (\(stateId,targetStateIndex,_,_) -> stateId == targetStateIndex) allConnectedStates
+         arrowList = case modelDetail of
                           "detailed" -> V.toList (V.map makeArrow connectedStates V.++ V.map makeSelfArrow selfConnectedStates)
                           "interval"-> map (makeArrow . indexStructureToConnections) (filter (\(acc,emit,_,_,_)-> acc /= emit)(fst indexStructure))
-                          _ -> []                        
+                          _ -> []
          labelList = case modelDetail of
                           "detailed" -> V.toList (V.map makeLabel connectedStates V.++ V.map makeSelfLabel selfConnectedStates)
                           _ -> []
-	 alignmentDiagram = if isJust aln then drawStockholmLines entryNumberCutoff maxWidth nodeAlignmentColIndices comparisonNodeLabels (fromJust aln) else mempty
+         alignmentDiagram = maybe mempty (drawStockholmLines entryNumberCutoff maxWidth nodeAlignmentColIndices comparisonNodeLabels) aln
 
 -- | Extracts consensus secondary structure from alignment and annotates cmcompare nodes
-secondaryStructureVisualisation :: String -> Double -> [CM.CM] -> [(Maybe StockholmAlignment)] -> [CmcompareResult] -> [(String,String)]
+secondaryStructureVisualisation :: String -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [CmcompareResult] -> [(String,String)]
 secondaryStructureVisualisation selectedTool maxWidth cms alns comparisons
   | selectedTool == "forna" = fornaVis
   | selectedTool == "r2r" = r2rVis
   | otherwise = []
   where fornaVis = map buildFornaInput structureComparisonInfo
         r2rVis = map buildR2RInput structureComparisonInfo
-	modelNumber = length cms
-	comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) cms
-	colorVector = makeColorVector modelNumber
-	modelNames = V.fromList (map (T.unpack . CM._name) cms)
-	nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
-	structureComparisonInfo = zip3 cms alns comparisonNodeLabels
+        modelNumber = length cms
+        comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) cms
+        colorVector = makeColorVector modelNumber
+        modelNames = V.fromList (map (T.unpack . CM._name) cms)
+        nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
+        structureComparisonInfo = zip3 cms alns comparisonNodeLabels
 
 buildFornaInput :: (CM.CM,Maybe StockholmAlignment,V.Vector (Int, V.Vector (Colour Double))) -> (String, String)
 buildFornaInput (cm,maybeAln,comparisonNodeLabels)
@@ -156,14 +156,14 @@ buildFornaInput (cm,maybeAln,comparisonNodeLabels)
         fornaInput = ">" ++ modelName ++ "\n" ++ gapfreeConsensusSequence ++ "\n" ++ consensusStructure
         allColumnAnnotations = columnAnnotations aln
         consensusSequenceList = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
-	consensusSequence = if null consensusSequenceList then "" else T.unpack (head consensusSequenceList)
+        consensusSequence = if null consensusSequenceList then "" else T.unpack (head consensusSequenceList)
         gapfreeConsensusSequence = map C.toUpper (filter (not . isGap) consensusSequence)
-	consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
-	consensusStructure = if null consensusStructureList then "" else extractGapfreeStructure consensusSequence (T.unpack (head consensusStructureList))
+        consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
+        consensusStructure = if null consensusStructureList then "" else extractGapfreeStructure consensusSequence (T.unpack (head consensusStructureList))
         modelName = T.unpack $ CM._name cm
         nodes = CM._nodes cm
-        nodeAlignmentColIndices = V.map (CM._nColL) nodes
-	maxEntryLength = length consensusStructure
+        nodeAlignmentColIndices = V.map CM._nColL nodes
+        maxEntryLength = length consensusStructure
         colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabels
         sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
         fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
@@ -173,8 +173,8 @@ buildFornaInput (cm,maybeAln,comparisonNodeLabels)
 
 comparisonColLabelsToFornaLabel :: (Int, V.Vector (Colour Double)) -> String
 comparisonColLabelsToFornaLabel (nodeNr,colorVector)
-  | (V.null colorVector) = ""
-  | (V.head colorVector) /= white =  " " ++ show nodeNr ++ ":red "
+  | V.null colorVector = ""
+  | V.head colorVector /= white =  " " ++ show nodeNr ++ ":red "
   | otherwise = ""
 
 buildR2RInput :: (CM.CM, Maybe StockholmAlignment,V.Vector (Int,V.Vector (Colour Double))) -> (String,String)
@@ -185,14 +185,14 @@ buildR2RInput (cm,maybeAln,comparisonNodeLabels)
         r2rInput = sHeader ++ sConsensusStructure ++ sConsensusSequence ++ sConsensusSequenceColor ++ sCovarianceAnnotation ++ sComparisonHighlight ++ sBackboneColorLabel
         allColumnAnnotations = columnAnnotations aln
         consensusSequenceList = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
-	consensusSequence = if null consensusSequenceList then "" else T.unpack (head consensusSequenceList)
-	gapfreeConsensusSequence = map C.toUpper (filter (not . isGap) consensusSequence)
-	consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
-	consensusStructure = if null consensusStructureList then "" else extractGapfreeStructure consensusSequence (T.unpack (head consensusStructureList))
+        consensusSequence = if null consensusSequenceList then "" else T.unpack (head consensusSequenceList)
+        gapfreeConsensusSequence = map C.toUpper (filter (not . isGap) consensusSequence)
+        consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
+        consensusStructure = if null consensusStructureList then "" else extractGapfreeStructure consensusSequence (T.unpack (head consensusStructureList))
         modelName = T.unpack $ CM._name cm
         nodes = CM._nodes cm
-	maxEntryLength = length consensusStructure
-        nodeAlignmentColIndices = V.map (CM._nColL) nodes
+        maxEntryLength = length consensusStructure
+        nodeAlignmentColIndices = V.map CM._nColL nodes
         colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabels
         sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
         fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
@@ -200,15 +200,15 @@ buildR2RInput (cm,maybeAln,comparisonNodeLabels)
         sHeader =  "# STOCKHOLM 1.0\n"
         sConsensusStructure =     "#=GC SS_cons          " ++ consensusStructure ++ "\n"
         sConsensusSequence =      "#=GC cons             " ++ gapfreeConsensusSequence ++ "\n"
-        sConsensusSequenceColor = "#=GC conss            " ++ (replicate (length consensusStructure) '2') ++ "\n"
-        sCovarianceAnnotation =   "#=GC cov_SS_cons      " ++ (replicate (length consensusStructure) '.') ++ "\n"
+        sConsensusSequenceColor = "#=GC conss            " ++ replicate (length consensusStructure) '2' ++ "\n"
+        sCovarianceAnnotation =   "#=GC cov_SS_cons      " ++ replicate (length consensusStructure) '.' ++ "\n"
         sComparisonHighlight =    "#=GC R2R_LABEL        " ++ r2rLabels ++ "\n"
         sBackboneColorLabel =     "#=GF R2R shade_along_backbone s rgb:200,0,0\n"
 
 comparisonColLabelsToR2RLabel :: (Int, V.Vector (Colour Double)) -> Char
 comparisonColLabelsToR2RLabel (nodeNr,colorVector)
-  | (V.null colorVector) = '.'
-  | (V.head colorVector) /= white = 's'
+  | V.null colorVector = '.'
+  | V.head colorVector /= white = 's'
   | otherwise = '.'
 
 nodeToColIndices :: (Int,(Int,V.Vector (Colour Double))) -> (Int,V.Vector (Colour Double))
@@ -221,7 +221,7 @@ fillComparisonColLabels maxEntryLength sparseComparisonColLabels = fullCompariso
 makeFullComparisonColLabel :: V.Vector (Int, V.Vector (Colour Double)) -> Int -> (Int, V.Vector (Colour Double))
 makeFullComparisonColLabel sparseComparisonColLabels colIndex = fullComparisonColLabel
   where availableLabel = V.find (\(a,c)-> colIndex == a) sparseComparisonColLabels
-        fullComparisonColLabel = if isJust availableLabel then fromJust availableLabel else (colIndex,V.singleton white)
+        fullComparisonColLabel = fromMaybe (colIndex,V.singleton white) availableLabel
 
 indexStructureToConnections :: (Int, Int, String, Int, Int) -> (String,String,Double,(Double,Double))
 indexStructureToConnections (acc,emit,_,_,_) = (show emit,show acc,1,(0,0))
@@ -247,10 +247,10 @@ buildRowIndexStructure row nodes (currentIndex:xs) = do
   let currentNode = nodes V.! currentIndex
   let currentEnd = getIndexEnd nodes (currentIndex:xs)
   let ntype = CM._ntype currentNode
-  case ntype of                  
-    CM.NodeType 6 -> put (((row,parentId,"S,",currentIndex,currentEnd):interval),parentId) -- ROOT start tree             
-    CM.NodeType 4 -> put (((row,parentId,"L,",currentIndex,currentEnd):interval),parentId) --(L [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices) -- BEGL set current label
-    CM.NodeType 5 -> put (((row,parentId,"R,",currentIndex,currentEnd):interval),parentId) -- (R [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices)  -- BEGR set current label
+  case ntype of
+    CM.NodeType 6 -> put ((row,parentId,"S,",currentIndex,currentEnd):interval,parentId) -- ROOT start tree             
+    CM.NodeType 4 -> put ((row,parentId,"L,",currentIndex,currentEnd):interval,parentId) --(L [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices) -- BEGL set current label
+    CM.NodeType 5 -> put ((row,parentId,"R,",currentIndex,currentEnd):interval,parentId) -- (R [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices)  -- BEGR set current label
     CM.NodeType 1 -> put (interval,parentId)
     CM.NodeType 2 -> put (interval,parentId)
     CM.NodeType 3 -> put (interval,parentId)
@@ -262,7 +262,7 @@ buildRowIndexStructure row nodes (currentIndex:xs) = do
     _ -> put (interval,parentId)
   buildRowIndexStructure row nodes xs
 
-buildTreeIndexStructure :: Int -> V.Vector CM.Node -> [Int] -> State ([(Int,Int,String,Int,Int)],Int) ([(Int,Int,String,Int,Int)],Int)             
+buildTreeIndexStructure :: Int -> V.Vector CM.Node -> [Int] -> State ([(Int,Int,String,Int,Int)],Int) ([(Int,Int,String,Int,Int)],Int)
 buildTreeIndexStructure row nodes [] = do
   (a,b) <- get
   return (a,b)
@@ -274,10 +274,10 @@ buildTreeIndexStructure intervalId nodes (currentIndex:xs) = do
   let maxId = if null interval then 0 else maximum $ map (\(iid,_,_,_,_)-> iid) interval
   let newId = maxId +1
   let nextId = setNextId ntype intervalId newId
-  case ntype of                  
-    CM.NodeType 6 -> put (((intervalId,parentId,"S,",currentIndex,currentEnd):interval),parentId) 
-    CM.NodeType 4 -> put (((newId,parentId,"L,",currentIndex,currentEnd):interval),parentId) 
-    CM.NodeType 5 -> put (((newId,parentId,"R,",currentIndex,currentEnd):interval),parentId)
+  case ntype of
+    CM.NodeType 6 -> put ((intervalId,parentId,"S,",currentIndex,currentEnd):interval,parentId)
+    CM.NodeType 4 -> put ((newId,parentId,"L,",currentIndex,currentEnd):interval,parentId)
+    CM.NodeType 5 -> put ((newId,parentId,"R,",currentIndex,currentEnd):interval,parentId)
     CM.NodeType 1 -> put (interval,parentId)
     CM.NodeType 2 -> put (interval,parentId)
     CM.NodeType 3 -> put (interval,parentId)
@@ -298,7 +298,7 @@ setNextId ntype intervalId newId
 
 getIndexEnd :: V.Vector CM.Node -> [Int] -> Int
 getIndexEnd nodes indices
-  | null indices = (length nodes -1)
+  | null indices = length nodes -1
   | ntype == CM.NodeType 7 = currentIndex
   | ntype == CM.NodeType 0 = currentIndex
   | otherwise = getIndexEnd nodes remainingindices
@@ -316,19 +316,19 @@ makeModelHeader mName modelColor nameColorVector = strutX 2 ||| setModelName mNa
 makeModelLegend :: V.Vector (String,Colour Double) -> QDiagram Cairo V2 Double Any
 makeModelLegend nameColorVector
   | V.null nameColorVector = mempty
-  | otherwise = (legendHead === legendBody) <> rect boxX boxY # lw 0.1 # translate (r2 (((boxX/2)-1), (negate (boxY/2)) + 6))
+  | otherwise = (legendHead === legendBody) <> rect boxX boxY # lw 0.1 # translate (r2 ((boxX/2)-1, negate (boxY/2) + 6))
   where legendHead = setLegendLabel "Legend:"
         legendBody = vcat (V.toList (V.map makeLegendEntry nameColorVector))
         nameLengths = V.map (length . fst) nameColorVector
         maxNameLength = fromIntegral $ V.maximum nameLengths
         entryNumber = fromIntegral $ V.length nameColorVector
-        boxX = maxNameLength * 6 
-        boxY = (entryNumber) * 15 
-        
+        boxX = maxNameLength * 6
+        boxY = entryNumber * 15
+
 makeLegendEntry (mName,mColor) = setLegendLabel mName ||| strutX 0.5 ||| rect 4 4 # lw 0.1 # fc mColor # translate (r2 (negate 0, 2))
 
 setEmissionText t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 1 1) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.5, negate 0.5))
-setLabel t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 2 2) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.25)) 
+setLabel t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 2 2) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.25))
 setTransition t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 2 2) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))   # rotate (1/4 @@ turn)
 setState t x y = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 3 3) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (x, y))
 setNodeNumber t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 5 5) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 2, 0))
@@ -336,24 +336,24 @@ setNodeLabel t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 6 6) t 
 setLegendLabel t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 10 10) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
 setModelName t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 20 20) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
 
-drawCMNodeTree :: String -> [Char] -> String -> Int -> CM.States -> V.Vector (Int, V.Vector (Colour Double))-> V.Vector CM.Node -> [(Int, Int, String, Int, Int)] -> (Int,Int,String,Int,Int) -> QDiagram Cairo V2 Double Any
+drawCMNodeTree :: String -> String -> String -> Int -> CM.States -> V.Vector (Int, V.Vector (Colour Double))-> V.Vector CM.Node -> [(Int, Int, String, Int, Int)] -> (Int,Int,String,Int,Int) -> QDiagram Cairo V2 Double Any
 drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure (intervalId,parentId,intervalType,currentIndex,currentEnd) = nodeTree
   where nodeTree = currentIntervalDrawing === hcat' with {_sep = 2} (map (drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure) nextIntervals)
         nextIntervals = filter (\(_,p,_,_,_) -> intervalId == p) indexStructure
         currentIntervalDrawing = drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength currentIndex currentEnd currentEnd allStates comparisonNodeLabels nodes (intervalId,parentId,intervalType,currentIndex,currentEnd) -- ||| (text' (show intervalId ++ "I" ++ show indexStructure) <> rect 100 100)
 
-drawCMNodeRow :: String -> [Char] -> String -> Int -> Int -> Int -> Int -> CM.States -> V.Vector (Int, V.Vector (Colour Double))-> V.Vector CM.Node -> [(Int, Int, String, Int, Int)] -> QDiagram Cairo V2 Double Any
+drawCMNodeRow :: String -> String -> String -> Int -> Int -> Int -> Int -> CM.States -> V.Vector (Int, V.Vector (Colour Double))-> V.Vector CM.Node -> [(Int, Int, String, Int, Int)] -> QDiagram Cairo V2 Double Any
 drawCMNodeRow modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes intervals = strutY 4 === hcat' with { _sep = 8 } (map (drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes) intervals)
 
-drawCMNodeInterval :: String -> [Char] -> String -> Int -> Int -> Int -> Int -> CM.States -> V.Vector (Int, V.Vector (Colour Double))-> V.Vector CM.Node -> (Int, Int, String, Int, Int) -> QDiagram Cairo V2 Double Any
+drawCMNodeInterval :: String -> String -> String -> Int -> Int -> Int -> Int -> CM.States -> V.Vector (Int, V.Vector (Colour Double))-> V.Vector CM.Node -> (Int, Int, String, Int, Int) -> QDiagram Cairo V2 Double Any
 drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes (intervalId,parent,intervaltype,currentIndex,currentEnd)
   | modelDetail == "interval" = intervalVis
   | otherwise = nodeVis
-  where intervalVis = rect 20 0 # named ("a" ++ intervalIdString)  # lw 0.0 === (rect 20 40 # lw 0.1 <> text' ((show currentIndex) ++ "-" ++ (show currentEnd))) === rect 20 0 # named ("e" ++ intervalIdString)  # lw 0.0 === strutY 5.0
+  where intervalVis = rect 20 0 # named ("a" ++ intervalIdString)  # lw 0.0 === (rect 20 40 # lw 0.1 <> text' (show currentIndex ++ "-" ++ show currentEnd)) === rect 20 0 # named ("e" ++ intervalIdString)  # lw 0.0 === strutY 5.0
         intervalIdString = show intervalId
         nodeVis = vcat' with { _sep = nodespacer } (map (drawCMNode modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes) currentInterval)
         currentInterval = [currentIndex..currentEnd]
-        nodespacer = if (modelDetail == "detailed") then (2 :: Double) else (0 :: Double)
+        nodespacer = if modelDetail == "detailed" then (2 :: Double) else (0 :: Double)
 
 getCMNodeType :: CM.Node -> String
 getCMNodeType node
@@ -372,12 +372,12 @@ text' :: String -> QDiagram Cairo V2 Double Any
 text' t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 3 3) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
 
 textWithSize' :: String -> Double -> QDiagram Cairo V2 Double Any
-textWithSize' t si = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False si si) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate siOffset, negate siOffset)) 
+textWithSize' t si = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False si si) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate siOffset, negate siOffset))
   where textLength = fromIntegral (length t) * 2
         siOffset = si/2
 
 -- | Transform covariance model node labels to colors
-labelToColor :: [Char] -> Colour Double
+labelToColor :: String -> Colour Double
 labelToColor label
    | label == "MATP" = sRGB24 211 211 211 -- P
    | label == "MATL" = sRGB24 211 211 211 -- L
@@ -389,26 +389,26 @@ labelToColor label
    | label == "END"  = sRGB24 245 245 245 -- E
 labelToColor _ = sRGB24 245 245 245
 
-drawCMNode :: String -> [Char] -> String -> Int -> Int -> Int -> Int -> CM.States -> V.Vector (Int, V.Vector (Colour Double)) -> V.Vector CM.Node -> Int -> QDiagram Cairo V2 Double Any
+drawCMNode :: String -> String -> String -> Int -> Int -> Int -> Int -> CM.States -> V.Vector (Int, V.Vector (Colour Double)) -> V.Vector CM.Node -> Int -> QDiagram Cairo V2 Double Any
 drawCMNode modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes nodeIndex
-  | modelDetail == "minimal" = (alignedText 0 0 nId # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nId))/2)), negate 1.25)) <> wheel nodeLabels # lw 0.1 <> rect 1.5 3 # lw 0.1) 
+  | modelDetail == "minimal" = alignedText 0 0 nId # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nId))/2)), negate 1.25)) <> wheel nodeLabels # lw 0.1 <> rect 1.5 3 # lw 0.1
   | modelDetail == "simple" = rect 20 5 # lw 0.5 <>  ((text' nId # translate (r2 (negate 7,0)) <> colourBoxes # translate (r2 (negate 7,0))) ||| text' nodeType # translate (r2 (14,0)))
   | otherwise = detailedNodeBox
   where node = nodes V.! nodeIndex
         idNumber = PI.getPInt (CM._nid node)
         nId = show idNumber
-	detailedNodeBox = drawCMNodeBox alphabetSymbols emissiontype boxlength states comparisonNodeLabels node
+        detailedNodeBox = drawCMNodeBox alphabetSymbols emissiontype boxlength states comparisonNodeLabels node
         nodeType = getCMNodeType node
         nodeLabels = V.toList (snd (comparisonNodeLabels V.! idNumber))
         boxNumber = fromIntegral $ length nodeLabels
         totalBoxYlength = 5 - 0.2
-        singleBoxYLength = totalBoxYlength / boxNumber 
+        singleBoxYLength = totalBoxYlength / boxNumber
         colourBoxes = vcat (map (colorBox singleBoxYLength) nodeLabels) -- <> rect 5 totalBoxYlength # lw 0.1
 
 colorBox :: Double -> Colour Double -> QDiagram Cairo V2 Double Any
 colorBox singleBoxYLength colColour = rect 5 singleBoxYLength # fc colColour # lw 0.1
-        
-drawCMNodeBox :: [Char] -> String -> Int -> CM.States -> V.Vector (Int, V.Vector (Colour Double)) -> CM.Node -> QDiagram Cairo V2 Double Any
+
+drawCMNodeBox :: String -> String -> Int -> CM.States -> V.Vector (Int, V.Vector (Colour Double)) -> CM.Node -> QDiagram Cairo V2 Double Any
 drawCMNodeBox alphabetSymbols emissiontype boxlength currentStates comparisonNodeLabels node
   | ntype == CM.NodeType 0 = bifNode # translate (r2 (negate 25,25)) <> nodeBox
   | ntype == CM.NodeType 1 = matPNode # translate (r2 (negate 25,25)) <> nodeBox
@@ -422,45 +422,45 @@ drawCMNodeBox alphabetSymbols emissiontype boxlength currentStates comparisonNod
     where ntype = CM._ntype node
           idNumber = PI.getPInt (CM._nid node)
           nId = show idNumber
-	  nodeLabels = V.toList (snd (comparisonNodeLabels V.! idNumber))
-          stateIndices = VU.toList (CM._nstates node)               
+          nodeLabels = V.toList (snd (comparisonNodeLabels V.! idNumber))
+          stateIndices = VU.toList (CM._nstates node)
           splitStatesBox = hcat' with { _sep = 0.01 } (map (drawCMSplitStateBox nId alphabetSymbols emissiontype boxlength currentStates) stateIndices)
-	  insertStatesBox = hcat (map (drawCMInsertStateBox nId alphabetSymbols emissiontype boxlength currentStates) stateIndices)
+          insertStatesBox = hcat (map (drawCMInsertStateBox nId alphabetSymbols emissiontype boxlength currentStates) stateIndices)
           -- bif b
-          bifNode = ((idBox nId "BIF" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          bifNode = (idBox nId "BIF" nodeLabels # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- matP mp ml mr d il ir
-          matPNode = ((idBox nId "MATP" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          matPNode = (idBox nId "MATP" nodeLabels # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- matL ml d il
-          matLNode = ((idBox nId "MATL" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          matLNode = (idBox nId "MATL" nodeLabels # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- matR mr d ir
-          matRNode = ((idBox nId "MATR" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          matRNode = (idBox nId "MATR" nodeLabels # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- begL s
-          begLNode = ((idBox nId "BEGL" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          begLNode = (idBox nId "BEGL" nodeLabels # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- begR s il
-          begRNode = ((idBox nId "BEGR" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          begRNode = (idBox nId "BEGR" nodeLabels # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- root s il ir
-          rootNode = ((idBox nId "ROOT" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          rootNode = (idBox nId "ROOT" nodeLabels # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5||| splitStatesBox) === strutY 5.0 === insertStatesBox
           -- end e
-          endNode = ((idBox nId "END" nodeLabels) # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
+          endNode = (idBox nId "END" nodeLabels # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
 
-idBox :: String -> String -> [(Colour Double)] -> QDiagram Cairo V2 Double Any
+idBox :: String -> String -> [Colour Double] -> QDiagram Cairo V2 Double Any
 --idBox nId nType nodeLabels = (alignedText 0 0 nId # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nId))/2)), negate 1.25)) <>  wheel nodeLabels # lw 0.1 <> rect 1.5 3 # lw 0) ||| strutX 2.0 ||| text' nType
-idBox nId nType nodeLabels = (setNodeNumber nId # translate (r2 ((negate ((fromIntegral (length nId))/2)), 0)) <>  wheel nodeLabels # lw 0.1 # translate (r2 (0, 1)) <> rect 3 3 # lw 0) ||| strutX 1.0 ||| setNodeLabel nType
+idBox nId nType nodeLabels = (setNodeNumber nId # translate (r2 (negate ((fromIntegral (length nId))/2), 0)) <>  wheel nodeLabels # lw 0.1 # translate (r2 (0, 1)) <> rect 3 3 # lw 0) ||| strutX 1.0 ||| setNodeLabel nType
 nodeBox :: QDiagram Cairo V2 Double Any
 nodeBox = rect 60 60 # lw 0.1
 
-wheel :: [(Colour Double)] -> QDiagram Cairo V2 Double Any
+wheel :: [Colour Double] -> QDiagram Cairo V2 Double Any
 wheel colors = wheel' # rotate r
    where
      wheel' = mconcat $ zipWith fc colors (iterateN n (rotate a) w)
      n = length colors
-     a = 1 / (fromIntegral n) @@ turn
+     a = 1 / fromIntegral n @@ turn
      w = wedge 4 xDir a # lwG 0
-     r = (1/4 @@ turn)  ^-^  (1/(2*(fromIntegral n)) @@ turn)
+     r = (1/4 @@ turn)  ^-^  (1/(2*fromIntegral n) @@ turn)
 
-drawCMSplitStateBox :: String -> [Char] -> String -> Int -> CM.States -> PI.PInt () CM.StateIndex -> QDiagram Cairo V2 Double Any
+drawCMSplitStateBox :: String -> String -> String -> Int -> CM.States -> PI.PInt () CM.StateIndex -> QDiagram Cairo V2 Double Any
 drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIndex
-  | stype == CM.StateType 0 = dState # translate (r2 (negate 3,negate 1)) <> statebox 8.0 20.0 stateIndx 
+  | stype == CM.StateType 0 = dState # translate (r2 (negate 3,negate 1)) <> statebox 8.0 20.0 stateIndx
   | stype == CM.StateType 1 = mpState # translate (r2 (negate 7,negate 1)) <> statebox 16.0 20.0 stateIndx
   | stype == CM.StateType 2 = mlState # translate (r2 (negate 3,negate 1)) <> statebox 8.0 20.0 stateIndx
   | stype == CM.StateType 3 = mrState # translate (r2 (negate 3,negate 1)) <> statebox 8.0 20.0 stateIndx
@@ -469,37 +469,37 @@ drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIn
   | stype == CM.StateType 8 = bState # translate (r2 (negate 3,negate 1)) <> statebox 8.0 20.0 stateIndx
   | stype == CM.StateType 9 = elState # translate (r2 (negate 3,negate 1)) <> statebox 8.0 20.0 stateIndx
   | otherwise = mempty
-    where stype = (CM._sStateType currentStates) PA.! sIndex
+    where stype = CM._sStateType currentStates PA.! sIndex
           stateIndx = show (PI.getPInt sIndex)
-          singleEmissionBitscores = V.map ((CM._sSingleEmissions currentStates) PA.!) (makeSingleEmissionIndices sIndex)
+          singleEmissionBitscores = V.map (CM._sSingleEmissions currentStates PA.!) (makeSingleEmissionIndices sIndex)
           singleEmissionEntries = setEmissions emissiontype 4 singleEmissionBitscores
           singleSymbolsAndEmissions = zip ["A","U","G","C"] (V.toList singleEmissionEntries)
-	  pairEmissionBitscores = V.map  (((CM._sPairEmissions currentStates) PA.!)) (makePairEmissionIndices sIndex)
+          pairEmissionBitscores = V.map  ((CM._sPairEmissions currentStates) PA.!) (makePairEmissionIndices sIndex)
           pairEmissionEntries = setEmissions emissiontype 16 pairEmissionBitscores
-	  pairSymbolsAndEmissions = zip ["AA","AU","AG","AC","UU","UA","UG","UC","GG","GA","GU","GC","CC","CA","CU","CG"] (V.toList pairEmissionEntries)
-	  pairSymbolsAndEmissions1 = take 8 pairSymbolsAndEmissions
-	  pairSymbolsAndEmissions2 = drop 8 pairSymbolsAndEmissions
+          pairSymbolsAndEmissions = zip ["AA","AU","AG","AC","UU","UA","UG","UC","GG","GA","GU","GC","CC","CA","CU","CG"] (V.toList pairEmissionEntries)
+          pairSymbolsAndEmissions1 = take 8 pairSymbolsAndEmissions
+          pairSymbolsAndEmissions2 = drop 8 pairSymbolsAndEmissions
           dState = setState ("D" ++ stateIndx) (negate 0.5) (negate 1)  === strutY 1 --- === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
           mpState = setState ("MP" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === (vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions1) ||| strutX 0.5 ||| vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions2))
-          mlState = setState ("ML" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          mrState = setState ("MR" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          mlState = setState ("ML" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions)
+          mrState = setState ("MR" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions)
           sState = setState ("S" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 -- === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions)
           eState = setState ("E" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 -- === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
           bState = setState ("B" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 -- === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
           elState = setState ("EL" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 -- === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
 
-drawCMInsertStateBox :: String -> [Char] -> String -> Int -> CM.States -> PI.PInt () CM.StateIndex -> QDiagram Cairo V2 Double Any
+drawCMInsertStateBox :: String -> String -> String -> Int -> CM.States -> PI.PInt () CM.StateIndex -> QDiagram Cairo V2 Double Any
 drawCMInsertStateBox nid alphabetSymbols emissiontype boxlength currentStates sIndex
   | stype == CM.StateType 4 = ((ilState # translate (r2 (negate 3,negate 1))) <> statebox 8.0 20.0 stateIndx) ||| strutX 38
-  | stype == CM.StateType 5 = (irState # translate (r2 (negate 3,negate 1))) <> inverseStatebox 8.0 20.0 stateIndx   
+  | stype == CM.StateType 5 = (irState # translate (r2 (negate 3,negate 1))) <> inverseStatebox 8.0 20.0 stateIndx
   | otherwise = mempty
-    where stype = (CM._sStateType currentStates) PA.! sIndex
+    where stype = CM._sStateType currentStates PA.! sIndex
           stateIndx = show (PI.getPInt sIndex)
-          singleEmissionBitscores = V.map (((CM._sSingleEmissions currentStates) PA.!)) (makeSingleEmissionIndices sIndex)
+          singleEmissionBitscores = V.map ((CM._sSingleEmissions currentStates) PA.!) (makeSingleEmissionIndices sIndex)
           singleEmissionEntries = setEmissions emissiontype 4 singleEmissionBitscores
           singleSymbolsAndEmissions = zip ["A","U","G","C"] (V.toList singleEmissionEntries)
-          ilState = setState ("IL" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
-          irState = setState ("IR" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions) 
+          ilState = setState ("IL" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions)
+          irState = setState ("IR" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions)
 
 setEmissions :: String -> Double -> V.Vector Bitscore -> V.Vector Double
 setEmissions emissiontype normalizationFactor emissions
@@ -507,41 +507,41 @@ setEmissions emissiontype normalizationFactor emissions
   | emissiontype == "probability" = propentries
   | emissiontype == "bar" = barentries
   | otherwise = barentries
-    where scoreentries = V.map bitScore2Double emissions      
-          propentries = V.map ((/normalizationFactor) . (score2Prob 1)) emissions
-          barentries = V.map ((/normalizationFactor) . (score2Prob 1)) emissions
+    where scoreentries = V.map bitScore2Double emissions
+          propentries = V.map ((/normalizationFactor) . score2Prob 1) emissions
+          barentries = V.map ((/normalizationFactor) . score2Prob 1) emissions
 
 
 wrap :: a -> [a]
 wrap x = [x]
-         
+
 emissionEntry :: String -> (String,Double) -> QDiagram Cairo V2 Double Any
-emissionEntry emissiontype (symbol,emission) 
+emissionEntry emissiontype (symbol,emission)
   | emissiontype == "probability" = textentry
   | emissiontype == "score" = textentry
   | emissiontype == "bar" = barentry
   | otherwise = barentry
-    where textentry = setLabel (symbol ++ " " ++ printf "%.3f" emission)  
+    where textentry = setLabel (symbol ++ " " ++ printf "%.3f" emission)
           barentry = setLabel symbol  ||| strutX 0.2 ||| bar emission
 
 bar :: Double -> QDiagram Cairo V2 Double Any
-bar emission = (rect (4 * emission) 1 # lw 0 # fc black # translate (r2 (negate (2 - (4 * emission/2)),0)) <> rect 4 1 # lw 0.03 )
-                    
-makeSingleEmissionIndices index = V.fromList [(PAI.Z  PAI.:. index PAI.:. A),(PAI.Z  PAI.:. index PAI.:. U),(PAI.Z  PAI.:. index PAI.:. G),(PAI.Z  PAI.:. index PAI.:. C)]
+bar emission = rect (4 * emission) 1 # lw 0 # fc black # translate (r2 (negate (2 - (4 * emission/2)),0)) <> rect 4 1 # lw 0.03
 
-makePairEmissionIndices index = V.fromList [(PAI.Z  PAI.:. index PAI.:. A PAI.:. A),(PAI.Z  PAI.:. index PAI.:. A PAI.:. U),(PAI.Z  PAI.:. index PAI.:. A PAI.:. G),(PAI.Z  PAI.:. index PAI.:. A PAI.:. C),(PAI.Z  PAI.:. index PAI.:. U PAI.:. U),(PAI.Z  PAI.:. index PAI.:. U PAI.:. A),(PAI.Z  PAI.:. index PAI.:. U PAI.:. G),(PAI.Z  PAI.:. index PAI.:. U PAI.:. C),(PAI.Z  PAI.:. index PAI.:. G PAI.:. G),(PAI.Z  PAI.:. index PAI.:. G PAI.:. A),(PAI.Z  PAI.:. index PAI.:. G PAI.:. U),(PAI.Z  PAI.:. index PAI.:. G PAI.:. C),(PAI.Z  PAI.:. index PAI.:. C PAI.:. C),(PAI.Z  PAI.:. index PAI.:. C PAI.:. A),(PAI.Z  PAI.:. index PAI.:. C PAI.:. U),(PAI.Z  PAI.:. index PAI.:. C PAI.:.G)]
+makeSingleEmissionIndices index = V.fromList [PAI.Z  PAI.:. index PAI.:. A,PAI.Z  PAI.:. index PAI.:. U,PAI.Z  PAI.:. index PAI.:. G,PAI.Z  PAI.:. index PAI.:. C]
+
+makePairEmissionIndices index = V.fromList [PAI.Z  PAI.:. index PAI.:. A PAI.:. A,PAI.Z  PAI.:. index PAI.:. A PAI.:. U,PAI.Z  PAI.:. index PAI.:. A PAI.:. G,PAI.Z  PAI.:. index PAI.:. A PAI.:. C,PAI.Z  PAI.:. index PAI.:. U PAI.:. U,PAI.Z  PAI.:. index PAI.:. U PAI.:. A,PAI.Z  PAI.:. index PAI.:. U PAI.:. G,PAI.Z  PAI.:. index PAI.:. U PAI.:. C,PAI.Z  PAI.:. index PAI.:. G PAI.:. G,PAI.Z  PAI.:. index PAI.:. G PAI.:. A,PAI.Z  PAI.:. index PAI.:. G PAI.:. U,PAI.Z  PAI.:. index PAI.:. G PAI.:. C,PAI.Z  PAI.:. index PAI.:. C PAI.:. C,PAI.Z  PAI.:. index PAI.:. C PAI.:. A,PAI.Z  PAI.:. index PAI.:. C PAI.:. U,PAI.Z  PAI.:. index PAI.:. C PAI.:.G]
 
 statebox :: Double -> Double -> String -> QDiagram Cairo V2 Double Any
-statebox x y si = ((rect 0.05 0.1 # lw 0 # named ("s" ++ si) ||| rect 1 0.1 # lw 0 # named ("a" ++ si) ||| rect 2 0.1 # lw 0 ||| rect 0.05 0.1 # lw 0 # named ("z" ++ si))) === rect x y  # lw 0.1 === rect 1 0 # lw 0 # named ("e" ++ si)
+statebox x y si = (rect 0.05 0.1 # lw 0 # named ("s" ++ si) ||| rect 1 0.1 # lw 0 # named ("a" ++ si) ||| rect 2 0.1 # lw 0 ||| rect 0.05 0.1 # lw 0 # named ("z" ++ si)) === rect x y  # lw 0.1 === rect 1 0 # lw 0 # named ("e" ++ si)
 
 inverseStatebox :: Double -> Double -> String -> QDiagram Cairo V2 Double Any
-inverseStatebox x y si = ((rect 0.05 0.1 # lw 0 # named ("s" ++ si) ||| rect 1 0.1 # lw 0 # named ("a" ++ si) ||| rect 2 0.1 # lw 0  ||| rect 0.05 0.1 # lw 0 # named ("z" ++ si))) === rect x y  # lw 0.1 === rect 1 0 # lw 0 # named ("e" ++ si)                  
-                  
+inverseStatebox x y si = (rect 0.05 0.1 # lw 0 # named ("s" ++ si) ||| rect 1 0.1 # lw 0 # named ("a" ++ si) ||| rect 2 0.1 # lw 0  ||| rect 0.05 0.1 # lw 0 # named ("z" ++ si)) === rect x y  # lw 0.1 === rect 1 0 # lw 0 # named ("e" ++ si)
+
 --scaling
 -- | Specifies the size of the diagram. Absolute adapts to overall size according to subdiagrams
 svgsize :: SizeSpec V2 Double
 svgsize = mkSizeSpec2D Nothing Nothing
-           
+
 -- | Check for available cairo output formats
 diagramName :: String -> String -> Either String String
 diagramName filename fileformat
@@ -552,7 +552,7 @@ diagramName filename fileformat
   | otherwise = Left "Unsupported output format requested (use svg, pdf, ps, png)"
 
 printCM outputName = renderCairo outputName
-                
+
 processCMs :: [CM.CM] -> [[(String,String)]]
 processCMs cms = map processCMGuideTree cms
 
@@ -565,14 +565,17 @@ getBlankComparisonNodeLabels model = comparisonNodeLabels
    where comparisonNodeLabels = V.generate (nodeNumber +1 ) makeBlankComparisonNodeLabel
          nodeNumber = CM._nodesInModel model
 
-makeBlankComparisonNodeLabel :: Int ->  (Int,(V.Vector (Colour Double)))
+makeBlankComparisonNodeLabel :: Int ->  (Int,V.Vector (Colour Double))
 makeBlankComparisonNodeLabel nodeNumber = (nodeNumber,V.singleton white)
 
 getComparisonNodeLabels :: [CmcompareResult] -> V.Vector (String, Colour Double) -> CM.CM -> V.Vector (Int, V.Vector (Colour Double))
 getComparisonNodeLabels comparsionResults colorVector model = comparisonNodeLabels
    where modelName = T.unpack (CM._name model)
          relevantComparisons1 = filter ((modelName==) . model1Name) comparsionResults
-	 modelNodeInterval1 = map (\a -> (model2Name a,model2matchednodes a))  relevantComparisons1 
+         --modelNodeInterval1 = map (model2Name Control.Arrow.&&& model2matchednodes)  relevantComparisons1
+         --relevantComparisons2 = filter ((modelName==) . model2Name) comparsionResults
+         --modelNodeInterval2 = map (model1Name Control.Arrow.&&& model1matchednodes)  relevantComparisons2
+         modelNodeInterval1 = map (\a -> (model2Name a,model2matchednodes a))  relevantComparisons1 
 	 relevantComparisons2 = filter ((modelName==) . model2Name) comparsionResults
          modelNodeInterval2 = map (\a -> (model1Name a,model1matchednodes a))  relevantComparisons2
          modelNodeIntervals =  V.fromList (modelNodeInterval1 ++ modelNodeInterval2)
@@ -587,32 +590,32 @@ modelToColor colorVector (mName,nInterval) = nColorInterval
         --nColorInterval = maybe Nothing (\a -> Just (snd a,nInterval)) entry
         entry = V.find (\(a,c)-> mName == a) colorVector
 
-makeComparisonNodeLabel :: V.Vector (Colour Double,[Int]) -> Int -> (Int,(V.Vector (Colour Double)))
+makeComparisonNodeLabel :: V.Vector (Colour Double,[Int]) -> Int -> (Int,V.Vector (Colour Double))
 makeComparisonNodeLabel colorNodeIntervals nodeNumber = comparisonNodeLabel
   where relevantColorNodeIntervals = V.filter (\(_,b) -> elem nodeNumber b) colorNodeIntervals
         modelColors = V.map fst relevantColorNodeIntervals
-        comparisonNodeLabel = if (null modelColors) then (nodeNumber,V.singleton white) else (nodeNumber,modelColors)
+        comparisonNodeLabel = if null modelColors then (nodeNumber,V.singleton white) else (nodeNumber,modelColors)
 
 makeColorVector modelNumber = V.map (\(a,b,c) -> R.rgb a b c) modelRGBTupel
-   where indexVector = V.iterateN (modelNumber) (1+) 0
-         stepSize = (765 :: Double) / (fromIntegral modelNumber)
-	 modelRGBTupel = V.map (makeRGBTupel stepSize) indexVector
+   where indexVector = V.iterateN modelNumber (1+) 0
+         stepSize = (765 :: Double) / fromIntegral modelNumber
+         modelRGBTupel = V.map (makeRGBTupel stepSize) indexVector
 
 makeRGBTupel :: Double -> Int -> (Double,Double,Double)
 makeRGBTupel stepSize modelNumber = (a,b,c)
-  where  totalSize = (fromIntegral modelNumber) * stepSize 
-         a = (rgbBoundries (totalSize  - 255))/255
-	 b = (rgbBoundries (totalSize - a - 255))/255
-	 c = (rgbBoundries (totalSize - a - b))/255
+  where  totalSize = fromIntegral modelNumber * stepSize
+         a = rgbBoundries (totalSize  - 255)/255
+         b = rgbBoundries (totalSize - a - 255)/255
+         c = rgbBoundries (totalSize - a - b)/255
 
-rgbBoundries :: Double -> Double	     
+rgbBoundries :: Double -> Double
 rgbBoundries rgbValue
   | rgbValue>210 = 210
   | rgbValue<50 = 50
   | otherwise = rgbValue
 
 -- deConsSnd :: ((PAI.Z PAI.:. PInt () CM.StateIndex) PAI.:. Int) (PInt () CM.StateIndex, Bitscore) -> String
-deConstr (PAI.Z PAI.:. a PAI.:. b) = PI.getPInt a 
+deConstr (PAI.Z PAI.:. a PAI.:. b) = PI.getPInt a
 
 --getPhantom (PInt i p) = p
 -- fromIS PAI.IndexStream a = a
@@ -620,15 +623,15 @@ deConstr (PAI.Z PAI.:. a PAI.:. b) = PI.getPInt a
 makeTransitionIndices n = concatMap makeTransitionSubIndices indexes
   where indexes = [0..n]
 
-makeTransitionSubIndices n = map  (\subI -> ((show (n),show (n+subI)),(PAI.Z PAI.:. (PI.PInt n) PAI.:. subI ))) subIndices
+makeTransitionSubIndices n = map  (\subI -> ((show n,show (n+subI)),PAI.Z PAI.:. (PI.PInt n) PAI.:. subI)) subIndices
   where subIndices = [0..4]
 
-makeArrow (lab1,lab2,weight,_) = connectOutside' arrowStyle1 ("e" ++ lab1) ("a" ++ lab2) 
-  where arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw (local (0.1)) & headLength .~ local 0.01 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
+makeArrow (lab1,lab2,weight,_) = connectOutside' arrowStyle1 ("e" ++ lab1) ("a" ++ lab2)
+  where arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw (local 0.1) & headLength .~ local 0.01 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
 
 makeSelfArrow (lab1,lab2,weight,_) = connectPerim' arrowStyle ("s" ++ lab1) ("z" ++ lab1) (5/12 @@ turn) (8/12 @@ turn)
-  where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw (local (0.1)) & headLength .~ local 0.01  & tailLength .~ 0 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
-        shaft' = wedge 3 xDir (2/4 @@ turn) 
+  where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw (local 0.1) & headLength .~ local 0.01  & tailLength .~ 0 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
+        shaft' = wedge 3 xDir (2/4 @@ turn)
 
 --  where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw (local (0.1)) & headLength .~ local 0.001  & tailLength .~ 0 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
 --        shaft' = arc xDir (-3.5/5 @@ turn) 
@@ -641,7 +644,7 @@ makeLabel (n1,n2,weight,(xOffset,yOffset))=
     let v = location b2 .-. location b1
         midpoint = location b1 .+^ (v ^/ 2)
     in
-      Diagrams.Prelude.atop (position [((midpoint # translateX (negate 0.25 + xOffset) # translateY (0 - 10)), (setTransition ((show (roundPos 2 weight)))))]) --n1 ++ "," ++ n2 ++"," ++
+      Diagrams.Prelude.atop (position [(midpoint # translateX (negate 0.25 + xOffset) # translateY (0 - 10), setTransition ((show (roundPos 2 weight))))]) --n1 ++ "," ++ n2 ++"," ++
 
 makeSelfLabel (n1,n2,weight,(xOffset,yOffset))
   | weight == 0 = mempty
@@ -678,15 +681,15 @@ findMissing :: String -> [CM.CM] -> Maybe CM.CM
 findMissing check models = find (\x -> getCMName x /= check) models
 
 getCMName :: CM.CM -> String
-getCMName x = filter (\c -> c /= ' ')  (T.unpack (CM._name x))
+getCMName x = filter ((/= ' '))  (T.unpack (CM._name x))
 
 checkCMCResultsParsed :: [ParseError] -> IO ()
-checkCMCResultsParsed x 
+checkCMCResultsParsed x
   | null x = print "Parsing comparisons - done\n"
-  | otherwise = error ("Following errors occured:" ++ (concat (map checkCMCResultParsed x)))
+  | otherwise = error ("Following errors occured:" ++ concat (map checkCMCResultParsed x))
 
 checkCMCResultParsed :: ParseError -> String
-checkCMCResultParsed x = (concat (map messageString (errorMessages x)))
+checkCMCResultParsed x = concat (map messageString (errorMessages x))
 --  | (errorIsUnknown x) = print "Parsing comparisons - done\n" 
 --  | x == [] = print "Parsing comparisons - done\n"
 --  | otherwise = (concat (map messageString (errorMessages x)))
@@ -694,7 +697,7 @@ checkCMCResultParsed x = (concat (map messageString (errorMessages x)))
 
 checkSortedModels :: forall a. (Eq a, Show a) => [[a]] -> IO ()
 checkSortedModels x
-  | x == [] = print "Sorting input models to comparison list - done\n" 
+  | null x = print "Sorting input models to comparison list - done\n"
   | otherwise = error ("Following errors occured :" ++ show (concat x))
 
 getComparisonsHighlightParameters :: [CM.CM] -> [CmcompareResult] -> [(Int,Int,Int,Int,Int,Int,Int,Int)]
@@ -726,30 +729,30 @@ highlightComparisonTrail modelDetail (a,b,c,d,e,f,g,h) = connectionTrail (getNod
 
 -- | Returns the center coordinates for an Covariance model guide tree node
 getNodeCoordinates :: String -> Int -> Int -> P2 Double
-getNodeCoordinates modelDetail modelindex nodeindex 
+getNodeCoordinates modelDetail modelindex nodeindex
    | modelDetail == "simple" = p2 (fromIntegral x, fromIntegral y)
    | modelDetail == "flat" = p2 (fromIntegral a, fromIntegral b)
    | otherwise = p2 (fromIntegral x, fromIntegral y)
-      where y = (getYCoordinateDetailed modelindex 0) * (-1)
-            x = (5 + (10 * (nodeindex - 1 )))
-            a = (1 + (2 * (nodeindex - 1 )))
-            b = (getYCoordinateSimple modelindex 0) * (-1)
+      where y = getYCoordinateDetailed modelindex 0 * (-1)
+            x = 5 + (10 * (nodeindex - 1 ))
+            a = 1 + (2 * (nodeindex - 1 ))
+            b = getYCoordinateSimple modelindex 0 * (-1)
 
 
 -- |  Computes the y coodinate for comparison highlighting, so that the
 -- line or area starts at the lower edge of the cm representation and ends right above it
-getYCoordinateDetailed :: Int -> Int -> Int 
+getYCoordinateDetailed :: Int -> Int -> Int
 getYCoordinateDetailed modelindex ycoordinate
-    | modelindex == 0 = ycoordinate 
-    | even modelindex = getYCoordinateDetailed (modelindex - 1) (ycoordinate + 40) 
+    | modelindex == 0 = ycoordinate
+    | even modelindex = getYCoordinateDetailed (modelindex - 1) (ycoordinate + 40)
     | otherwise = getYCoordinateDetailed (modelindex - 1) (ycoordinate + 10)
-    
 
-getYCoordinateSimple :: Int -> Int -> Int 
+
+getYCoordinateSimple :: Int -> Int -> Int
 getYCoordinateSimple modelindex ycoordinate
-    | modelindex == 0 = ycoordinate 
-    | even modelindex = getYCoordinateSimple (modelindex - 1) (ycoordinate + 8) 
-    | otherwise = getYCoordinateSimple (modelindex - 1) (ycoordinate + 2) 
+    | modelindex == 0 = ycoordinate
+    | even modelindex = getYCoordinateSimple (modelindex - 1) (ycoordinate + 8)
+    | otherwise = getYCoordinateSimple (modelindex - 1) (ycoordinate + 2)
 
 connectionLine :: forall b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => Point (V b) (N b) -> Point (V b) (N b) -> b
 connectionLine a b = fromVertices [a,b] # lw 0.5 # lc green
@@ -759,12 +762,12 @@ connectionTrail a b c d = stroke (paralellogram a b c d ) # fc aqua # fillRule E
 
 mkPath :: forall a. (Num (N a), Monoid a, Semigroup a, Additive (V a), HasOrigin a) => (Point (V a) (N a), a) -> (Point (V a) (N a), a) -> (Point (V a) (N a), a) -> (Point (V a) (N a), a) -> a
 mkPath a b c d = position [a,b,c,d,a]
-              
+
 paralellogram :: forall (v :: * -> *) n. (Floating n, Ord n, Metric v) => Point v n -> Point v n -> Point v n -> Point v n -> Path v n
 paralellogram a b c d = pathFromTrailAt (closeTrail (trailFromVertices [a,b,d,c,a])) a
 
 roundPos :: (RealFrac a) => Int -> a -> a
-roundPos positions number  = (fromInteger $ round $ number * (10^positions)) / (10.0^^positions)
+roundPos positions number  = fromInteger (round $ number * (10^positions)) / (10.0^^positions)
 
 bitScore2Double :: Bitscore -> Double
 bitScore2Double (Bitscore x) = x

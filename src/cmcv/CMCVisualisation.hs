@@ -14,7 +14,7 @@ module Main where
 import Bio.CMCompareResult
 import Bio.CMDraw
 import qualified Biobase.SElab.CM as CM
-import Biobase.SElab.CM.Import     
+import Biobase.SElab.CM.Import
 import System.Console.CmdArgs
 import Data.Either
 import qualified Data.Either.Unwrap as E
@@ -24,12 +24,13 @@ import qualified Bio.StockholmParser as SP
 import Paths_cmv (version)
 import Data.Version (showVersion)
 import Data.List (intercalate)
+import Control.Monad
 
 options :: Options
-data Options = Options            
+data Options = Options
   { cmcompareResultFile :: String,
     modelsFile :: String,
-    alignmentFile :: String, 
+    alignmentFile :: String,
     modelDetail :: String,
     modelLayout :: String,
     emissionLayout :: String,
@@ -50,7 +51,7 @@ options = Options
     modelDetail = "detailed" &= name "d" &= help "Set verbosity of drawn models: minimal, simple, detailed",
     modelLayout = "flat" &= name "l" &= help "Set layout of drawn models: flat, tree",
     emissionLayout = "box" &= name "e" &= help "Set layout of drawn models: score, probability, box (Default: box)",
-    alignmentEntries = (50 :: Int) &= name "n" &= help "Set cutoff for included stockholm alignment entries (Default: 50)", 
+    alignmentEntries = (50 :: Int) &= name "n" &= help "Set cutoff for included stockholm alignment entries (Default: 50)",
     maxWidth = (200 :: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)",
     scalingFactor = (2 :: Double) &= name "t" &= help "Set uniform scaling factor for image size (Default: 2)",
     comparisonAlignment = "model" &= name "a" &= help "Set layout of drawn models: model, comparison",
@@ -72,10 +73,10 @@ main = do
        cmcResultParsed <- getCmcompareResults cmcompareResultFile
        let comparisons = rights cmcResultParsed
        alnInput <- SP.readExistingStockholm alignmentFile
-       if (isLeft alnInput) then print (E.fromLeft alnInput) else return ()
+       Control.Monad.when (isLeft alnInput) $ print (E.fromLeft alnInput)
        let outputName = diagramName "cmcv" outputFormat
        let modelNumber = length cms
-       let alns = if (isRight alnInput) then (map (\a -> Just a) (E.fromRight alnInput)) else (replicate modelNumber Nothing)
+       let alns = if isRight alnInput then map (\a -> Just a) (E.fromRight alnInput) else replicate modelNumber Nothing
        let structureVisInputs = secondaryStructureVisualisation secondaryStructureVisTool maxWidth cms alns comparisons
        let currentModelNames = map (T.unpack . CM._name) cms
        currentWD <- getCurrentDirectory
@@ -88,18 +89,18 @@ main = do
        let (modelVis,alignmentVis) = unzip $ drawSingleCMComparisons modelDetail alignmentEntries modelLayout emissionLayout maxWidth scalingFactor cms alns comparisons
        mapM_ (\(a,b) -> printCM a svgsize b) (zip modelFileNames modelVis)
        mapM_ (\(a,b) -> printCM a svgsize b) (zip alignmentFileNames alignmentVis)
-       mapM_ (\(structureFilePath,(structureVis,_)) -> writeFile (structureFilePath) structureVis) (zip structureFilePaths structureVisInputs)
+       mapM_ (\(structureFilePath,(structureVis,_)) -> writeFile structureFilePath structureVis) (zip structureFilePaths structureVisInputs)
        mapM_ (\(structureFilePath,(_,colorScheme)) -> writeFile (structureFilePath ++"Color") colorScheme) (zip structureFilePaths structureVisInputs)
        setCurrentDirectory currentWD
      else do
-       if modelFileExists then return () else putStrLn "Model file not found"
-       if cmcFileExists then return () else putStrLn "Comparison file not found"
+       Control.Monad.unless modelFileExists $ putStrLn "Model file not found"
+       Control.Monad.unless cmcFileExists $ putStrLn "Comparison file not found"
 
 toolVersion :: String
 toolVersion = showVersion version
 
 writeModelNameFile :: Bool -> String -> [String] -> IO ()
-writeModelNameFile toggle outputDirectoryPath modelNames = do
+writeModelNameFile toggle outputDirectoryPath modelNames =
   if toggle
     then do
        let modelNamesString = intercalate "," modelNames
