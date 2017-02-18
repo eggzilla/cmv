@@ -92,7 +92,7 @@ drawCM :: String -> Int -> String -> String -> Double -> Double -> V.Vector (Str
 drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef nameColorVector (cm,aln,comparisonNodeLabels,modelColor)
    | modelLayout == "tree" = ((applyAll ([bg white]) modelTreeLayout),alignmentDiagram)
    | modelLayout == "flat" = ((applyAll ([bg white]) modelFlatLayout),alignmentDiagram)
-   | otherwise = (modelTreeLayout,alignmentDiagram)
+   | otherwise = ((applyAll ([bg white])modelTreeLayout),alignmentDiagram)
    where nodes = CM._nodes cm
          nodeNumber = V.length nodes
          allStates = CM._states cm
@@ -108,9 +108,10 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef na
          --dummyNullModelBitscores = zip dummyLetters nullModelBitscores
          --nullModelBox = vcat (map (emissionEntry "score") dummyNullModelBitscores)
          modelName = CM._name cm
-         modelFlatLayout = alignTL (vcat' with {_sep=5} [modelHeader,detailedNodeTransitions]) # scale scalef
-         modelTreeLayout = alignTL (vcat' with {_sep=5} [modelHeader,detailedNodeTreeTransitions]) #scale scalef
-         detailedNodeTreeTransitions = applyAll (arrowList ++ labelList) detailedNodesTree
+         modelFlatLayout = alignTL (vcat' with {_sep=0} [modelHeader,detailedNodeTransitions]) # scale scalef
+         modelTreeLayout = alignTL (vcat' with {_sep=0} [modelHeader,detailedNodeTreeTransitions]) #scale scalef
+         detailedNodeTreeTransitions = applyAll (arrowList ) detailedNodesTree
+         --detailedNodeTreeTransitions = applyAll (arrowList ++ labelList) detailedNodesTree
          firstInterval = fromJust (find (\(_,p,_,_,_) -> p == 0) (fst indexStructure))
          detailedNodesTree = drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes (fst indexStructure) firstInterval
          modelHeader = makeModelHeader (T.unpack modelName) modelColor nameColorVector
@@ -353,7 +354,7 @@ drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength rowStart r
         intervalIdString = show intervalId
         nodeVis = vcat' with { _sep = nodespacer } (map (drawCMNode modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes) currentInterval)
         currentInterval = [currentIndex..currentEnd]
-        nodespacer = if modelDetail == "detailed" then (2 :: Double) else (0 :: Double)
+        nodespacer = if modelDetail == "detailed" then (0 :: Double) else (0 :: Double)
 
 getCMNodeType :: CM.Node -> String
 getCMNodeType node
@@ -391,8 +392,8 @@ labelToColor _ = sRGB24 245 245 245
 
 drawCMNode :: String -> String -> String -> Int -> Int -> Int -> Int -> CM.States -> V.Vector (Int, V.Vector (Colour Double)) -> V.Vector CM.Node -> Int -> QDiagram Cairo V2 Double Any
 drawCMNode modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes nodeIndex
-  | modelDetail == "minimal" = alignedText 0 0 nId # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nId))/2)), negate 1.25)) <> wheel nodeLabels # lw 0.1 <> rect 1.5 3 # lw 0.1
-  | modelDetail == "simple" = rect 20 5 # lw 0.5 <>  ((text' nId # translate (r2 (negate 7,0)) <> colourBoxes # translate (r2 (negate 7,0))) ||| text' nodeType # translate (r2 (14,0)))
+  | modelDetail == "minimal" = rect 5 5 # lw 0.1 # lc black <> alignedText 0 0 nId # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nId))/2)), negate 1.25)) <> wheel nodeLabels # lw 0.1 # lc black  
+  | modelDetail == "simple" = rect 20 5 # lw 0.5 # lc black <>  ((text' nId # translate (r2 (negate 7,0)) <> colourBoxes # translate (r2 (negate 7,0))) ||| text' nodeType # translate (r2 (14,0)))
   | otherwise = detailedNodeBox
   where node = nodes V.! nodeIndex
         idNumber = PI.getPInt (CM._nid node)
