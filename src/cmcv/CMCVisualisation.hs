@@ -49,7 +49,7 @@ options = Options
     modelsFile = def &= name "m" &= help "Path to covariance model file",
     alignmentFile = "" &= name "s" &= help "Path to stockholm alignment file",
     modelDetail = "detailed" &= name "d" &= help "Set verbosity of drawn models: minimal, simple, detailed",
-    modelLayout = "flat" &= name "l" &= help "Set layout of drawn models: flat, tree",
+    modelLayout = "tree" &= name "l" &= help "Set layout of drawn models: flat, tree",
     emissionLayout = "box" &= name "e" &= help "Set layout of drawn models: score, probability, box (Default: box)",
     alignmentEntries = (50 :: Int) &= name "n" &= help "Set cutoff for included stockholm alignment entries (Default: 50)",
     maxWidth = (200 :: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)",
@@ -59,7 +59,7 @@ options = Options
     outputDirectoryPath = "" &= name "p" &= help "Output directory path (Default: none)",
     secondaryStructureVisTool = "" &= name "x" &= help "Select tool for secondary structure visualisation: forna, r2r (Default: none)",
     modelNameToggle = False  &= name "b" &= help "Write all comma separted model names to modelNames file (Default: False)"
-  } &= summary ("cmcv " ++ toolVersion) &= help "Florian Eggenhofer - 2013-2016" &= verbosity
+  } &= summary ("cmcv " ++ toolVersion) &= help "Florian Eggenhofer - 2013-2017" &= verbosity
 
 main :: IO ()
 main = do
