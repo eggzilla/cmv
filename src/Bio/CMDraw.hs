@@ -108,15 +108,15 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef na
          --dummyNullModelBitscores = zip dummyLetters nullModelBitscores
          --nullModelBox = vcat (map (emissionEntry "score") dummyNullModelBitscores)
          modelName = CM._name cm
-         modelFlatLayout = alignTL (vcat' with {_sep=0} [modelHeader,nodeTransitions]) # scale scalef
-         modelTreeLayout = alignTL (vcat' with {_sep=0} [modelHeader,nodeTreeTransitions]) #scale scalef
+         modelFlatLayout = alignTL (vcat' with {_sep=0.1} [modelHeader,nodeTransitions]) # scale scalef
+         modelTreeLayout = alignTL (vcat' with {_sep=0.1} [modelHeader,nodeTreeTransitions]) #scale scalef
          nodeTreeTransitions = applyAll (arrowList ++ labelList) nodesTree
          nodeTransitions = applyAll (arrowList ++ labelList) nodesFlat
          firstInterval = fromJust (find (\(_,p,_,_,_) -> p == 0) (fst indexStructure))
          nodesTree = drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes (fst indexStructure) firstInterval
          modelHeader = makeModelHeader (T.unpack modelName) modelColor nameColorVector
          nodeIndices = V.iterateN nodeNumber (1+) 0
-         nodesFlat = vcat (V.toList (V.map (drawCMNode modelDetail alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) nodeIndices))
+         nodesFlat = vcat' with {_sep=0.01} (V.toList (V.map (drawCMNode modelDetail alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) nodeIndices))
          trans = CM._sTransitions (CM._states cm)
          (lo,up) = PA.bounds trans
          (transitionIndexTuple,transitionPAIndices) = unzip $ makeTransitionIndices (deConstr up)
