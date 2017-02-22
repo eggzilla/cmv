@@ -127,8 +127,8 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef na
          arrowList = case modelDetail of
                           "detailed" -> V.toList (V.map makeArrow connectedStates V.++ V.map makeSelfArrow selfConnectedStates)
                           "interval"-> map (makeArrow . indexStructureToConnections) (filter (\(acc,emit,_,_,_)-> acc /= emit)(fst indexStructure))
-                          --"minimal"-> V.toList (V.map makeArrow connectedStates V.++ V.map makeSelfArrow selfConnectedStates)
-                          "simple"-> V.toList (V.map makeArrow connectedStates) -- (V.singleton ("12","2",1,(0,0))))
+                          "minimal"-> V.toList (V.map makeArrow connectedStates)
+                          "simple"-> V.toList (V.map makeArrow connectedStates)
                           _ -> []
          labelList = case modelDetail of
                           "detailed" -> V.toList (V.map makeLabel connectedStates V.++ V.map makeSelfLabel selfConnectedStates)
@@ -393,9 +393,8 @@ labelToColor _ = sRGB24 245 245 245
 
 drawCMNode :: String -> String -> String -> Int -> Int -> Int -> Int -> CM.States -> V.Vector (Int, V.Vector (Colour Double)) -> V.Vector CM.Node -> Int -> QDiagram Cairo V2 Double Any
 drawCMNode modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes nodeIndex
-  | modelDetail == "minimal" = rect 5 5 # lw 0.1 # lc black <> alignedText 0 0 nId # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nId))/2)), negate 1.25)) <> wheel 2 nodeLabels # lw 0.1 # lc black
+  | modelDetail == "minimal" = drawCMMinimalNodeBox alphabetSymbols emissiontype boxlength states comparisonNodeLabels node
   | modelDetail == "simple" = drawCMSimpleNodeBox alphabetSymbols emissiontype boxlength states comparisonNodeLabels node
-  -- | modelDetail == "simple" = rect 10 5 # lw 0.1 # lc black <>  ((text' nId # translate (r2 (negate 7.5,0)) <> colourBoxes # translate (r2 (negate 7.5,0))) ||| text' nodeType # translate (r2 (14,0)))
   | otherwise = detailedNodeBox
   where node = nodes V.! nodeIndex
         idNumber = PI.getPInt (CM._nid node)
@@ -410,6 +409,25 @@ drawCMNode modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd la
 
 colorBox :: Double -> Colour Double -> QDiagram Cairo V2 Double Any
 colorBox singleBoxYLength colColour = rect 5 singleBoxYLength # fc colColour # lw 0.1
+
+drawCMMinimalNodeBox :: String -> String -> Int -> CM.States -> V.Vector (Int, V.Vector (Colour Double)) -> CM.Node -> QDiagram Cairo V2 Double Any
+drawCMMinimalNodeBox alphabetSymbols emissiontype boxlength currentStates comparisonNodeLabels node
+  | ntype == CM.NodeType 0 = minimalNode === splitStatesBox -- bifNode 
+  | ntype == CM.NodeType 4 = splitStatesBox === minimalNode -- begLNode 
+  | ntype == CM.NodeType 5 = splitStatesBox === minimalNode -- begRNode 
+  | otherwise = minimalNode
+    where ntype = CM._ntype node
+          idNumber = PI.getPInt (CM._nid node)
+          nId = show idNumber
+          stateIndices = VU.toList (CM._nstates node)
+          minimalNode = rect 5 5 # lw 0.1 # lc black <> alignedText 0 0 nId # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nId))/2)), negate 1.25)) <> wheel 2 nodeLabels # lw 0.1 # lc black
+          splitStatesBox = hcat (map (drawCMSimpleStateBox nId alphabetSymbols emissiontype boxlength currentStates) stateIndices)
+          nodeType = getCMNodeType node
+          nodeLabels = V.toList (snd (comparisonNodeLabels V.! idNumber))
+          boxNumber = fromIntegral $ length nodeLabels
+          totalBoxYlength = 5 
+          singleBoxYLength = totalBoxYlength / boxNumber
+          colourBoxes = vcat (map (colorBox singleBoxYLength) nodeLabels)
 
 drawCMSimpleNodeBox :: String -> String -> Int -> CM.States -> V.Vector (Int, V.Vector (Colour Double)) -> CM.Node -> QDiagram Cairo V2 Double Any
 drawCMSimpleNodeBox alphabetSymbols emissiontype boxlength currentStates comparisonNodeLabels node
