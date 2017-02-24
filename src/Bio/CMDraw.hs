@@ -420,7 +420,7 @@ drawCMMinimalNodeBox alphabetSymbols emissiontype boxlength currentStates compar
           idNumber = PI.getPInt (CM._nid node)
           nId = show idNumber
           stateIndices = VU.toList (CM._nstates node)
-          minimalNode = rect 5 5 # lw 0.1 # lc black <> alignedText 0 0 nId # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nId))/2)), negate 1.25)) <> wheel 2 nodeLabels # lw 0.1 # lc black
+          minimalNode = rect 5 5 # lw 0.1 # lc black <> text' nId # fontSize 2  <> wheel 2 nodeLabels # lw 0.1 # lc black
           splitStatesBox = hcat (map (drawCMSimpleStateBox nId alphabetSymbols emissiontype boxlength currentStates) stateIndices)
           nodeType = getCMNodeType node
           nodeLabels = V.toList (snd (comparisonNodeLabels V.! idNumber))
