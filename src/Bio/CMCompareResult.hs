@@ -22,7 +22,6 @@ module Bio.CMCompareResult
 import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Token
 import Text.ParserCombinators.Parsec.Language (emptyDef)
-import Control.Monad
 
 -- | Datastructure for result strings of comparisons between covariance models by CMCompare
 data CmcompareResult = CmcompareResult
