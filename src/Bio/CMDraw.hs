@@ -169,7 +169,7 @@ buildFornaInput (inputCM,maybeAln,comparisonNodeLabels)
         gapfreeConsensusSequence = map C.toUpper (filter (not . isGap) consensusSequence)
         consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
         consensusStructure = if null consensusStructureList then "" else extractGapfreeStructure consensusSequence (T.unpack (head consensusStructureList))
-        modelName = CM._name inputCM
+        modelName = T.unpack (CM._name inputCM)
         nodeAlignmentColIndices = V.map CM._nodeColL nodes
         maxEntryLength = length consensusStructure
         colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabels
@@ -413,7 +413,7 @@ drawCMMinimalNodeBox alphabetSymbols emissiontype boxlength currentStates compar
           --idNumber = PI.getPInt (CM._nid node)
           idNumber = nodeIndex
           nId = show idNumber
-          stateIndices = VU.toList (CM._nodeStates node)
+          stateIndices = V.toList (CM._nodeStates node)
           minimalNode = rect 5 5 # lw 0.1 # lc black <> text' nId # fontSize 2  <> wheel 2 nodeLabels # lw 0.1 # lc black
           splitStatesBox = hcat (map (drawCMSimpleStateBox nId alphabetSymbols emissiontype boxlength currentStates) stateIndices)
           nodeType = getCMNodeType node
@@ -433,7 +433,7 @@ drawCMSimpleNodeBox alphabetSymbols emissiontype boxlength currentStates compari
           --idNumber = PI.getPInt (CM._nid node)
           idNumber = nodeIndex 
           nId = show idNumber
-          stateIndices = VU.toList (CM._nodeStates node)
+          stateIndices = V.toList (CM._nodeStates node)
           simpleNode = rect 10 5 # lw 0.1 # lc black <>  ((text' nId # translate (r2 (negate 7.5,0)) <> colourBoxes # translate (r2 (negate 7.5,0))) ||| text' nodeType # translate (r2 (14,0)))
           splitStatesBox = hcat (map (drawCMSimpleStateBox nId alphabetSymbols emissiontype boxlength currentStates) stateIndices)
           nodeType = getCMNodeType node
@@ -470,7 +470,7 @@ drawCMDetailedNodeBox alphabetSymbols emissiontype boxlength currentStates compa
           idNumber = nodeIndex
           nId = show idNumber
           nodeLabels = V.toList (snd (comparisonNodeLabels V.! idNumber))
-          stateIndices = VU.toList (CM._nodeStates node)
+          stateIndices = V.toList (CM._nodeStates node)
           splitStatesBox = hcat' with { _sep = 0.01 } (map (drawCMSplitStateBox nId alphabetSymbols emissiontype boxlength currentStates) stateIndices)
           insertStatesBox = hcat (map (drawCMInsertStateBox nId alphabetSymbols emissiontype boxlength currentStates) stateIndices)
           -- bif b
@@ -522,11 +522,11 @@ drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIn
           --singleEmissionBitscores = V.map (CM._stateEmissions currentState PA.!) (makeSingleEmissionIndices sIndex)
           singleEmissionBitscores = CM._stateEmissions currentState
           singleEmissionEntries = setEmissions emissiontype 4 singleEmissionBitscores
-          singleSymbolsAndEmissions = zip ["A","U","G","C"] (V.toList singleEmissionEntries)
+          singleSymbolsAndEmissions = zip ["A","U","G","C"] (VU.toList singleEmissionEntries)
           --pairEmissionBitscores = V.map  ((CM._stateEmissions currentState) PA.!) (makePairEmissionIndices sIndex)
           pairEmissionBitscores = CM._stateEmissions currentState
           pairEmissionEntries = setEmissions emissiontype 16 pairEmissionBitscores
-          pairSymbolsAndEmissions = zip ["AA","AU","AG","AC","UU","UA","UG","UC","GG","GA","GU","GC","CC","CA","CU","CG"] (V.toList pairEmissionEntries)
+          pairSymbolsAndEmissions = zip ["AA","AU","AG","AC","UU","UA","UG","UC","GG","GA","GU","GC","CC","CA","CU","CG"] (VU.toList pairEmissionEntries)
           pairSymbolsAndEmissions1 = take 8 pairSymbolsAndEmissions
           pairSymbolsAndEmissions2 = drop 8 pairSymbolsAndEmissions
           dState = setState ("D" ++ stateIndx) (negate 0.5) (negate 1)  === strutY 1 
@@ -549,19 +549,19 @@ drawCMInsertStateBox nid alphabetSymbols emissiontype boxlength currentStates sI
           --singleEmissionBitscores = V.map ((CM._stateEmissions currentStates) PA.!) (makeSingleEmissionIndices sIndex)
           singleEmissionBitscores = CM._stateEmissions currentState
           singleEmissionEntries = setEmissions emissiontype 4 singleEmissionBitscores
-          singleSymbolsAndEmissions = zip ["A","U","G","C"] (V.toList singleEmissionEntries)
+          singleSymbolsAndEmissions = zip ["A","U","G","C"] (VU.toList singleEmissionEntries)
           ilState = setState ("IL" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions)
           irState = setState ("IR" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions)
 
-setEmissions :: String -> Double -> V.Vector Bitscore -> V.Vector Double
+setEmissions :: String -> Double -> VU.Vector Bitscore -> VU.Vector Double
 setEmissions emissiontype normalizationFactor emissions
   | emissiontype == "score" = scoreentries
   | emissiontype == "probability" = propentries
   | emissiontype == "bar" = barentries
   | otherwise = barentries
-    where scoreentries = V.map bitScore2Double emissions
-          propentries = V.map ((/normalizationFactor) . score2Prob 1) emissions
-          barentries = V.map ((/normalizationFactor) . score2Prob 1) emissions
+    where scoreentries = VU.map bitScore2Double emissions
+          propentries = VU.map ((/normalizationFactor) . score2Prob 1) emissions
+          barentries = VU.map ((/normalizationFactor) . score2Prob 1) emissions
 
 wrap :: a -> [a]
 wrap x = [x]
