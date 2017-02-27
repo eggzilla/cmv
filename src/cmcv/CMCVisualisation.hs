@@ -14,7 +14,7 @@ module Main where
 import Bio.CMCompareResult
 import Bio.CMDraw
 import qualified Biobase.SElab.CM as CM
-import Biobase.SElab.CM.Import
+import Biobase.SElab.CM.Import (cmFromFile)
 import System.Console.CmdArgs
 import Data.Either
 import qualified Data.Either.Unwrap as E
@@ -69,7 +69,7 @@ main = do
   cmcFileExists <- doesFileExist cmcompareResultFile
   if modelFileExists && cmcFileExists
      then do
-       cms <- fromFile modelsFile
+       cms <- cmFromFile modelsFile
        cmcResultParsed <- getCmcompareResults cmcompareResultFile
        let comparisons = rights cmcResultParsed
        alnInput <- SP.readExistingStockholm alignmentFile

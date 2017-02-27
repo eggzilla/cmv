@@ -13,7 +13,7 @@ module Main where
 
 import Bio.CMDraw
 import qualified Biobase.SElab.CM as CM
-import Biobase.SElab.CM.Import
+import Biobase.SElab.CM.Import (cmFromFile)
 import System.Console.CmdArgs
 import System.Directory
 import Data.Either.Unwrap
@@ -62,7 +62,7 @@ main = do
   --alnFileExists <- doesFileExist alignmentFile
   if modelFileExists
     then do
-      cms <- fromFile modelFile
+      cms <- cmFromFile modelFile
       if not (null cms)
         then do
           alnInput <- SP.readExistingStockholm alignmentFile

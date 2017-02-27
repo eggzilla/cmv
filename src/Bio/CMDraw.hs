@@ -14,9 +14,9 @@ module Bio.CMDraw
      svgsize,
      diagramName,
      printCM,
-     processCMs,
-     processCMGuideTree,
-     getNodeInfo,
+--     processCMs,
+--     processCMGuideTree,
+--     getNodeInfo,
      sortModelsByComparisonResults,
      findModelError,
      findModel,
@@ -123,10 +123,11 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef na
          --(lo,up) = PA.bounds trans
          --(transitionIndexTuple,transitionPAIndices) = unzip $ makeTransitionIndices (deConstr up)
          --transitionBitscores = map ((\(a,b) ->(show (PI.getPInt a),score2Prob 1 b)) . (trans PA.!)) transitionPAIndices
-         trans = V.map CM._stateTransitions allStates
-         (transitionIndexTuple,transitionPAIndices) = unzip $ makeTransitionIndices (deConstr up)
-         transitionBitscores = map ((\(a,b) ->(show (PI.getPInt a),score2Prob 1 b)) . (trans PA.!)) transitionPAIndices
-         allConnectedStates = V.map (\((stateId,targetId),(targetStateIndex,bitS)) -> (stateId,targetStateIndex,bitS,(0,0))) (V.fromList (zip transitionIndexTuple transitionBitscores))
+         allConnectedStates = makeAllConnectedStates allStates
+         --trans = CM._stateTransitions allStates
+         --(transitionIndexTuple,transitionPAIndices) = unzip $ makeTransitionIndices (deConstr up)
+         --transitionBitscores = map ((\(a,b) ->(show (PI.getPInt a),score2Prob 1 b)) . (trans PA.!)) transitionPAIndices
+        -- allConnectedStates = V.map (\((stateId,targetId),(targetStateIndex,bitS)) -> (stateId,targetStateIndex,bitS,(0,0))) (V.fromList (zip transitionIndexTuple transitionBitscores))
          connectedStates = V.filter (\(stateId,targetStateIndex,_,_) -> stateId /= targetStateIndex) allConnectedStates
          selfConnectedStates = V.filter (\(stateId,targetStateIndex,_,_) -> stateId == targetStateIndex) allConnectedStates
          arrowList = case modelDetail of
@@ -139,6 +140,24 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef na
                           "detailed" -> V.toList (V.map makeLabel connectedStates V.++ V.map makeSelfLabel selfConnectedStates)
                           _ -> []
          alignmentDiagram = maybe mempty (drawStockholmLines entryNumberCutoff maxWidth nodeAlignmentColIndices comparisonNodeLabels) aln
+
+makeAllConnectedStates :: M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (String,String,Double,(Double,Int))
+makeAllConnectedStates allStates = allConnectedStates
+  where indexStateTuples = M.assocs allStates
+        allConnectedStates = V.fromList (concatMap makeStateConnections indexStateTuples)
+  
+  --trans = CM._stateTransitions allStates
+  --(transitionIndexTuple,transitionPAIndices) = unzip $ makeTransitionIndices (deConstr up)
+  --transitionBitscores = map ((\(a,b) ->(show (PI.getPInt a),score2Prob 1 b)) . (trans PA.!)) transitionPAIndices
+  -- allConnectedStates = V.map (\((stateId,targetId),(targetStateIndex,bitS)) -> (stateId,targetStateIndex,bitS,(0,0))) (V.fromList (zip transitionIndexTuple transitionBitscores))
+
+makeStateConnections :: (PI.PInt () CM.StateIndex,CM.State) -> [(String,String,Double,(Double,Int))]
+makeStateConnections (pInt,currentState) = conns
+  where stateId = show (PI.getPInt pInt)
+        targetBitscoreVector = VU.toList (CM._stateTransitions currentState)
+        conns = map (\(target,bitscore) ->  (stateId,show(PI.getPInt target),score2Prob 1 bitscore,(0,0))) targetBitscoreVector
+--constructConnection :: 
+--constructConnection 
 
 -- | Extracts consensus secondary structure from alignment and annotates cmcompare nodes
 secondaryStructureVisualisation :: String -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [CmcompareResult] -> [(String,String)]
