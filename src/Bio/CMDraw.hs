@@ -14,9 +14,6 @@ module Bio.CMDraw
      svgsize,
      diagramName,
      printCM,
---     processCMs,
---     processCMGuideTree,
---     getNodeInfo,
      sortModelsByComparisonResults,
      findModelError,
      findModel,
@@ -41,28 +38,25 @@ module Bio.CMDraw
 import Diagrams.Prelude
 import Data.Typeable.Internal
 import Bio.CMCompareResult
---import qualified Biobase.SElab.CM as CM
 import Data.List
 import Text.Parsec.Error
 import qualified Data.Text as T
 import qualified Data.Vector as V
 import Bio.StockholmData
 import Bio.StockholmDraw
-import qualified Diagrams.Backend.Cairo as C
+--import qualified Diagrams.Backend.Cairo as C
 import Diagrams.Backend.Cairo
 import qualified Data.Vector.Unboxed as VU
 import qualified Data.PrimitiveArray.Index.PhantomInt as PI
-import qualified Data.PrimitiveArray.Class as PA
---import Biobase.SElab.Bitscore (Bitscore(..), score2Prob)
+--import qualified Data.PrimitiveArray.Class as PA
 import Biobase.Types.Bitscore (Bitscore(..), score2Prob)
 import Biobase.Primary.Nuc.RNA
 import qualified Data.PrimitiveArray.Index.Class as PAI
 import Text.Printf
---import Biobase.SElab.Types
-import Data.Colour
+--import Data.Colour
 import qualified Data.Colour.SRGB.Linear as R
 import Data.Maybe
-import GHC.Float
+--import GHC.Float
 import Control.Monad.State
 import qualified Data.Char as C
 import Graphics.SVGFonts
@@ -82,7 +76,7 @@ drawSingleCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype m
         colorVector = makeColorVector modelNumber
         modelNames =  V.fromList (map (T.unpack . CM._name) cms)
         nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
-        comparisonsHighlightParameter = getComparisonsHighlightParameters cms comparisons
+        --comparisonsHighlightParameter = getComparisonsHighlightParameters cms comparisons
 
 -- | Draw one or more CM
 drawSingleCMs :: String -> Int -> String -> String -> Double -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [(QDiagram Cairo V2 Double Any,QDiagram Cairo V2 Double Any)]
@@ -99,8 +93,6 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef na
    | modelLayout == "flat" = ((applyAll ([bg white]) modelFlatLayout),alignmentDiagram)
    | otherwise = ((applyAll ([bg white])modelTreeLayout),alignmentDiagram)
    where cm = fromLeft (CM._cm inputCM) -- select Flexible Model
-         --mdl = c ^. inputCM
-         --cm = either CM.flexibleToStatic id cmFlex
          nodes = V.fromList (M.elems (CM._fmNodes cm))
          nodeNumber = V.length nodes
          allStates = CM._fmStates cm
@@ -108,7 +100,7 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef na
          alphabetSymbols = ['A','U','C','G']
          nodeAlignmentColIndices = V.map CM._nodeColL nodes
          indices = V.toList (V.iterateN (nodeNumber-1) (1+) 0)
-         (indexStructure,finalState)= runState (buildTreeIndexStructure 1 nodes indices) startState
+         (indexStructure,_)= runState (buildTreeIndexStructure 1 nodes indices) startState
          modelName = CM._name inputCM
          modelFlatLayout = alignTL (vcat' with {_sep=0.1} [modelHeader,nodeTransitions]) # scale scalef
          modelTreeLayout = alignTL (vcat' with {_sep=0.1} [modelHeader,nodeTreeTransitions]) #scale scalef
@@ -119,15 +111,7 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef na
          modelHeader = makeModelHeader (T.unpack modelName) modelColor nameColorVector
          nodeIndices = V.iterateN nodeNumber (1+) 0
          nodesFlat = vcat' with {_sep=0.01} (V.toList (V.map (drawCMNode modelDetail alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) nodeIndices))
-         --trans = CM._stateTransitions allStates
-         --(lo,up) = PA.bounds trans
-         --(transitionIndexTuple,transitionPAIndices) = unzip $ makeTransitionIndices (deConstr up)
-         --transitionBitscores = map ((\(a,b) ->(show (PI.getPInt a),score2Prob 1 b)) . (trans PA.!)) transitionPAIndices
          allConnectedStates = makeAllConnectedStates allStates
-         --trans = CM._stateTransitions allStates
-         --(transitionIndexTuple,transitionPAIndices) = unzip $ makeTransitionIndices (deConstr up)
-         --transitionBitscores = map ((\(a,b) ->(show (PI.getPInt a),score2Prob 1 b)) . (trans PA.!)) transitionPAIndices
-        -- allConnectedStates = V.map (\((stateId,targetId),(targetStateIndex,bitS)) -> (stateId,targetStateIndex,bitS,(0,0))) (V.fromList (zip transitionIndexTuple transitionBitscores))
          connectedStates = V.filter (\(stateId,targetStateIndex,_,_) -> stateId /= targetStateIndex) allConnectedStates
          selfConnectedStates = V.filter (\(stateId,targetStateIndex,_,_) -> stateId == targetStateIndex) allConnectedStates
          arrowList = case modelDetail of
@@ -146,22 +130,15 @@ makeAllConnectedStates allStates = allConnectedStates
   where indexStateTuples = M.assocs allStates
         allConnectedStates = V.fromList (concatMap makeStateConnections indexStateTuples)
   
-  --trans = CM._stateTransitions allStates
-  --(transitionIndexTuple,transitionPAIndices) = unzip $ makeTransitionIndices (deConstr up)
-  --transitionBitscores = map ((\(a,b) ->(show (PI.getPInt a),score2Prob 1 b)) . (trans PA.!)) transitionPAIndices
-  -- allConnectedStates = V.map (\((stateId,targetId),(targetStateIndex,bitS)) -> (stateId,targetStateIndex,bitS,(0,0))) (V.fromList (zip transitionIndexTuple transitionBitscores))
-
 makeStateConnections :: (PI.PInt () CM.StateIndex,CM.State) -> [(String,String,Double,(Double,Int))]
 makeStateConnections (pInt,currentState) = conns
   where stateId = show (PI.getPInt pInt)
         targetBitscoreVector = VU.toList (CM._stateTransitions currentState)
         conns = map (\(target,bitscore) ->  (stateId,show(PI.getPInt target),score2Prob 1 bitscore,(0,0))) targetBitscoreVector
---constructConnection :: 
---constructConnection 
-
+        
 -- | Extracts consensus secondary structure from alignment and annotates cmcompare nodes
 secondaryStructureVisualisation :: String -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [CmcompareResult] -> [(String,String)]
-secondaryStructureVisualisation selectedTool maxWidth cms alns comparisons
+secondaryStructureVisualisation selectedTool _ cms alns comparisons
   | selectedTool == "forna" = fornaVis
   | selectedTool == "r2r" = r2rVis
   | otherwise = []
@@ -218,7 +195,7 @@ buildR2RInput (inputCM,maybeAln,comparisonNodeLabels)
         gapfreeConsensusSequence = map C.toUpper (filter (not . isGap) consensusSequence)
         consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
         consensusStructure = if null consensusStructureList then "" else extractGapfreeStructure consensusSequence (T.unpack (head consensusStructureList))
-        modelName = CM._name inputCM
+        --modelName = CM._name inputCM
         nodeAlignmentColIndices = V.map CM._nodeColL nodes
         maxEntryLength = length consensusStructure
         colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabels
@@ -234,13 +211,13 @@ buildR2RInput (inputCM,maybeAln,comparisonNodeLabels)
         sBackboneColorLabel =     "#=GF R2R shade_along_backbone s rgb:200,0,0\n"
 
 comparisonColLabelsToR2RLabel :: (Int, V.Vector (Colour Double)) -> Char
-comparisonColLabelsToR2RLabel (nodeNr,colorVector)
+comparisonColLabelsToR2RLabel (_,colorVector)
   | V.null colorVector = '.'
   | V.head colorVector /= white = 's'
   | otherwise = '.'
 
 nodeToColIndices :: (Int,(Int,V.Vector (Colour Double))) -> (Int,V.Vector (Colour Double))
-nodeToColIndices (colIndex,(nodeIndex,colors)) = (colIndex,colors)
+nodeToColIndices (colIndex,(_,colors)) = (colIndex,colors)
 
 fillComparisonColLabels :: Int -> V.Vector (Int, V.Vector (Colour Double)) ->  V.Vector (Int, V.Vector (Colour Double))
 fillComparisonColLabels maxEntryLength sparseComparisonColLabels = fullComparisonColLabels
@@ -248,17 +225,17 @@ fillComparisonColLabels maxEntryLength sparseComparisonColLabels = fullCompariso
 
 makeFullComparisonColLabel :: V.Vector (Int, V.Vector (Colour Double)) -> Int -> (Int, V.Vector (Colour Double))
 makeFullComparisonColLabel sparseComparisonColLabels colIndex = fullComparisonColLabel
-  where availableLabel = V.find (\(a,c)-> colIndex == a) sparseComparisonColLabels
+  where availableLabel = V.find (\(a,_)-> colIndex == a) sparseComparisonColLabels
         fullComparisonColLabel = fromMaybe (colIndex,V.singleton white) availableLabel
 
 indexStructureToConnections :: (Int, Int, String, Int, Int) -> (String,String,Double,(Double,Double))
 indexStructureToConnections (acc,emit,_,_,_) = (show emit,show acc,1,(0,0))
 
-indexStructureRow :: (Int, Int, String, Int, Int) -> (Int, Int, String, Int, Int) -> Bool
-indexStructureRow (row1,_,_,_,_)  (row2,_,_,_,_) = row1 == row2
+--indexStructureRow :: (Int, Int, String, Int, Int) -> (Int, Int, String, Int, Int) -> Bool
+--indexStructureRow (row1,_,_,_,_)  (row2,_,_,_,_) = row1 == row2
 
-indexStructureParent ::  (Int, Int, String, Int, Int) -> (Int, Int, String, Int, Int) -> Bool
-indexStructureParent (_,p1,_,_,_)  (_,p2,_,_,_) = p1 == p2
+--indexStructureParent ::  (Int, Int, String, Int, Int) -> (Int, Int, String, Int, Int) -> Bool
+--indexStructureParent (_,p1,_,_,_)  (_,p2,_,_,_) = p1 == p2
 
 data NodeIndices = S [Int] | L [Int] | R [Int]
   deriving (Show, Eq, Ord)
@@ -267,24 +244,24 @@ startState :: ([(Int,Int,String,Int,Int)],Int)
 startState = ([],0::Int)
 
 buildRowIndexStructure :: Int -> V.Vector CM.Node -> [Int] -> State ([(Int,Int,String,Int,Int)],Int) ([(Int,Int,String,Int,Int)],Int)
-buildRowIndexStructure row nodes [] = do
+buildRowIndexStructure _ _ [] = do
   (a,b) <- get
   return (a,b)
 buildRowIndexStructure row nodes (currentIndex:xs) = do
-  (interval,parentId) <- get
+  (currentInterval,parentId) <- get
   let currentNode = nodes V.! currentIndex
   let currentEnd = getIndexEnd nodes (currentIndex:xs)
   let ntype = CM._nodeType currentNode
   case ntype of
-    CM.Root -> put ((row,parentId,"S,",currentIndex,currentEnd):interval,parentId) -- ROOT start tree             
-    CM.BegL -> put ((row,parentId,"L,",currentIndex,currentEnd):interval,parentId) --(L [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices) -- BEGL set current label
-    CM.BegR -> put ((row,parentId,"R,",currentIndex,currentEnd):interval,parentId) -- (R [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices)  -- BEGR set current label
-    CM.Root -> put (interval,parentId+1)
-    _ -> put (interval,parentId)
+    CM.Root -> put ((row,parentId,"S,",currentIndex,currentEnd):currentInterval,parentId) -- ROOT start tree             
+    CM.BegL -> put ((row,parentId,"L,",currentIndex,currentEnd):currentInterval,parentId) --(L [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices) -- BEGL set current label
+    CM.BegR -> put ((row,parentId,"R,",currentIndex,currentEnd):currentInterval,parentId) -- (R [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices)  -- BEGR set current label
+    CM.Root -> put (currentInterval,parentId+1)
+    _ -> put (currentInterval,parentId)
   buildRowIndexStructure row nodes xs
 
 buildTreeIndexStructure :: Int -> V.Vector CM.Node -> [Int] -> State ([(Int,Int,String,Int,Int)],Int) ([(Int,Int,String,Int,Int)],Int)
-buildTreeIndexStructure row nodes [] = do
+buildTreeIndexStructure _ _ [] = do
   (a,b) <- get
   return (a,b)
 buildTreeIndexStructure intervalId nodes (currentIndex:xs) = do
@@ -338,15 +315,22 @@ makeModelLegend nameColorVector
         boxX = maxNameLength * 6
         boxY = entryNumber * 15
 
+makeLegendEntry :: (String,Colour Double) -> QDiagram Cairo V2 Double Any
 makeLegendEntry (mName,mColor) = setLegendLabel mName ||| strutX 0.5 ||| rect 4 4 # lw 0.1 # fc mColor # translate (r2 (negate 0, 2))
 
-setEmissionText t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 1 1) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.5, negate 0.5))
+setLabel :: String -> QDiagram Cairo V2 Double Any
 setLabel t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 2 2) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.25))
+setTransition :: String -> QDiagram Cairo V2 Double Any
 setTransition t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 2 2) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))   # rotate (1/4 @@ turn)
+setState :: String -> Double -> Double -> QDiagram Cairo V2 Double Any
 setState t x y = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 3 3) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (x, y))
+setNodeNumber :: String -> QDiagram Cairo V2 Double Any
 setNodeNumber t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 5 5) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 2, 0))
+setNodeLabel :: String -> QDiagram Cairo V2 Double Any
 setNodeLabel t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 6 6) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 2, 0))
+setLegendLabel :: String -> QDiagram Cairo V2 Double Any
 setLegendLabel t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 10 10) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
+setModelName :: String -> QDiagram Cairo V2 Double Any
 setModelName t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 20 20) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
 
 drawCMNodeTree :: String -> String -> String -> Int -> M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (Int, V.Vector (Colour Double))-> V.Vector CM.Node -> [(Int, Int, String, Int, Int)] -> (Int,Int,String,Int,Int) -> QDiagram Cairo V2 Double Any
@@ -709,15 +693,16 @@ makeSelfArrow (lab1,lab2,weight,_) = connectPerim' arrowStyle ("s" ++ lab1) ("z"
 --        shaft' = arc xDir (-3.5/5 @@ turn) 
 
 -- %~ lw (local (0.1 * weight))
-
-makeLabel (n1,n2,weight,(xOffset,yOffset))=
-  withName ("a" ++ n1) $ \b1 ->
-  withName ("s" ++ n2) $ \b2 ->
-    let v = location b2 .-. location b1
-        midpoint = location b1 .+^ (v ^/ 2)
-    in
-      Diagrams.Prelude.atop (position [(midpoint # translateX (negate 0.25 + xOffset) # translateY (0 - 10), setTransition ((show (roundPos 2 weight))))]) --n1 ++ "," ++ n2 ++"," ++
-
+makeLabel :: (String, String, Double, (Double, Int)) -> QDiagram Cairo V2 Double Any -> QDiagram Cairo V2 Double Any
+makeLabel (n1,n2,weight,(xOffset,yOffset))
+  | weight == 0 = mempty
+  | otherwise = withName ("a" ++ n1) $ \b1 ->
+                withName ("s" ++ n2) $ \b2 ->
+                  let v = location b2 .-. location b1
+                      midpoint = location b1 .+^ (v ^/ 2)
+                  in
+                    Diagrams.Prelude.atop (position [(midpoint # translateX (negate 0.25 + xOffset) # translateY (0 - 10), setTransition ((show (roundPos 2 weight))))]) --n1 ++ "," ++ n2 ++"," ++
+makeSelfLabel :: (String, String, Double, (Double, Int)) -> QDiagram Cairo V2 Double Any -> QDiagram Cairo V2 Double Any
 makeSelfLabel (n1,n2,weight,(xOffset,yOffset))
   | weight == 0 = mempty
   | otherwise = withName ("e" ++ n1) $ \b1 ->
