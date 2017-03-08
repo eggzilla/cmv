@@ -112,8 +112,9 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef na
          nodeIndices = V.iterateN nodeNumber (1+) 0
          nodesFlat = vcat' with {_sep=0.01} (V.toList (V.map (drawCMNode modelDetail alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) nodeIndices))
          allConnectedStates = makeAllConnectedStates allStates
-         connectedStates = V.filter (\(stateId,targetStateIndex,_,_) -> stateId /= targetStateIndex) allConnectedStates
-         selfConnectedStates = V.filter (\(stateId,targetStateIndex,_,_) -> stateId == targetStateIndex) allConnectedStates
+         lowConnectedStates = V.filter (\(_,_,w,_) -> w > 0.001) allConnectedStates
+         connectedStates = V.filter (\(stateId,targetStateIndex,_,_) -> stateId /= targetStateIndex) lowConnectedStates
+         selfConnectedStates = V.filter (\(stateId,targetStateIndex,_,_) -> stateId == targetStateIndex) lowConnectedStates
          arrowList = case modelDetail of
                           "detailed" -> V.toList (V.map makeArrow connectedStates V.++ V.map makeSelfArrow selfConnectedStates)
                           "interval"-> map (makeArrow . indexStructureToConnections) (filter (\(acc,emit,_,_,_)-> acc /= emit)(fst indexStructure))
@@ -694,14 +695,14 @@ makeSelfArrow (lab1,lab2,weight,_) = connectPerim' arrowStyle ("s" ++ lab1) ("z"
 
 -- %~ lw (local (0.1 * weight))
 makeLabel :: (String, String, Double, (Double, Int)) -> QDiagram Cairo V2 Double Any -> QDiagram Cairo V2 Double Any
-makeLabel (n1,n2,weight,(xOffset,yOffset))
-  | weight == 0 = mempty
-  | otherwise = withName ("a" ++ n1) $ \b1 ->
-                withName ("s" ++ n2) $ \b2 ->
-                  let v = location b2 .-. location b1
-                      midpoint = location b1 .+^ (v ^/ 2)
-                  in
-                    Diagrams.Prelude.atop (position [(midpoint # translateX (negate 0.25 + xOffset) # translateY (0 - 10), setTransition ((show (roundPos 2 weight))))]) --n1 ++ "," ++ n2 ++"," ++
+makeLabel (n1,n2,weight,(xOffset,yOffset)) =
+  withName ("a" ++ n1) $ \b1 ->
+  withName ("s" ++ n2) $ \b2 ->
+    let v = location b2 .-. location b1
+        midpoint = location b1 .+^ (v ^/ 2)
+        offset = if (location b1 ^. _x) == (location b2 ^. _x) then 19 else 13
+      in
+        Diagrams.Prelude.atop (position [(midpoint # translateX (negate 0.25 + xOffset) # translateY (negate offset), setTransition (n1 ++ "," ++ n2 ++"," ++ (show (roundPos 3 weight))))]) --n1 ++ "," ++ n2 ++"," ++
 makeSelfLabel :: (String, String, Double, (Double, Int)) -> QDiagram Cairo V2 Double Any -> QDiagram Cairo V2 Double Any
 makeSelfLabel (n1,n2,weight,(xOffset,yOffset))
   | weight == 0 = mempty
@@ -710,7 +711,7 @@ makeSelfLabel (n1,n2,weight,(xOffset,yOffset))
                   let v = location b2 .-. location b1
                       midpoint = location b1 -- .+^ (v ^/ 2)
                   in
-                    Diagrams.Prelude.atop (position [(midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + 22), setTransition (show (roundPos 2 weight)))])
+                    Diagrams.Prelude.atop (position [(midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + 22), setTransition (show (roundPos 3 weight)))])
 
 -------- Simple/ Flat functions
 --getNodeInfo :: (CM.Node, (CM.NodeType, [CM.State])) -> (String,String)
