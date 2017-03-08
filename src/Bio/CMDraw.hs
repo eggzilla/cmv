@@ -23,11 +23,11 @@ module Bio.CMDraw
      checkCMCResultsParsed,
      checkCMCResultParsed,
      checkSortedModels,
-     getComparisonsHighlightParameters,
-     getComparisonHighlightParameters,
-     highlightComparisonIntervalBoundry,
-     connectionLine,
-     mkPath,
+     --getComparisonsHighlightParameters,
+     --getComparisonHighlightParameters,
+     --highlightComparisonIntervalBoundry,
+     --connectionLine,
+     --mkPath,
      NodeIndices,
      buildRowIndexStructure,
      buildTreeIndexStructure,
@@ -36,7 +36,7 @@ module Bio.CMDraw
     ) where
 
 import Diagrams.Prelude
-import Data.Typeable.Internal
+--import Data.Typeable.Internal
 import Bio.CMCompareResult
 import Data.List
 import Text.Parsec.Error
@@ -606,7 +606,8 @@ diagramName filename fileformat
   | fileformat == "png" = Right (filename ++ "." ++ fileformat )
   | fileformat == "ps" = Right (filename ++ "." ++ fileformat )
   | otherwise = Left "Unsupported output format requested (use svg, pdf, ps, png)"
-
+                
+printCM :: FilePath -> SizeSpec V2 Double -> QDiagram Cairo V2 Double Any -> IO ()
 printCM outputName = renderCairo outputName
 
 --processCMs :: [CM.CM] -> [[(String,String)]]
@@ -632,7 +633,7 @@ getComparisonNodeLabels comparsionResults colorVector model = comparisonNodeLabe
          --relevantComparisons2 = filter ((modelName==) . model2Name) comparsionResults
          --modelNodeInterval2 = map (model1Name Control.Arrow.&&& model1matchednodes)  relevantComparisons2
          modelNodeInterval1 = map (\a -> (model2Name a,model2matchednodes a))  relevantComparisons1 
-	 relevantComparisons2 = filter ((modelName==) . model2Name) comparsionResults
+         relevantComparisons2 = filter ((modelName==) . model2Name) comparsionResults
          modelNodeInterval2 = map (\a -> (model1Name a,model1matchednodes a))  relevantComparisons2
          modelNodeIntervals =  V.fromList (modelNodeInterval1 ++ modelNodeInterval2)
          colorNodeIntervals = V.map (modelToColor colorVector) modelNodeIntervals
@@ -644,7 +645,7 @@ modelToColor :: V.Vector (String,Colour Double) ->  (String,[Int]) -> (Colour Do
 modelToColor colorVector (mName,nInterval) = nColorInterval
   where nColorInterval = (snd (fromJust entry),nInterval)
         --nColorInterval = maybe Nothing (\a -> Just (snd a,nInterval)) entry
-        entry = V.find (\(a,c)-> mName == a) colorVector
+        entry = V.find (\(a,_)-> mName == a) colorVector
 
 makeComparisonNodeLabel :: V.Vector (Colour Double,[Int]) -> Int -> (Int,V.Vector (Colour Double))
 makeComparisonNodeLabel colorNodeIntervals nodeNumber = comparisonNodeLabel
@@ -682,11 +683,13 @@ makeTransitionIndices n = concatMap makeTransitionSubIndices indexes
 makeTransitionSubIndices n = map  (\subI -> ((show n,show (n+subI)),PAI.Z PAI.:. (PI.PInt n) PAI.:. subI)) subIndices
   where subIndices = [0..4]
 
-makeArrow' (lab1,lab2,weight) = connectOutside ("e" ++ lab1) ("a" ++ lab2)
+--makeArrow' (lab1,lab2,weight) = connectOutside ("e" ++ lab1) ("a" ++ lab2)
 
+makeArrow :: ([Char], [Char], Double) -> QDiagram Cairo V2 Double Any -> QDiagram Cairo V2 Double Any
 makeArrow (lab1,lab2,weight) = connectOutside' arrowStyle1 ("e" ++ lab1) ("a" ++ lab2)
   where arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw (local 0.1) & headLength .~ local 0.01 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
 
+makeSelfArrow :: ([Char], [Char], Double) -> QDiagram Cairo V2 Double Any -> QDiagram Cairo V2 Double Any  
 makeSelfArrow (lab1,lab2,weight) = connectPerim' arrowStyle ("s" ++ lab1) ("z" ++ lab1) (5/12 @@ turn) (8/12 @@ turn)
   where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw (local 0.1) & headLength .~ local 0.01  & tailLength .~ 0 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
         shaft' = wedge 3 xDir (2/4 @@ turn)
@@ -720,12 +723,10 @@ setLabelOffset x1 x2 y1 y2
   | otherwise = (0,0)
                 
 makeSelfLabel :: (String, String, Double) -> QDiagram Cairo V2 Double Any -> QDiagram Cairo V2 Double Any
-makeSelfLabel (n1,n2,weight)
+makeSelfLabel (n1,_,weight)
   | weight == 0 = mempty
   | otherwise = withName ("e" ++ n1) $ \b1 ->
-                withName ("e" ++ n2) $ \b2 ->
-                  let v = location b2 .-. location b1
-                      midpoint = location b1 -- .+^ (v ^/ 2)
+                  let midpoint = location b1
                   in
                     Diagrams.Prelude.atop (position [(midpoint # translateX (negate 0.25)  # translateY 22, setTransition (show (roundPos 3 weight)))])
 
@@ -774,71 +775,71 @@ checkSortedModels x
   | null x = print "Sorting input models to comparison list - done\n"
   | otherwise = error ("Following errors occured :" ++ show (concat x))
 
-getComparisonsHighlightParameters :: [CM.CM] -> [CmcompareResult] -> [(Int,Int,Int,Int,Int,Int,Int,Int)]
-getComparisonsHighlightParameters sortedmodels comp = map (getComparisonHighlightParameters sortedmodels) comp
+--getComparisonsHighlightParameters :: [CM.CM] -> [CmcompareResult] -> [(Int,Int,Int,Int,Int,Int,Int,Int)]
+--getComparisonsHighlightParameters sortedmodels comp = map (getComparisonHighlightParameters sortedmodels) comp
 
-getComparisonHighlightParameters :: [CM.CM] -> CmcompareResult -> (Int,Int,Int,Int,Int,Int,Int,Int)
-getComparisonHighlightParameters sortedmodels comp = (a,b,c,d,a,f,c,e)
-  where --a = (fromJust (findModelIndex (model1Name comp) sortedmodels) + 1)
-        a = 1
-        b = head (model1matchednodes comp)
+--getComparisonHighlightParameters :: [CM.CM] -> CmcompareResult -> (Int,Int,Int,Int,Int,Int,Int,Int)
+--getComparisonHighlightParameters _ comp = (a,b,c,d,a,f,c,e)
+--  where --a = (fromJust (findModelIndex (model1Name comp) sortedmodels) + 1)
+--        a = 1
+--        b = head (model1matchednodes comp)
         --c = (fromJust (findModelIndex (model2Name comp) sortedmodels) + 1)
-        c = 2
-        d = head (model2matchednodes comp)
-        e = last (model2matchednodes comp)
-        f = last (model1matchednodes comp)
+--        c = 2
+--        d = head (model2matchednodes comp)
+--        e = last (model2matchednodes comp)
+--        f = last (model1matchednodes comp)
 
 -- | Highlight comparison by connecting the delimiting nodes of the aligned nodes of both models
 -- takes the model identifier of both models and the starting and ending nodes of both models as arguments.
 --highlightComparisonLines a b c d e f g h = highlightComparisonIntervalBoundry a b c d <> highlightComparisonIntervalBoundry e f g h
-highlightComparisonIntervalBoundry :: forall b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2, N b ~ Double) => Int -> Int -> Int -> Int -> b
-highlightComparisonIntervalBoundry model1index node1index model2index node2index = connectionLine (getNodeCoordinates "detailed" model1index node1index) (getNodeCoordinates "detailed" model2index node2index)
+--highlightComparisonIntervalBoundry :: forall b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2, N b ~ Double) => Int -> Int -> Int -> Int -> b
+--highlightComparisonIntervalBoundry model1index node1index model2index node2index = connectionLine (getNodeCoordinates "detailed" model1index node1index) (getNodeCoordinates "detailed" model2index node2index)
 
-highlightComparisonTrails :: forall b. Renderable (Path V2 Double) b => String -> [(Int, Int, Int, Int, Int, Int, Int, Int)] -> [QDiagram b V2 Double Any]
-highlightComparisonTrails modelDetail trails  = map (highlightComparisonTrail modelDetail) trails
+--highlightComparisonTrails :: forall b. Renderable (Path V2 Double) b => String -> [(Int, Int, Int, Int, Int, Int, Int, Int)] -> [QDiagram b V2 Double Any]
+--highlightComparisonTrails modelDetail trails  = map (highlightComparisonTrail modelDetail) trails
 
 -- | Highlight comparison by connecting the all of the aligned nodes of both models
-highlightComparisonTrail :: forall b. Renderable (Path V2 Double) b => String -> (Int, Int, Int, Int, Int, Int, Int, Int) -> QDiagram b V2 Double Any
-highlightComparisonTrail modelDetail (a,b,c,d,e,f,g,h) = connectionTrail (getNodeCoordinates modelDetail a b) (getNodeCoordinates modelDetail c d) (getNodeCoordinates  modelDetail e f) (getNodeCoordinates modelDetail g h)
+--highlightComparisonTrail :: forall b. Renderable (Path V2 Double) b => String -> (Int, Int, Int, Int, Int, Int, Int, Int) -> QDiagram b V2 Double Any
+--highlightComparisonTrail modelDetail (a,b,c,d,e,f,g,h) = connectionTrail (getNodeCoordinates modelDetail a b) (getNodeCoordinates modelDetail c d) (getNodeCoordinates  modelDetail e f) (getNodeCoordinates modelDetail g h)
 
 -- | Returns the center coordinates for an Covariance model guide tree node
-getNodeCoordinates :: String -> Int -> Int -> P2 Double
-getNodeCoordinates modelDetail modelindex nodeindex
-   | modelDetail == "simple" = p2 (fromIntegral x, fromIntegral y)
-   | modelDetail == "flat" = p2 (fromIntegral a, fromIntegral b)
-   | otherwise = p2 (fromIntegral x, fromIntegral y)
-      where y = getYCoordinateDetailed modelindex 0 * (-1)
-            x = 5 + (10 * (nodeindex - 1 ))
-            a = 1 + (2 * (nodeindex - 1 ))
-            b = getYCoordinateSimple modelindex 0 * (-1)
+--getNodeCoordinates :: String -> Int -> Int -> P2 Double
+--getNodeCoordinates modelDetail modelindex nodeindex
+--   | modelDetail == "simple" = p2 (fromIntegral x, fromIntegral y)
+--   | modelDetail == "flat" = p2 (fromIntegral a, fromIntegral b)
+--   | otherwise = p2 (fromIntegral x, fromIntegral y)
+--      where y = getYCoordinateDetailed modelindex 0 * (-1)
+--            x = 5 + (10 * (nodeindex - 1 ))
+--            a = 1 + (2 * (nodeindex - 1 ))
+--            b = getYCoordinateSimple modelindex 0 * (-1)
 
 
 -- |  Computes the y coodinate for comparison highlighting, so that the
 -- line or area starts at the lower edge of the cm representation and ends right above it
-getYCoordinateDetailed :: Int -> Int -> Int
-getYCoordinateDetailed modelindex ycoordinate
-    | modelindex == 0 = ycoordinate
-    | even modelindex = getYCoordinateDetailed (modelindex - 1) (ycoordinate + 40)
-    | otherwise = getYCoordinateDetailed (modelindex - 1) (ycoordinate + 10)
+--getYCoordinateDetailed :: Int -> Int -> Int
+--getYCoordinateDetailed modelindex ycoordinate
+--    | modelindex == 0 = ycoordinate
+--    | even modelindex = getYCoordinateDetailed (modelindex - 1) (ycoordinate + 40)
+--    | otherwise = getYCoordinateDetailed (modelindex - 1) (ycoordinate + 10)
 
 
-getYCoordinateSimple :: Int -> Int -> Int
-getYCoordinateSimple modelindex ycoordinate
-    | modelindex == 0 = ycoordinate
-    | even modelindex = getYCoordinateSimple (modelindex - 1) (ycoordinate + 8)
-    | otherwise = getYCoordinateSimple (modelindex - 1) (ycoordinate + 2)
+--getYCoordinateSimple :: Int -> Int -> Int
+--getYCoordinateSimple modelindex ycoordinate
+--    | modelindex == 0 = ycoordinate
+--    | even modelindex = getYCoordinateSimple (modelindex - 1) (ycoordinate + 8)
+--    | otherwise = getYCoordinateSimple (modelindex - 1) (ycoordinate + 2)
 
-connectionLine :: forall b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => Point (V b) (N b) -> Point (V b) (N b) -> b
-connectionLine a b = fromVertices [a,b] # lw 0.5 # lc green
+--connectionLine :: forall b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => Point (V b) (N b) -> Point (V b) (N b) -> b
+--connectionLine a b = fromVertices [a,b] # lw 0.5 # lc green
 
-connectionTrail :: forall b n. (RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => Point V2 n -> Point V2 n -> Point V2 n -> Point V2 n -> QDiagram b V2 n Any
-connectionTrail a b c d = stroke (paralellogram a b c d ) # fc aqua # fillRule EvenOdd # lc black # lw 0.1
+--connectionTrail :: forall b n. (RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => Point V2 n -> Point V2 n -> Point V2 n -> Point V2 n -> QDiagram b V2 n Any
+--connectionTrail a b c d = stroke (paralellogram a b c d ) # fc aqua # fillRule EvenOdd # lc black # lw 0.1
 
-mkPath :: forall a. (Num (N a), Monoid a, Semigroup a, Additive (V a), HasOrigin a) => (Point (V a) (N a), a) -> (Point (V a) (N a), a) -> (Point (V a) (N a), a) -> (Point (V a) (N a), a) -> a
-mkPath a b c d = position [a,b,c,d,a]
+--mkPath :: forall a. (Num (N a), Monoid a, Semigroup a, Additive (V a), HasOrigin a) => (Point (V a) (N a), a) -> (Point (V a) (N a), a) -> (Point (V a) (N a), a) -> (Point (V a) (N a), a) -> a
+--mkPath a b c d = position [a,b,c,d,a]
 
-paralellogram :: forall (v :: * -> *) n. (Floating n, Ord n, Metric v) => Point v n -> Point v n -> Point v n -> Point v n -> Path v n
-paralellogram a b c d = pathFromTrailAt (closeTrail (trailFromVertices [a,b,d,c,a])) a
+--paralellogram :: forall (v :: * -> *) n. (Floating n, Ord n, Metric v) => Point v n -> Point v n -> Point v n -> Point v n -> Path v n
+--paralellogram a b c d = pathFromTrailAt (closeTrail (trailFromVertices [a,b,d,c,a])) a
 
 roundPos :: (RealFrac a) => Int -> a -> a
 roundPos positions number  = fromInteger (round $ number * (10^positions)) / (10.0^^positions)
