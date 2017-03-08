@@ -112,9 +112,9 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef na
          nodeIndices = V.iterateN nodeNumber (1+) 0
          nodesFlat = vcat' with {_sep=0.01} (V.toList (V.map (drawCMNode modelDetail alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) nodeIndices))
          allConnectedStates = makeAllConnectedStates allStates
-         lowConnectedStates = V.filter (\(_,_,w,_) -> w > 0.001) allConnectedStates
-         connectedStates = V.filter (\(stateId,targetStateIndex,_,_) -> stateId /= targetStateIndex) lowConnectedStates
-         selfConnectedStates = V.filter (\(stateId,targetStateIndex,_,_) -> stateId == targetStateIndex) lowConnectedStates
+         lowConnectedStates = V.filter (\(_,_,w) -> w > 0.001) allConnectedStates
+         connectedStates = V.filter (\(stateId,targetStateIndex,_) -> stateId /= targetStateIndex) lowConnectedStates
+         selfConnectedStates = V.filter (\(stateId,targetStateIndex,_) -> stateId == targetStateIndex) lowConnectedStates
          arrowList = case modelDetail of
                           "detailed" -> V.toList (V.map makeArrow connectedStates V.++ V.map makeSelfArrow selfConnectedStates)
                           "interval"-> map (makeArrow . indexStructureToConnections) (filter (\(acc,emit,_,_,_)-> acc /= emit)(fst indexStructure))
@@ -126,16 +126,16 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef na
                           _ -> []
          alignmentDiagram = maybe mempty (drawStockholmLines entryNumberCutoff maxWidth nodeAlignmentColIndices comparisonNodeLabels) aln
 
-makeAllConnectedStates :: M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (String,String,Double,(Double,Int))
+makeAllConnectedStates :: M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (String,String,Double)
 makeAllConnectedStates allStates = allConnectedStates
   where indexStateTuples = M.assocs allStates
         allConnectedStates = V.fromList (concatMap makeStateConnections indexStateTuples)
   
-makeStateConnections :: (PI.PInt () CM.StateIndex,CM.State) -> [(String,String,Double,(Double,Int))]
+makeStateConnections :: (PI.PInt () CM.StateIndex,CM.State) -> [(String,String,Double)]
 makeStateConnections (pInt,currentState) = conns
   where stateId = show (PI.getPInt pInt)
         targetBitscoreVector = VU.toList (CM._stateTransitions currentState)
-        conns = map (\(target,bitscore) ->  (stateId,show(PI.getPInt target),score2Prob 1 bitscore,(0,0))) targetBitscoreVector
+        conns = map (\(target,bitscore) ->  (stateId,show(PI.getPInt target),score2Prob 1 bitscore)) targetBitscoreVector
         
 -- | Extracts consensus secondary structure from alignment and annotates cmcompare nodes
 secondaryStructureVisualisation :: String -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [CmcompareResult] -> [(String,String)]
@@ -229,8 +229,8 @@ makeFullComparisonColLabel sparseComparisonColLabels colIndex = fullComparisonCo
   where availableLabel = V.find (\(a,_)-> colIndex == a) sparseComparisonColLabels
         fullComparisonColLabel = fromMaybe (colIndex,V.singleton white) availableLabel
 
-indexStructureToConnections :: (Int, Int, String, Int, Int) -> (String,String,Double,(Double,Double))
-indexStructureToConnections (acc,emit,_,_,_) = (show emit,show acc,1,(0,0))
+indexStructureToConnections :: (Int, Int, String, Int, Int) -> (String,String,Double)
+indexStructureToConnections (acc,emit,_,_,_) = (show emit,show acc,1)
 
 --indexStructureRow :: (Int, Int, String, Int, Int) -> (Int, Int, String, Int, Int) -> Bool
 --indexStructureRow (row1,_,_,_,_)  (row2,_,_,_,_) = row1 == row2
@@ -682,12 +682,12 @@ makeTransitionIndices n = concatMap makeTransitionSubIndices indexes
 makeTransitionSubIndices n = map  (\subI -> ((show n,show (n+subI)),PAI.Z PAI.:. (PI.PInt n) PAI.:. subI)) subIndices
   where subIndices = [0..4]
 
-makeArrow' (lab1,lab2,weight,_) = connectOutside ("e" ++ lab1) ("a" ++ lab2)
+makeArrow' (lab1,lab2,weight) = connectOutside ("e" ++ lab1) ("a" ++ lab2)
 
-makeArrow (lab1,lab2,weight,_) = connectOutside' arrowStyle1 ("e" ++ lab1) ("a" ++ lab2)
+makeArrow (lab1,lab2,weight) = connectOutside' arrowStyle1 ("e" ++ lab1) ("a" ++ lab2)
   where arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw (local 0.1) & headLength .~ local 0.01 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
 
-makeSelfArrow (lab1,lab2,weight,_) = connectPerim' arrowStyle ("s" ++ lab1) ("z" ++ lab1) (5/12 @@ turn) (8/12 @@ turn)
+makeSelfArrow (lab1,lab2,weight) = connectPerim' arrowStyle ("s" ++ lab1) ("z" ++ lab1) (5/12 @@ turn) (8/12 @@ turn)
   where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw (local 0.1) & headLength .~ local 0.01  & tailLength .~ 0 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
         shaft' = wedge 3 xDir (2/4 @@ turn)
 
@@ -695,24 +695,39 @@ makeSelfArrow (lab1,lab2,weight,_) = connectPerim' arrowStyle ("s" ++ lab1) ("z"
 --        shaft' = arc xDir (-3.5/5 @@ turn) 
 
 -- %~ lw (local (0.1 * weight))
-makeLabel :: (String, String, Double, (Double, Int)) -> QDiagram Cairo V2 Double Any -> QDiagram Cairo V2 Double Any
-makeLabel (n1,n2,weight,(xOffset,yOffset)) =
+makeLabel :: (String, String, Double) -> QDiagram Cairo V2 Double Any -> QDiagram Cairo V2 Double Any
+makeLabel (n1,n2,weight) =
   withName ("a" ++ n1) $ \b1 ->
   withName ("s" ++ n2) $ \b2 ->
     let v = location b2 .-. location b1
         midpoint = location b1 .+^ (v ^/ 2)
-        offset = if (location b1 ^. _x) == (location b2 ^. _x) then 19 else 13
+        (xOffset,yOffset) = setLabelOffset (location b1 ^. _x) (location b2 ^. _x) (location b1 ^. _y) (location b2 ^. _y)
       in
-        Diagrams.Prelude.atop (position [(midpoint # translateX (negate 0.25 + xOffset) # translateY (negate offset), setTransition (n1 ++ "," ++ n2 ++"," ++ (show (roundPos 3 weight))))]) --n1 ++ "," ++ n2 ++"," ++
-makeSelfLabel :: (String, String, Double, (Double, Int)) -> QDiagram Cairo V2 Double Any -> QDiagram Cairo V2 Double Any
-makeSelfLabel (n1,n2,weight,(xOffset,yOffset))
+        Diagrams.Prelude.atop (position [(midpoint # translateX xOffset # translateY yOffset, setTransition (n1 ++ "," ++ n2 ++"," ++ (show (roundPos 3 weight))))]) --n1 ++ "," ++ n2 ++"," ++
+
+setLabelOffset :: Double -> Double -> Double -> Double -> (Double,Double)
+setLabelOffset x1 x2 y1 y2
+  -- between same split states of different nodes (A)
+  | x1 == x2 = (0,0)
+  -- between insert states (D)
+  | (x1 > x2) && (y1 == y2) = (negate 5,0)
+  -- between same split states of different nodes (B)
+  | (x1 > x2) = (0,5)
+  -- between insert states (E)
+  | x1 < x2 && (y1 == y2) = (5,0)
+  -- between same split states of different nodes (C)
+  | x1 < x2  = (0,negate 5)
+  | otherwise = (0,0)
+                
+makeSelfLabel :: (String, String, Double) -> QDiagram Cairo V2 Double Any -> QDiagram Cairo V2 Double Any
+makeSelfLabel (n1,n2,weight)
   | weight == 0 = mempty
   | otherwise = withName ("e" ++ n1) $ \b1 ->
                 withName ("e" ++ n2) $ \b2 ->
                   let v = location b2 .-. location b1
                       midpoint = location b1 -- .+^ (v ^/ 2)
                   in
-                    Diagrams.Prelude.atop (position [(midpoint # translateX (negate 0.25 + xOffset) # translateY (0 + 22), setTransition (show (roundPos 3 weight)))])
+                    Diagrams.Prelude.atop (position [(midpoint # translateX (negate 0.25)  # translateY 22, setTransition (show (roundPos 3 weight)))])
 
 -------- Simple/ Flat functions
 --getNodeInfo :: (CM.Node, (CM.NodeType, [CM.State])) -> (String,String)
