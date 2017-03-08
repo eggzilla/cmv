@@ -257,14 +257,11 @@ buildRowIndexStructure row nodes (currentIndex:xs) = do
     CM.Root -> put ((row,parentId,"S,",currentIndex,currentEnd):currentInterval,parentId) -- ROOT start tree             
     CM.BegL -> put ((row,parentId,"L,",currentIndex,currentEnd):currentInterval,parentId) --(L [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices) -- BEGL set current label
     CM.BegR -> put ((row,parentId,"R,",currentIndex,currentEnd):currentInterval,parentId) -- (R [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices)  -- BEGR set current label
-    CM.Root -> put (currentInterval,parentId+1)
+    CM.Bif -> put (currentInterval,parentId+1)
     _ -> put (currentInterval,parentId)
   buildRowIndexStructure row nodes xs
 
 buildTreeIndexStructure :: Int -> V.Vector CM.Node -> [Int] -> State ([(Int,Int,String,Int,Int)],Int) ([(Int,Int,String,Int,Int)],Int)
-buildTreeIndexStructure _ _ [] = do
-  (a,b) <- get
-  return (a,b)
 buildTreeIndexStructure intervalId nodes (currentIndex:xs) = do
   (interval,parentId) <- get
   let currentNode = nodes V.! currentIndex
@@ -277,9 +274,13 @@ buildTreeIndexStructure intervalId nodes (currentIndex:xs) = do
     CM.Root -> put ((intervalId,parentId,"S,",currentIndex,currentEnd):interval,parentId)
     CM.BegL -> put ((newId,parentId,"L,",currentIndex,currentEnd):interval,parentId)
     CM.BegR -> put ((newId,parentId,"R,",currentIndex,currentEnd):interval,parentId)
-    _ -> put (interval,intervalId)
+    CM.Bif -> put (interval,intervalId)
+    _ -> put (interval,parentId)
   buildTreeIndexStructure nextId nodes xs
-
+buildTreeIndexStructure _ _ [] = do
+  (a,b) <- get
+  return (a,b)
+  
 setNextId :: CM.NodeType -> Int -> Int -> Int
 setNextId ntype intervalId newId
   | ntype == CM.Root = newId
@@ -336,9 +337,9 @@ setModelName t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 20 20) 
 
 drawCMNodeTree :: String -> String -> String -> Int -> M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (Int, V.Vector (Colour Double))-> V.Vector CM.Node -> [(Int, Int, String, Int, Int)] -> (Int,Int,String,Int,Int) -> QDiagram Cairo V2 Double Any
 drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure (intervalId,parentId,intervalType,currentIndex,currentEnd) = nodeTree
-  where nodeTree = currentIntervalDrawing === hcat' with {_sep = 2} (map (drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure) nextIntervals)
+  where nodeTree = currentIntervalDrawing === hcat' with {_sep = 20} (map (drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure) nextIntervals)
         nextIntervals = filter (\(_,p,_,_,_) -> intervalId == p) indexStructure
-        currentIntervalDrawing = drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength currentIndex currentEnd currentEnd allStates comparisonNodeLabels nodes (intervalId,parentId,intervalType,currentIndex,currentEnd) -- ||| (text' (show intervalId ++ "I" ++ show indexStructure) <> rect 100 100)
+        currentIntervalDrawing = drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength currentIndex currentEnd currentEnd allStates comparisonNodeLabels nodes (intervalId,parentId,intervalType,currentIndex,currentEnd)  --- ||| (text' (show intervalId ++ "I" ++ show indexStructure) <> rect 100 100)
 
 drawCMNodeRow :: String -> String -> String -> Int -> Int -> Int -> Int -> M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (Int, V.Vector (Colour Double))-> V.Vector CM.Node -> [(Int, Int, String, Int, Int)] -> QDiagram Cairo V2 Double Any
 drawCMNodeRow modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes intervals = strutY 4 === hcat' with { _sep = 8 } (map (drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes) intervals)
