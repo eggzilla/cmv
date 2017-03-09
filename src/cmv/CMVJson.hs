@@ -6,14 +6,14 @@ module Main where
 
 import Prelude 
 import System.Console.CmdArgs
-import qualified Biobase.SElab.CM as CM
+--import qualified Biobase.SElab.CM as CM
 import Biobase.SElab.CM.Import (cmFromFile)
-import Data.Either.Unwrap
-import qualified Data.Vector as V
-import qualified Data.ByteString.Lazy.Char8 as L
-import Data.Char
-import qualified Data.Aeson.Encode as E
-
+--import Data.Either.Unwrap
+--import qualified Data.Vector as V
+--import qualified Data.ByteString.Lazy.Char8 as L
+--import Data.Char
+--import qualified Data.Aeson.Encode as E
+import qualified Data.Aeson as E
 --------------------------------------------------------
 
 data Options = Options            
