@@ -646,23 +646,27 @@ makeLabel (n1,n2,weight) =
   withName ("s" ++ n2) $ \b2 ->
     let v = location b2 .-. location b1
         midpoint = location b1 .+^ (v ^/ 2)
-        (xOffset,yOffset) = setLabelOffset (location b1 ^. _x) (location b2 ^. _x) (location b1 ^. _y) (location b2 ^. _y)
+        (xOffset,yOffset,lclass) = setLabelOffset (location b1 ^. _x) (location b2 ^. _x) (location b1 ^. _y) (location b2 ^. _y)
       in
-        Diagrams.Prelude.atop (position [(midpoint # translateX xOffset # translateY yOffset, setTransition (n1 ++ "," ++ n2 ++"," ++ (show (roundPos 3 weight))))]) --n1 ++ "," ++ n2 ++"," ++
+        --Diagrams.Prelude.atop (position [(midpoint # translateX xOffset # translateY yOffset, setTransition ((show (roundPos 3 weight))))])
+        Diagrams.Prelude.atop (position [(midpoint # translateX xOffset # translateY yOffset, setTransition (lclass ++"," ++ (show (roundPos 3 weight))))]) 
 
-setLabelOffset :: Double -> Double -> Double -> Double -> (Double,Double)
+setLabelOffset :: Double -> Double -> Double -> Double -> (Double,Double,String)
 setLabelOffset x1 x2 y1 y2
-  -- between same split states of different nodes (A)
-  | x1 == x2 = (0,0)
-  -- between insert states (D)
-  | (x1 > x2) && (y1 == y2) = (negate 5,0)
-  -- between same split states of different nodes (B)
-  | (x1 > x2) = (0,5)
-  -- between insert states (E)
-  | x1 < x2 && (y1 == y2) = (5,0)
+  -- between split and insert state of same node - left upper(A)
+  | x1 > x2 && (ydiff < 20) = (0,0,"A")
+  -- between split and insert state of same node - right upper (B)
+  | x1 < x2 && (ydiff < 20) = (0,0,"B")
   -- between same split states of different nodes (C)
-  | x1 < x2  = (0,negate 5)
-  | otherwise = (0,0)
+  | x1 == x2 = (0,0,"C")
+  -- 
+  | x1 > x2 && (ydiff > 20) = (0,0,"D")
+  -- 
+  | x1 < x2 && (ydiff > 20) = (0,0,"E")
+  -- 
+  | y1 == y2 = (0,0,"F")
+  | otherwise = (0,0,"R")
+    where ydiff = abs (abs y1 - abs y2)
                 
 makeSelfLabel :: (String, String, Double) -> QDiagram Cairo V2 Double Any -> QDiagram Cairo V2 Double Any
 makeSelfLabel (n1,_,weight)
