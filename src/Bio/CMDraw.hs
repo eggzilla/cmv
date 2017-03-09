@@ -14,20 +14,6 @@ module Bio.CMDraw
      svgsize,
      diagramName,
      printCM,
-     sortModelsByComparisonResults,
-     findModelError,
-     findModel,
-     findModelIndex,
-     findMissing,
-     getCMName,
-     checkCMCResultsParsed,
-     checkCMCResultParsed,
-     checkSortedModels,
-     --getComparisonsHighlightParameters,
-     --getComparisonHighlightParameters,
-     --highlightComparisonIntervalBoundry,
-     --connectionLine,
-     --mkPath,
      NodeIndices,
      buildRowIndexStructure,
      buildTreeIndexStructure,
@@ -36,7 +22,6 @@ module Bio.CMDraw
     ) where
 
 import Diagrams.Prelude
---import Data.Typeable.Internal
 import Bio.CMCompareResult
 import Data.List
 import Text.Parsec.Error
@@ -44,19 +29,15 @@ import qualified Data.Text as T
 import qualified Data.Vector as V
 import Bio.StockholmData
 import Bio.StockholmDraw
---import qualified Diagrams.Backend.Cairo as C
 import Diagrams.Backend.Cairo
 import qualified Data.Vector.Unboxed as VU
 import qualified Data.PrimitiveArray.Index.PhantomInt as PI
---import qualified Data.PrimitiveArray.Class as PA
 import Biobase.Types.Bitscore (Bitscore(..), score2Prob)
 import Biobase.Primary.Nuc.RNA
 import qualified Data.PrimitiveArray.Index.Class as PAI
 import Text.Printf
---import Data.Colour
 import qualified Data.Colour.SRGB.Linear as R
 import Data.Maybe
---import GHC.Float
 import Control.Monad.State
 import qualified Data.Char as C
 import Graphics.SVGFonts
@@ -76,7 +57,6 @@ drawSingleCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype m
         colorVector = makeColorVector modelNumber
         modelNames =  V.fromList (map (T.unpack . CM._name) cms)
         nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
-        --comparisonsHighlightParameter = getComparisonsHighlightParameters cms comparisons
 
 -- | Draw one or more CM
 drawSingleCMs :: String -> Int -> String -> String -> Double -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [(QDiagram Cairo V2 Double Any,QDiagram Cairo V2 Double Any)]
@@ -196,7 +176,6 @@ buildR2RInput (inputCM,maybeAln,comparisonNodeLabels)
         gapfreeConsensusSequence = map C.toUpper (filter (not . isGap) consensusSequence)
         consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
         consensusStructure = if null consensusStructureList then "" else extractGapfreeStructure consensusSequence (T.unpack (head consensusStructureList))
-        --modelName = CM._name inputCM
         nodeAlignmentColIndices = V.map CM._nodeColL nodes
         maxEntryLength = length consensusStructure
         colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabels
@@ -232,12 +211,6 @@ makeFullComparisonColLabel sparseComparisonColLabels colIndex = fullComparisonCo
 indexStructureToConnections :: (Int, Int, String, Int, Int) -> (String,String,Double)
 indexStructureToConnections (acc,emit,_,_,_) = (show emit,show acc,1)
 
---indexStructureRow :: (Int, Int, String, Int, Int) -> (Int, Int, String, Int, Int) -> Bool
---indexStructureRow (row1,_,_,_,_)  (row2,_,_,_,_) = row1 == row2
-
---indexStructureParent ::  (Int, Int, String, Int, Int) -> (Int, Int, String, Int, Int) -> Bool
---indexStructureParent (_,p1,_,_,_)  (_,p2,_,_,_) = p1 == p2
-
 data NodeIndices = S [Int] | L [Int] | R [Int]
   deriving (Show, Eq, Ord)
 
@@ -255,8 +228,8 @@ buildRowIndexStructure row nodes (currentIndex:xs) = do
   let ntype = CM._nodeType currentNode
   case ntype of
     CM.Root -> put ((row,parentId,"S,",currentIndex,currentEnd):currentInterval,parentId) -- ROOT start tree             
-    CM.BegL -> put ((row,parentId,"L,",currentIndex,currentEnd):currentInterval,parentId) --(L [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices) -- BEGL set current label
-    CM.BegR -> put ((row,parentId,"R,",currentIndex,currentEnd):currentInterval,parentId) -- (R [currentIndex..currentEnd],buildIndexStructure nodes remainingIndices)  -- BEGR set current label
+    CM.BegL -> put ((row,parentId,"L,",currentIndex,currentEnd):currentInterval,parentId) -- BEGL set current label
+    CM.BegR -> put ((row,parentId,"R,",currentIndex,currentEnd):currentInterval,parentId) -- BEGR set current label
     CM.Bif -> put (currentInterval,parentId+1)
     _ -> put (currentInterval,parentId)
   buildRowIndexStructure row nodes xs
@@ -299,7 +272,6 @@ getIndexEnd nodes indices
          currentNode = nodes V.! currentIndex
          ntype = CM._nodeType currentNode
 
---TODO swap with SVGFont
 makeModelHeader :: String -> Colour Double -> V.Vector (String,Colour Double) -> QDiagram Cairo V2 Double Any
 makeModelHeader mName modelColor nameColorVector = strutX 2 ||| setModelName mName ||| strutX 1 ||| rect 12 12 # lw 0.1 # fc modelColor # translate (r2 (negate 0, 5)) ||| strutX 30 ||| modelLegend
   where modelLegend = makeModelLegend otherModelsNameColorVector
@@ -394,16 +366,11 @@ drawCMNode modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd la
   | modelDetail == "simple" = drawCMSimpleNodeBox alphabetSymbols emissiontype boxlength states comparisonNodeLabels node nodeIndex
   | otherwise = detailedNodeBox
   where node = nodes V.! nodeIndex
-        --idNumber = PI.getPInt (CM._nid node)
         idNumber = nodeIndex
         nId = show idNumber
         detailedNodeBox = drawCMDetailedNodeBox alphabetSymbols emissiontype boxlength states comparisonNodeLabels node nodeIndex
         nodeType = getCMNodeType node
         nodeLabels = V.toList (snd (comparisonNodeLabels V.! idNumber))
-        --boxNumber = fromIntegral $ length nodeLabels
-        --totalBoxYlength = 5 - 0.2
-        --singleBoxYLength = totalBoxYlength / boxNumber
-        --colourBoxes = vcat (map (colorBox singleBoxYLength) nodeLabels) -- <> rect 5 totalBoxYlength # lw 0.1
 
 colorBox :: Double -> Colour Double -> QDiagram Cairo V2 Double Any
 colorBox singleBoxYLength colColour = rect 5 singleBoxYLength # fc colColour # lw 0.1
@@ -415,7 +382,6 @@ drawCMMinimalNodeBox alphabetSymbols emissiontype boxlength currentStates compar
   | ntype == CM.BegR = splitStatesBox === minimalNode -- begRNode 
   | otherwise = minimalNode
     where ntype = CM._nodeType node
-          --idNumber = PI.getPInt (CM._nid node)
           idNumber = nodeIndex
           nId = show idNumber
           stateIndices = V.toList (CM._nodeStates node)
@@ -435,7 +401,6 @@ drawCMSimpleNodeBox alphabetSymbols emissiontype boxlength currentStates compari
   | ntype == CM.BegR = splitStatesBox === simpleNode -- begRNode 
   | otherwise = simpleNode
     where ntype = CM._nodeType node
-          --idNumber = PI.getPInt (CM._nid node)
           idNumber = nodeIndex 
           nId = show idNumber
           stateIndices = V.toList (CM._nodeStates node)
@@ -471,7 +436,6 @@ drawCMDetailedNodeBox alphabetSymbols emissiontype boxlength currentStates compa
   | ntype == CM.End = endNode # translate (r2 (negate 25,25)) <> nodeBox
   | otherwise = endNode <> nodeBox
     where ntype = CM._nodeType node
-          --idNumber = PI.getPInt (CM._nid node)
           idNumber = nodeIndex
           nId = show idNumber
           nodeLabels = V.toList (snd (comparisonNodeLabels V.! idNumber))
@@ -496,7 +460,6 @@ drawCMDetailedNodeBox alphabetSymbols emissiontype boxlength currentStates compa
           endNode = (idBox nId "END" nodeLabels # rotate (1/4 @@ turn) # translate (r2 (1, negate 17)) ||| strutX 0.5 ||| splitStatesBox) === strutY 5.0 === insertStatesBox
 
 idBox :: String -> String -> [Colour Double] -> QDiagram Cairo V2 Double Any
---idBox nId nType nodeLabels = (alignedText 0 0 nId # fontSize 2 # translate (r2 ((negate ((fromIntegral (length nId))/2)), negate 1.25)) <>  wheel nodeLabels # lw 0.1 <> rect 1.5 3 # lw 0) ||| strutX 2.0 ||| text' nType
 idBox nId nType nodeLabels = (setNodeNumber nId # translate (r2 (negate ((fromIntegral (length nId))/2), 0)) <>  wheel 4 nodeLabels # lw 0.1 # translate (r2 (0, 1)) <> rect 3 3 # lw 0) ||| strutX 1.0 ||| setNodeLabel nType
 nodeBox :: QDiagram Cairo V2 Double Any
 nodeBox = rect 60 60 # lw 0.1
@@ -524,11 +487,9 @@ drawCMSplitStateBox nid alphabetSymbols emissiontype boxlength currentStates sIn
     where currentState = currentStates M.! sIndex
           stype = CM._stateType currentState
           stateIndx = show (PI.getPInt sIndex)
-          --singleEmissionBitscores = V.map (CM._stateEmissions currentState PA.!) (makeSingleEmissionIndices sIndex)
           singleEmissionBitscores = CM._stateEmissions currentState
           singleEmissionEntries = setEmissions emissiontype 4 singleEmissionBitscores
           singleSymbolsAndEmissions = zip ["A","U","G","C"] (VU.toList singleEmissionEntries)
-          --pairEmissionBitscores = V.map  ((CM._stateEmissions currentState) PA.!) (makePairEmissionIndices sIndex)
           pairEmissionBitscores = CM._stateEmissions currentState
           pairEmissionEntries = setEmissions emissiontype 16 pairEmissionBitscores
           pairSymbolsAndEmissions = zip ["AA","AU","AG","AC","UU","UA","UG","UC","GG","GA","GU","GC","CC","CA","CU","CG"] (VU.toList pairEmissionEntries)
@@ -551,7 +512,6 @@ drawCMInsertStateBox nid alphabetSymbols emissiontype boxlength currentStates sI
     where currentState = currentStates M.! sIndex
           stype = CM._stateType currentState
           stateIndx = show (PI.getPInt sIndex)
-          --singleEmissionBitscores = V.map ((CM._stateEmissions currentStates) PA.!) (makeSingleEmissionIndices sIndex)
           singleEmissionBitscores = CM._stateEmissions currentState
           singleEmissionEntries = setEmissions emissiontype 4 singleEmissionBitscores
           singleSymbolsAndEmissions = zip ["A","U","G","C"] (VU.toList singleEmissionEntries)
@@ -610,13 +570,6 @@ diagramName filename fileformat
 printCM :: FilePath -> SizeSpec V2 Double -> QDiagram Cairo V2 Double Any -> IO ()
 printCM outputName = renderCairo outputName
 
---processCMs :: [CM.CM] -> [[(String,String)]]
---processCMs cms = map processCMGuideTree cms
-
---processCMGuideTree :: CM.CM -> [(String,String)]
---processCMGuideTree cm = map getNodeInfo (Map.assocs (CM._nodes cm))
---processCMGuideTree cm = map getNodeInfo (V.toList (CM._Nodes cm))
-
 getBlankComparisonNodeLabels :: CM.CM -> V.Vector (Int, V.Vector (Colour Double))
 getBlankComparisonNodeLabels model = comparisonNodeLabels
    where comparisonNodeLabels = V.generate (nodeNumber +1 ) makeBlankComparisonNodeLabel
@@ -629,9 +582,6 @@ getComparisonNodeLabels :: [CmcompareResult] -> V.Vector (String, Colour Double)
 getComparisonNodeLabels comparsionResults colorVector model = comparisonNodeLabels
    where modelName = T.unpack (CM._name model)
          relevantComparisons1 = filter ((modelName==) . model1Name) comparsionResults
-         --modelNodeInterval1 = map (model2Name Control.Arrow.&&& model2matchednodes)  relevantComparisons1
-         --relevantComparisons2 = filter ((modelName==) . model2Name) comparsionResults
-         --modelNodeInterval2 = map (model1Name Control.Arrow.&&& model1matchednodes)  relevantComparisons2
          modelNodeInterval1 = map (\a -> (model2Name a,model2matchednodes a))  relevantComparisons1 
          relevantComparisons2 = filter ((modelName==) . model2Name) comparsionResults
          modelNodeInterval2 = map (\a -> (model1Name a,model1matchednodes a))  relevantComparisons2
@@ -639,7 +589,6 @@ getComparisonNodeLabels comparsionResults colorVector model = comparisonNodeLabe
          colorNodeIntervals = V.map (modelToColor colorVector) modelNodeIntervals
          nodeNumber = CM._nodesInModel model
          comparisonNodeLabels = V.generate (nodeNumber +1) (makeComparisonNodeLabel colorNodeIntervals)
-         --nodeColorLabels = map model colorNodeIntervals
 
 modelToColor :: V.Vector (String,Colour Double) ->  (String,[Int]) -> (Colour Double,[Int])
 modelToColor colorVector (mName,nInterval) = nColorInterval
@@ -683,8 +632,6 @@ makeTransitionIndices n = concatMap makeTransitionSubIndices indexes
 makeTransitionSubIndices n = map  (\subI -> ((show n,show (n+subI)),PAI.Z PAI.:. (PI.PInt n) PAI.:. subI)) subIndices
   where subIndices = [0..4]
 
---makeArrow' (lab1,lab2,weight) = connectOutside ("e" ++ lab1) ("a" ++ lab2)
-
 makeArrow :: ([Char], [Char], Double) -> QDiagram Cairo V2 Double Any -> QDiagram Cairo V2 Double Any
 makeArrow (lab1,lab2,weight) = connectOutside' arrowStyle1 ("e" ++ lab1) ("a" ++ lab2)
   where arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw (local 0.1) & headLength .~ local 0.01 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
@@ -694,10 +641,6 @@ makeSelfArrow (lab1,lab2,weight) = connectPerim' arrowStyle ("s" ++ lab1) ("z" +
   where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw (local 0.1) & headLength .~ local 0.01  & tailLength .~ 0 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
         shaft' = wedge 3 xDir (2/4 @@ turn)
 
---  where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw (local (0.1)) & headLength .~ local 0.001  & tailLength .~ 0 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
---        shaft' = arc xDir (-3.5/5 @@ turn) 
-
--- %~ lw (local (0.1 * weight))
 makeLabel :: (String, String, Double) -> QDiagram Cairo V2 Double Any -> QDiagram Cairo V2 Double Any
 makeLabel (n1,n2,weight) =
   withName ("a" ++ n1) $ \b1 ->
@@ -729,117 +672,6 @@ makeSelfLabel (n1,_,weight)
                   let midpoint = location b1
                   in
                     Diagrams.Prelude.atop (position [(midpoint # translateX (negate 0.25)  # translateY 22, setTransition (show (roundPos 3 weight)))])
-
--------- Simple/ Flat functions
---getNodeInfo :: (CM.Node, (CM.NodeType, [CM.State])) -> (String,String)
---getNodeInfo (nodeid, (nodetype, _ )) = (show (CM._nId nodeid) , (show nodetype))
-
---getNodeInfo :: CM.Node -> (String,String)
---getNodeInfo _node = (show (CM._nid _node) , show (CM._nodesType _node))
-
-sortModelsByComparisonResults :: [String] -> [CM.CM] -> [Either String CM.CM]
-sortModelsByComparisonResults cmComparisonNames models = map (\x -> findModelError x (findModel x models)) cmComparisonNames
--- todo: also add models at end of the sorted list that are not in comparisons
--- ++ (map (\x -> findModelError x (findMissing x models)) cmComparisonNames)
-
-findModelError :: String -> Maybe CM.CM -> Either String CM.CM
-findModelError _name (Just model) = Right model
-findModelError _name Nothing = Left ("Model " ++ _name ++ "that is present in comparison file is not present in model file")
-
-findModel :: String -> [CM.CM] -> Maybe CM.CM
-findModel check models = find (\x -> getCMName x == check) models
-
-findModelIndex :: String -> [CM.CM] -> Maybe Int
-findModelIndex check models = findIndex (\x -> getCMName x == check) models
-
-findMissing :: String -> [CM.CM] -> Maybe CM.CM
-findMissing check models = find (\x -> getCMName x /= check) models
-
-getCMName :: CM.CM -> String
-getCMName x = filter ((/= ' '))  (T.unpack (CM._name x))
-
-checkCMCResultsParsed :: [ParseError] -> IO ()
-checkCMCResultsParsed x
-  | null x = print "Parsing comparisons - done\n"
-  | otherwise = error ("Following errors occured:" ++ concat (map checkCMCResultParsed x))
-
-checkCMCResultParsed :: ParseError -> String
-checkCMCResultParsed x = concat (map messageString (errorMessages x))
---  | (errorIsUnknown x) = print "Parsing comparisons - done\n" 
---  | x == [] = print "Parsing comparisons - done\n"
---  | otherwise = (concat (map messageString (errorMessages x)))
---  | otherwise = error ("Following errors occured :" ++ (concat (map (\y -> (concat (map messageString (errorMessages y)))) x)))
-
-checkSortedModels :: forall a. (Eq a, Show a) => [[a]] -> IO ()
-checkSortedModels x
-  | null x = print "Sorting input models to comparison list - done\n"
-  | otherwise = error ("Following errors occured :" ++ show (concat x))
-
---getComparisonsHighlightParameters :: [CM.CM] -> [CmcompareResult] -> [(Int,Int,Int,Int,Int,Int,Int,Int)]
---getComparisonsHighlightParameters sortedmodels comp = map (getComparisonHighlightParameters sortedmodels) comp
-
---getComparisonHighlightParameters :: [CM.CM] -> CmcompareResult -> (Int,Int,Int,Int,Int,Int,Int,Int)
---getComparisonHighlightParameters _ comp = (a,b,c,d,a,f,c,e)
---  where --a = (fromJust (findModelIndex (model1Name comp) sortedmodels) + 1)
---        a = 1
---        b = head (model1matchednodes comp)
-        --c = (fromJust (findModelIndex (model2Name comp) sortedmodels) + 1)
---        c = 2
---        d = head (model2matchednodes comp)
---        e = last (model2matchednodes comp)
---        f = last (model1matchednodes comp)
-
--- | Highlight comparison by connecting the delimiting nodes of the aligned nodes of both models
--- takes the model identifier of both models and the starting and ending nodes of both models as arguments.
---highlightComparisonLines a b c d e f g h = highlightComparisonIntervalBoundry a b c d <> highlightComparisonIntervalBoundry e f g h
---highlightComparisonIntervalBoundry :: forall b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2, N b ~ Double) => Int -> Int -> Int -> Int -> b
---highlightComparisonIntervalBoundry model1index node1index model2index node2index = connectionLine (getNodeCoordinates "detailed" model1index node1index) (getNodeCoordinates "detailed" model2index node2index)
-
---highlightComparisonTrails :: forall b. Renderable (Path V2 Double) b => String -> [(Int, Int, Int, Int, Int, Int, Int, Int)] -> [QDiagram b V2 Double Any]
---highlightComparisonTrails modelDetail trails  = map (highlightComparisonTrail modelDetail) trails
-
--- | Highlight comparison by connecting the all of the aligned nodes of both models
---highlightComparisonTrail :: forall b. Renderable (Path V2 Double) b => String -> (Int, Int, Int, Int, Int, Int, Int, Int) -> QDiagram b V2 Double Any
---highlightComparisonTrail modelDetail (a,b,c,d,e,f,g,h) = connectionTrail (getNodeCoordinates modelDetail a b) (getNodeCoordinates modelDetail c d) (getNodeCoordinates  modelDetail e f) (getNodeCoordinates modelDetail g h)
-
--- | Returns the center coordinates for an Covariance model guide tree node
---getNodeCoordinates :: String -> Int -> Int -> P2 Double
---getNodeCoordinates modelDetail modelindex nodeindex
---   | modelDetail == "simple" = p2 (fromIntegral x, fromIntegral y)
---   | modelDetail == "flat" = p2 (fromIntegral a, fromIntegral b)
---   | otherwise = p2 (fromIntegral x, fromIntegral y)
---      where y = getYCoordinateDetailed modelindex 0 * (-1)
---            x = 5 + (10 * (nodeindex - 1 ))
---            a = 1 + (2 * (nodeindex - 1 ))
---            b = getYCoordinateSimple modelindex 0 * (-1)
-
-
--- |  Computes the y coodinate for comparison highlighting, so that the
--- line or area starts at the lower edge of the cm representation and ends right above it
---getYCoordinateDetailed :: Int -> Int -> Int
---getYCoordinateDetailed modelindex ycoordinate
---    | modelindex == 0 = ycoordinate
---    | even modelindex = getYCoordinateDetailed (modelindex - 1) (ycoordinate + 40)
---    | otherwise = getYCoordinateDetailed (modelindex - 1) (ycoordinate + 10)
-
-
---getYCoordinateSimple :: Int -> Int -> Int
---getYCoordinateSimple modelindex ycoordinate
---    | modelindex == 0 = ycoordinate
---    | even modelindex = getYCoordinateSimple (modelindex - 1) (ycoordinate + 8)
---    | otherwise = getYCoordinateSimple (modelindex - 1) (ycoordinate + 2)
-
---connectionLine :: forall b. (Data.Typeable.Internal.Typeable (N b), TrailLike b, HasStyle b, V b ~ V2) => Point (V b) (N b) -> Point (V b) (N b) -> b
---connectionLine a b = fromVertices [a,b] # lw 0.5 # lc green
-
---connectionTrail :: forall b n. (RealFloat n, Data.Typeable.Internal.Typeable n, Renderable (Path V2 n) b) => Point V2 n -> Point V2 n -> Point V2 n -> Point V2 n -> QDiagram b V2 n Any
---connectionTrail a b c d = stroke (paralellogram a b c d ) # fc aqua # fillRule EvenOdd # lc black # lw 0.1
-
---mkPath :: forall a. (Num (N a), Monoid a, Semigroup a, Additive (V a), HasOrigin a) => (Point (V a) (N a), a) -> (Point (V a) (N a), a) -> (Point (V a) (N a), a) -> (Point (V a) (N a), a) -> a
---mkPath a b c d = position [a,b,c,d,a]
-
---paralellogram :: forall (v :: * -> *) n. (Floating n, Ord n, Metric v) => Point v n -> Point v n -> Point v n -> Point v n -> Path v n
---paralellogram a b c d = pathFromTrailAt (closeTrail (trailFromVertices [a,b,d,c,a])) a
 
 roundPos :: (RealFrac a) => Int -> a -> a
 roundPos positions number  = fromInteger (round $ number * (10^positions)) / (10.0^^positions)
