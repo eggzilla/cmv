@@ -17,7 +17,6 @@ module Bio.CMDraw
      NodeIndices,
      buildRowIndexStructure,
      buildTreeIndexStructure,
-     getIndexEnd,
      secondaryStructureVisualisation
     ) where
 
