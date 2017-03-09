@@ -637,7 +637,7 @@ makeArrow (lab1,lab2,weight) = connectOutside' arrowStyle1 ("e" ++ lab1) ("a" ++
 
 makeSelfArrow :: ([Char], [Char], Double) -> QDiagram Cairo V2 Double Any -> QDiagram Cairo V2 Double Any  
 makeSelfArrow (lab1,_,weight) = connectPerim' arrowStyle ("s" ++ lab1) ("z" ++ lab1) (5/12 @@ turn) (8/12 @@ turn)
-  where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw (local 0.1) & headLength .~ local 0.01  & tailLength .~ 0 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
+  where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw (local 0.1) & headLength .~ local 0.01  & tailLength .~ 0 & shaftStyle %~ dashingG [weight, 0.3] 0 & headStyle %~ fc black . opacity (weight * 2)
         shaft' = wedge 3 xDir (2/4 @@ turn)
 
 makeLabel :: (String, String, Double) -> QDiagram Cairo V2 Double Any -> QDiagram Cairo V2 Double Any
@@ -649,24 +649,26 @@ makeLabel (n1,n2,weight) =
         (xOffset,yOffset,lclass) = setLabelOffset (location b1 ^. _x) (location b2 ^. _x) (location b1 ^. _y) (location b2 ^. _y)
       in
         --Diagrams.Prelude.atop (position [(midpoint # translateX xOffset # translateY yOffset, setTransition ((show (roundPos 3 weight))))])
-        Diagrams.Prelude.atop (position [(midpoint # translateX xOffset # translateY yOffset, setTransition (lclass ++"," ++ (show (roundPos 3 weight))))]) 
+        Diagrams.Prelude.atop (position [(midpoint # translateX xOffset # translateY yOffset, setTransition (lclass ++"," ++ (show (roundPos 3 weight))))])         
+        --Diagrams.Prelude.atop (position [(midpoint # translateX xOffset # translateY yOffset, setTransition (n1 ++"," ++ n2 ++"," ++lclass ++"," ++ (show (roundPos 3 weight))))]) 
 
 setLabelOffset :: Double -> Double -> Double -> Double -> (Double,Double,String)
 setLabelOffset x1 x2 y1 y2
+  -- 
+  | ydiff < 2 = (negate 10,0,"F")
+  | xdiff < 2 = (negate 1,0,"C")
+    -- 
+  | x1 > x2 && (ydiff > 30) = (negate 6,negate 12,"D")
+  -- 
+  | x1 < x2 && (ydiff > 30) = (6,negate 8,"E")             
   -- between split and insert state of same node - left upper(A)
-  | x1 > x2 && (ydiff < 20) = (0,0,"A")
+  | x1 > x2 && (ydiff < 30) = (0,negate 12,"A")
   -- between split and insert state of same node - right upper (B)
-  | x1 < x2 && (ydiff < 20) = (0,0,"B")
+  | x1 < x2 && (ydiff < 30) = (0,negate 12,"B")
   -- between same split states of different nodes (C)
-  | x1 == x2 = (0,0,"C")
-  -- 
-  | x1 > x2 && (ydiff > 20) = (0,0,"D")
-  -- 
-  | x1 < x2 && (ydiff > 20) = (0,0,"E")
-  -- 
-  | y1 == y2 = (0,0,"F")
   | otherwise = (0,0,"R")
     where ydiff = abs (abs y1 - abs y2)
+          xdiff = abs (abs x1 - abs x2)
                 
 makeSelfLabel :: (String, String, Double) -> QDiagram Cairo V2 Double Any -> QDiagram Cairo V2 Double Any
 makeSelfLabel (n1,_,weight)
