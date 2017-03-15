@@ -648,21 +648,21 @@ makeLabel (n1,n2,weight) =
         midpoint = location b1 .+^ (v ^/ 2)
         (xOffset,yOffset,lclass) = setLabelOffset (location b1 ^. _x) (location b2 ^. _x) (location b1 ^. _y) (location b2 ^. _y)
       in
-        --Diagrams.Prelude.atop (position [(midpoint # translateX xOffset # translateY yOffset, setTransition ((show (roundPos 3 weight))))])
-        Diagrams.Prelude.atop (position [(midpoint # translateX xOffset # translateY yOffset, setTransition (lclass ++"," ++ (show (roundPos 3 weight))))])         
+        Diagrams.Prelude.atop (position [(midpoint # translateX xOffset # translateY yOffset, setTransition ((show (roundPos 3 weight))))])
+        --Diagrams.Prelude.atop (position [(midpoint # translateX xOffset # translateY yOffset, setTransition (lclass ++"," ++ (show (roundPos 3 weight))))])         
         --Diagrams.Prelude.atop (position [(midpoint # translateX xOffset # translateY yOffset, setTransition (n1 ++"," ++ n2 ++"," ++lclass ++"," ++ (show (roundPos 3 weight))))]) 
 
 setLabelOffset :: Double -> Double -> Double -> Double -> (Double,Double,String)
 setLabelOffset x1 x2 y1 y2
   -- 
-  | ydiff < 2 = (negate 10,0,"F")
-  | xdiff < 2 = (negate 1,0,"C")
+  | ydiff < 2 = (0,0,"F")
+  | xdiff < 2 = (negate 1,negate 1,"C")
     -- 
-  | x1 > x2 && (ydiff > 30) = (negate 6,negate 12,"D")
+  | x1 > x2 && (ydiff > 30) = (negate 1,negate 10,"D")
   -- 
-  | x1 < x2 && (ydiff > 30) = (6,negate 8,"E")             
+  | x1 < x2 && (ydiff > 30) = (1,negate 10,"E")             
   -- between split and insert state of same node - left upper(A)
-  | x1 > x2 && (ydiff < 30) = (0,negate 12,"A")
+  | x1 > x2 && (ydiff < 30) = (negate 1,negate 12,"A")
   -- between split and insert state of same node - right upper (B)
   | x1 < x2 && (ydiff < 30) = (0,negate 12,"B")
   -- between same split states of different nodes (C)
