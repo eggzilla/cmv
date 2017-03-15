@@ -47,9 +47,9 @@ import Data.Either.Unwrap
 import qualified Data.Map as M
 
 -- | Draw one or more CM
-drawSingleCMComparisons :: String -> Int -> String -> String -> Double -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [CmcompareResult] -> [(QDiagram Cairo V2 Double Any,QDiagram Cairo V2 Double Any)]
-drawSingleCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef cms alns comparisons = diagrams
-  where diagrams = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef nameColorVector) zippedInput
+drawSingleCMComparisons :: String -> Int -> Double -> String -> String -> Double -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [CmcompareResult] -> [(QDiagram Cairo V2 Double Any,QDiagram Cairo V2 Double Any)]
+drawSingleCMComparisons modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype maxWidth scalef cms alns comparisons = diagrams
+  where diagrams = map (drawCM modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype maxWidth scalef nameColorVector) zippedInput
         zippedInput = zip4 cms alns comparisonNodeLabels (V.toList colorVector)
         modelNumber = length cms
         comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) cms
@@ -58,16 +58,16 @@ drawSingleCMComparisons modelDetail entryNumberCutoff modelLayout emissiontype m
         nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
 
 -- | Draw one or more CM
-drawSingleCMs :: String -> Int -> String -> String -> Double -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [(QDiagram Cairo V2 Double Any,QDiagram Cairo V2 Double Any)]
-drawSingleCMs modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef cms alns = map (drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef emptyColorNameVector) zippedInput
+drawSingleCMs :: String -> Int -> Double -> String -> String -> Double -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [(QDiagram Cairo V2 Double Any,QDiagram Cairo V2 Double Any)]
+drawSingleCMs modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype maxWidth scalef cms alns = map (drawCM modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype maxWidth scalef emptyColorNameVector) zippedInput
     where zippedInput = zip4 cms alns comparisonNodeLabels colorList
           comparisonNodeLabels = map getBlankComparisonNodeLabels cms
           colorList = replicate (length cms) white
           emptyColorNameVector = V.empty
 
 -- | Draw the guide Tree of a single CM
-drawCM :: String -> Int -> String -> String -> Double -> Double -> V.Vector (String,Colour Double) -> (CM.CM,Maybe StockholmAlignment,V.Vector (Int,V.Vector (Colour Double)), Colour Double) -> (QDiagram Cairo V2 Double Any,QDiagram Cairo V2 Double Any)
-drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef nameColorVector (inputCM,aln,comparisonNodeLabels,modelColor)
+drawCM :: String -> Int -> Double -> String -> String -> Double -> Double -> V.Vector (String,Colour Double) -> (CM.CM,Maybe StockholmAlignment,V.Vector (Int,V.Vector (Colour Double)), Colour Double) -> (QDiagram Cairo V2 Double Any,QDiagram Cairo V2 Double Any)
+drawCM modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype maxWidth scalef nameColorVector (inputCM,aln,comparisonNodeLabels,modelColor)
    | modelLayout == "tree" = ((applyAll ([bg white]) modelTreeLayout),alignmentDiagram)
    | modelLayout == "flat" = ((applyAll ([bg white]) modelFlatLayout),alignmentDiagram)
    | otherwise = ((applyAll ([bg white])modelTreeLayout),alignmentDiagram)
@@ -91,9 +91,9 @@ drawCM modelDetail entryNumberCutoff modelLayout emissiontype maxWidth scalef na
          nodeIndices = V.iterateN nodeNumber (1+) 0
          nodesFlat = vcat' with {_sep=0.01} (V.toList (V.map (drawCMNode modelDetail alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) nodeIndices))
          allConnectedStates = makeAllConnectedStates allStates
-         lowConnectedStates = V.filter (\(_,_,w) -> w > 0.001) allConnectedStates
-         connectedStates = V.filter (\(stateId,targetStateIndex,_) -> stateId /= targetStateIndex) lowConnectedStates
-         selfConnectedStates = V.filter (\(stateId,targetStateIndex,_) -> stateId == targetStateIndex) lowConnectedStates
+         highConnectedStates = V.filter (\(_,_,w) -> w >= transitionCutoff) allConnectedStates
+         connectedStates = V.filter (\(stateId,targetStateIndex,_) -> stateId /= targetStateIndex) highConnectedStates
+         selfConnectedStates = V.filter (\(stateId,targetStateIndex,_) -> stateId == targetStateIndex) highConnectedStates
          arrowList = case modelDetail of
                           "detailed" -> V.toList (V.map makeArrow connectedStates V.++ V.map makeSelfArrow selfConnectedStates)
                           "interval"-> map (makeArrow . indexStructureToConnections) (filter (\(acc,emit,_,_,_)-> acc /= emit)(fst indexStructure))

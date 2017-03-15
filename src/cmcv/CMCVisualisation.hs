@@ -35,6 +35,7 @@ data Options = Options
     modelLayout :: String,
     emissionLayout :: String,
     alignmentEntries :: Int,
+    transitionCutoff :: Double,
     maxWidth :: Double,
     scalingFactor :: Double,
     comparisonAlignment :: String,
@@ -52,8 +53,9 @@ options = Options
     modelLayout = "tree" &= name "l" &= help "Set layout of drawn models: flat, tree",
     emissionLayout = "box" &= name "e" &= help "Set layout of drawn models: score, probability, box (Default: box)",
     alignmentEntries = (50 :: Int) &= name "n" &= help "Set cutoff for included stockholm alignment entries (Default: 50)",
+    transitionCutoff = (0.01 :: Double) &= name "t" &= help "Minimal value for a transition probability to be displayed (Default: 0.01)",
     maxWidth = (200 :: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)",
-    scalingFactor = (2 :: Double) &= name "t" &= help "Set uniform scaling factor for image size (Default: 2)",
+    scalingFactor = (2 :: Double) &= name "c" &= help "Set uniform scaling factor for image size (Default: 2)",
     comparisonAlignment = "model" &= name "a" &= help "Set layout of drawn models: model, comparison",
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
     outputDirectoryPath = "" &= name "p" &= help "Output directory path (Default: none)",
@@ -86,7 +88,7 @@ main = do
        let alignmentFileNames = map (\m -> m ++ ".aln" ++ "." ++ outputFormat) currentModelNames
        let structureFilePaths = map (\m -> outputDirectoryPath ++ "/" ++ m ++ "." ++ secondaryStructureVisTool) currentModelNames
        setCurrentDirectory dirPath
-       let (modelVis,alignmentVis) = unzip $ drawSingleCMComparisons modelDetail alignmentEntries modelLayout emissionLayout maxWidth scalingFactor cms alns comparisons
+       let (modelVis,alignmentVis) = unzip $ drawSingleCMComparisons modelDetail alignmentEntries transitionCutoff modelLayout emissionLayout maxWidth scalingFactor cms alns comparisons
        mapM_ (\(a,b) -> printCM a svgsize b) (zip modelFileNames modelVis)
        mapM_ (\(a,b) -> printCM a svgsize b) (zip alignmentFileNames alignmentVis)
        mapM_ (\(structureFilePath,(structureVis,_)) -> writeFile structureFilePath structureVis) (zip structureFilePaths structureVisInputs)
