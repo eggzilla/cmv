@@ -33,6 +33,7 @@ data Options = Options
     alignmentEntries :: Int,
     maxWidth :: Double,
     scalingFactor :: Double,
+    transitionCutoff :: Double,
     comparisonAlignment :: String,
     outputFormat :: String,
     outputDirectoryPath :: String,
@@ -48,7 +49,8 @@ options = Options
     emissionLayout = "box" &= name "e" &= help "Set layout of drawn models: score, probability, box (Default: box)",
     alignmentEntries = (50 :: Int) &= name "n" &= help "Set cutoff for included stockholm alignment entries (Default: 50)",
     maxWidth = (180:: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)",
-    scalingFactor = (2 :: Double) &= name "t" &= help "Set uniform scaling factor for image size (Default: 2)",
+    scalingFactor = (2 :: Double) &= name "c" &= help "Set uniform scaling factor for image size (Default: 2)",
+    transitionCutoff = (0.01 :: Double) &= name "t" &= help "Minimal value for a transition probability to be displayed (Default: 0.01)",
     comparisonAlignment = "model" &= name "a" &= help "Set layout of drawn models: model, comparison",
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
     outputDirectoryPath = "" &= name "p" &= help "Output directory path (Default: none)",
@@ -84,7 +86,7 @@ main = do
               let modelFileNames = map (\m -> m ++ "." ++ outputFormat) currentModelNames
               let alignmentFileNames = map (\m -> m ++ ".aln" ++ "." ++ outputFormat) currentModelNames
               writeModelNameFile modelNameToggle outputDirectoryPath currentModelNames
-              let (modelVis,alignmentVis) = unzip $ drawSingleHMMComparison modelDetail alignmentEntries emissionLayout maxWidth scalingFactor models alns rightHMMCResultsParsed
+              let (modelVis,alignmentVis) = unzip $ drawSingleHMMComparison modelDetail alignmentEntries transitionCutoff emissionLayout maxWidth scalingFactor models alns rightHMMCResultsParsed
               mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelFileNames modelVis)
               mapM_ (\(a,b) -> printHMM a svgsize b) (zip alignmentFileNames alignmentVis)
               setCurrentDirectory currentWD
