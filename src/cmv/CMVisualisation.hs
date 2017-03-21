@@ -71,21 +71,30 @@ main = do
           let outputName = diagramName "cmv" outputFormat
           let modelNumber = length cms
           let alns = if isRight alnInput then map (\a -> Just a) (fromRight alnInput) else replicate modelNumber Nothing
-          let structureVisInputs = secondaryStructureVisualisation secondaryStructureVisTool maxWidth cms alns []
           let currentModelNames = map (T.unpack . CM._name) cms
           currentWD <- getCurrentDirectory
           let dirPath = if null outputDirectoryPath then currentWD else outputDirectoryPath
           writeModelNameFile modelNameToggle outputDirectoryPath currentModelNames
           let modelFileNames = map (\m -> m ++ "." ++ outputFormat) currentModelNames
           let alignmentFileNames = map (\m -> m ++ ".aln" ++ "." ++ outputFormat) currentModelNames
-          let structureFilePaths = map (\m -> outputDirectoryPath ++ "/" ++ m ++ "." ++ secondaryStructureVisTool) currentModelNames
           setCurrentDirectory dirPath
           let (modelVis,alignmentVis)= unzip $ drawSingleCMs modelDetail alignmentEntries transitionCutoff modelLayout emissionLayout maxWidth scalingFactor cms alns
           mapM_ (\(a,b) -> printCM a svgsize b) (zip modelFileNames modelVis)
           mapM_ (\(a,b) -> printCM a svgsize b) (zip alignmentFileNames alignmentVis)
-          mapM_ (\(structureFileName,(structureVis,_)) -> writeFile structureFileName structureVis) (zip structureFilePaths structureVisInputs)
-          mapM_ (\(structureFileName,(_,colorScheme)) -> writeFile (structureFileName ++"Color") colorScheme) (zip structureFilePaths structureVisInputs)
-          setCurrentDirectory currentWD
+          let structureVisType = "perModel"
+          if structureVisType == "perModel"
+            then do
+              let structureFilePath = outputDirectoryPath ++ "/"
+              let structureVisInputs = perModelSecondaryStructureVisualisation secondaryStructureVisTool maxWidth structureFilePath cms alns []
+              mapM_ (\(structureFileName,structureVis) -> writeFile structureFileName structureVis) structureVisInputs
+              setCurrentDirectory currentWD
+            else do
+              let structureFilePaths = map (\m -> outputDirectoryPath ++ "/" ++ m ++ "." ++ secondaryStructureVisTool) currentModelNames
+              let structureVisInputs = mergedSecondaryStructureVisualisation secondaryStructureVisTool maxWidth cms alns []
+              mapM_ (\(structureFileName,(structureVis,_)) -> writeFile structureFileName structureVis) (zip structureFilePaths structureVisInputs)
+              mapM_ (\(structureFileName,(_,colorScheme)) -> writeFile (structureFileName ++"Color") colorScheme) (zip structureFilePaths structureVisInputs)
+              setCurrentDirectory currentWD
+          
         else
           print "Could not read covariance models from input file"
     else

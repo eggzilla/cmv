@@ -115,10 +115,107 @@ makeStateConnections (pInt,currentState) = conns
   where stateId = show (PI.getPInt pInt)
         targetBitscoreVector = VU.toList (CM._stateTransitions currentState)
         conns = map (\(target,bitscore) ->  (stateId,show(PI.getPInt target),score2Prob 1 bitscore)) targetBitscoreVector
+
+
+-- | Extracts consensus secondary structure from alignment and annotates cmcompare nodes for each model-model combination seperatly
+perModelSecondaryStructureVisualisation :: String -> Double -> String -> [CM.CM] -> [Maybe StockholmAlignment] -> [CmcompareResult] -> [(String,String)]
+perModelSecondaryStructureVisualisation selectedTool _ structureFilePath cms alns comparisons
+  | selectedTool == "forna" = fornaVis
+  | selectedTool == "r2r" = r2rVis
+  | otherwise = []
+  where fornaVis = map (buildFornaperModelInput structureFilePath) structureComparisonInfo
+        r2rVis = map (buildR2RperModelInput structureFilePath) structureComparisonInfo
+        modelNumber = length cms
+        comparisonNodeLabels = map (getComparisonPerModelNodeLabels comparisons nameColorVector) cms
+        colorVector = makeColorVector modelNumber
+        modelNames = V.fromList (map (T.unpack . CM._name) cms)
+        nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
+        structureComparisonInfo = zip3 cms alns comparisonNodeLabels
+
+getComparisonPerModelNodeLabels :: [CmcompareResult] -> V.Vector (String, Colour Double) -> CM.CM -> V.Vector (String,V.Vector (Int, Colour Double))
+getComparisonPerModelNodeLabels comparsionResults colorVector model = comparisonNodeLabels
+   where modelName = T.unpack (CM._name model)
+         relevantComparisons1 = filter ((modelName==) . model1Name) comparsionResults
+         modelNodeInterval1 = map (\a -> (model2Name a,model2matchednodes a))  relevantComparisons1 
+         relevantComparisons2 = filter ((modelName==) . model2Name) comparsionResults
+         modelNodeInterval2 = map (\a -> (model1Name a,model1matchednodes a))  relevantComparisons2
+         modelNodeIntervals =  V.fromList (modelNodeInterval1 ++ modelNodeInterval2)
+         nodeNumber = CM._nodesInModel model
+         modelComparisonLabels = V.map (getModelComparisonLabels modelName nodeNumber colorVector) modelNodeIntervals
+
+getModelComparisonLabels String -> Int -> V.Vector (String, Colour Double) -> (String,[Int])-> (String,V.Vector (Int, Colour Double))
+getModelComparisonLabels modelName nodeNumber colorVector (compModel,matchedNodes) = (compModel,comparisonNodeLabels)
+  where modelColorInterval = modelToColor colorVector modelNodeInterval
+        comparisonNodeLabels = V.generate (nodeNumber +1) (makeModelComparisonNodeLabel colorNodeInterval)
+
+makeModelComparisonNodeLabel :: (Colour Double,[Int]) -> Int -> (Int,Colour Double)
+makeModelComparisonNodeLabel (modelColor, nodeInterval) nodeNumber = comparisonNodeLabel
+  where relevantColorNodeInterval = V.filter (\(_,b) -> elem nodeNumber b) colorNodeInterval        
+        comparisonNodeLabel = if elem nodeNumber nodeInterval then (nodeNumber,modelColor) else (nodeNumber,V.singleton white)    
+
+buildR2RperModelInput :: String -> (CM.CM, Maybe StockholmAlignment,V.Vector (String,V.Vector (Int, Colour Double)) -> ([String],String)
+buildR2RperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabels)
+  | isNothing maybeAln = ([],[])
+  | otherwise = (r2rInput,[])
+  where cm = fromLeft (CM._cm inputCM) -- select Flexible Model
+        nodes = V.fromList (M.elems (CM._fmNodes cm))
+        aln = fromJust maybeAln
+        r2rInput = sHeader ++ sConsensusStructure ++ sConsensusSequence ++ sConsensusSequenceColor ++ sCovarianceAnnotation ++ sComparisonHighlight ++ sBackboneColorLabel
+        allColumnAnnotations = columnAnnotations aln
+        consensusSequenceList = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
+        consensusSequence = if null consensusSequenceList then "" else T.unpack (head consensusSequenceList)
+        gapfreeConsensusSequence = map C.toUpper (filter (not . isGap) consensusSequence)
+        consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
+        consensusStructure = if null consensusStructureList then "" else extractGapfreeStructure consensusSequence (T.unpack (head consensusStructureList))
+        nodeAlignmentColIndices = V.map CM._nodeColL nodes
+        maxEntryLength = length consensusStructure
+        colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabels
+        sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
+        fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
+        r2rLabels = map comparisonColLabelsToR2RLabel (V.toList fullComparisonColLabels)
+        sHeader =  "# STOCKHOLM 1.0\n"
+        sConsensusStructure =     "#=GC SS_cons          " ++ consensusStructure ++ "\n"
+        sConsensusSequence =      "#=GC cons             " ++ gapfreeConsensusSequence ++ "\n"
+        sConsensusSequenceColor = "#=GC conss            " ++ replicate (length consensusStructure) '2' ++ "\n"
+        sCovarianceAnnotation =   "#=GC cov_SS_cons      " ++ replicate (length consensusStructure) '.' ++ "\n"
+        -- for multiple comparisons we need to return different filenames and labels
+        sComparisonHighlight =    "#=GC R2R_LABEL        " ++ r2rLabels ++ "\n"
+        sBackboneColorLabel =     "#=GF R2R shade_along_backbone s rgb:200,0,0\n"
+
+buildFornaperModelInput :: String -> (CM.CM,Maybe StockholmAlignment,V.Vector (String,V.Vector (Int, Colour Double))) -> [(String, String)]
+buildFornaperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabelsPerModels)
+  | isNothing maybeAln = ([],[])
+  | otherwise = (fornaInput colorScheme)
+  where cm = fromLeft (CM._cm inputCM) -- select Flexible Model
+        nodes = V.fromList (M.elems (CM._fmNodes cm))
+        aln = fromJust maybeAln
+        fornaString = ">" ++ modelName ++ "\n" ++ gapfreeConsensusSequence ++ "\n" ++ consensusStructure
+        fornaFilePath = structureFilePath ++ modelName ++ ".forna"
+        fornaInput = (fornaFilePath,fornaString)
+        allColumnAnnotations = columnAnnotations aln
+        consensusSequenceList = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
+        consensusSequence = if null consensusSequenceList then "" else T.unpack (head consensusSequenceList)
+        gapfreeConsensusSequence = map C.toUpper (filter (not . isGap) consensusSequence)
+        consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
+        consensusStructure = if null consensusStructureList then "" else extractGapfreeStructure consensusSequence (T.unpack (head consensusStructureList))
+        modelName = T.unpack (CM._name inputCM)
+        nodeAlignmentColIndices = V.map CM._nodeColL nodes
+        maxEntryLength = length consensusStructure
+        colorSchemes = V.map (makeColorScheme modelName nodeAlignmentColIndices maxEntryLength) comparisonNodeLabelsPerModels
+
+makeColorScheme ::  String -> String -> V.Vector Int -> Int -> (String,V.Vector (Int, Colour Double)) -> (String,String)
+makeColorScheme modelName structureFilePath nodeAlignmentColIndices maxEntryLength (compModelName,comparisonNodeLabelsPerModel) = (schemeFilePath,singleColorLabels)
+  where schemeFilePath = structureFilePath ++ modelName ++ "." ++ compModelName ++ ".fornacolor"
+        colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabelsPerModel
+        sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
+        fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
+        --forna only supports a single color per node, which has to be supplied as additional color scheme
+        singleColorLabels = concatMap comparisonColLabelsToFornaLabel (V.toList fullComparisonColLabels)
+
         
--- | Extracts consensus secondary structure from alignment and annotates cmcompare nodes
-secondaryStructureVisualisation :: String -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [CmcompareResult] -> [(String,String)]
-secondaryStructureVisualisation selectedTool _ cms alns comparisons
+-- | Extracts consensus secondary structure from alignment and annotates cmcompare nodes for all comparisons in one merged output
+mergedSecondaryStructureVisualisation :: String -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [CmcompareResult] -> [(String,String)]
+mergedSecondaryStructureVisualisation selectedTool _ cms alns comparisons
   | selectedTool == "forna" = fornaVis
   | selectedTool == "r2r" = r2rVis
   | otherwise = []
@@ -130,9 +227,9 @@ secondaryStructureVisualisation selectedTool _ cms alns comparisons
         modelNames = V.fromList (map (T.unpack . CM._name) cms)
         nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
         structureComparisonInfo = zip3 cms alns comparisonNodeLabels
-
-buildFornaInput :: (CM.CM,Maybe StockholmAlignment,V.Vector (Int, V.Vector (Colour Double))) -> (String, String)
-buildFornaInput (inputCM,maybeAln,comparisonNodeLabels)
+        
+mergedBuildFornaInput :: (CM.CM,Maybe StockholmAlignment,V.Vector (Int, V.Vector (Colour Double))) -> (String, String)
+mergedBuildFornaInput (inputCM,maybeAln,comparisonNodeLabels)
   | isNothing maybeAln = ([],[])
   | otherwise = (fornaInput, colorScheme)
   where cm = fromLeft (CM._cm inputCM) -- select Flexible Model
@@ -160,11 +257,11 @@ comparisonColLabelsToFornaLabel (nodeNr,colorVector)
   | V.null colorVector = ""
   | V.head colorVector /= white =  " " ++ show nodeNr ++ ":red "
   | otherwise = ""
-
-buildR2RInput :: (CM.CM, Maybe StockholmAlignment,V.Vector (Int,V.Vector (Colour Double))) -> (String,String)
-buildR2RInput (inputCM,maybeAln,comparisonNodeLabels)
-  | isNothing maybeAln = ([],[])
-  | otherwise = (r2rInput,[])
+        
+mergedBuildR2RInput :: (CM.CM, Maybe StockholmAlignment,V.Vector (Int,V.Vector (Colour Double))) -> (String,String)
+mergedBuildR2RInput (inputCM,maybeAln,comparisonNodeLabels)
+   | isNothing maybeAln = ([],[])
+   | otherwise = (r2rInput,[])
   where cm = fromLeft (CM._cm inputCM) -- select Flexible Model
         nodes = V.fromList (M.elems (CM._fmNodes cm))
         aln = fromJust maybeAln
