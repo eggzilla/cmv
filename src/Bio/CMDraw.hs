@@ -17,7 +17,8 @@ module Bio.CMDraw
      NodeIndices,
      buildRowIndexStructure,
      buildTreeIndexStructure,
-     secondaryStructureVisualisation
+     mergedSecondaryStructureVisualisation,
+     perModelSecondaryStructureVisualisation
     ) where
 
 import Diagrams.Prelude
@@ -123,8 +124,8 @@ perModelSecondaryStructureVisualisation selectedTool _ structureFilePath cms aln
   | selectedTool == "forna" = fornaVis
   | selectedTool == "r2r" = r2rVis
   | otherwise = []
-  where fornaVis = map (buildFornaperModelInput structureFilePath) structureComparisonInfo
-        r2rVis = map (buildR2RperModelInput structureFilePath) structureComparisonInfo
+  where fornaVis = concatMap (buildFornaperModelInput structureFilePath) structureComparisonInfo
+        r2rVis = concatMap (buildR2RperModelInput structureFilePath) structureComparisonInfo
         modelNumber = length cms
         comparisonNodeLabels = map (getComparisonPerModelNodeLabels comparisons nameColorVector) cms
         colorVector = makeColorVector modelNumber
@@ -132,8 +133,8 @@ perModelSecondaryStructureVisualisation selectedTool _ structureFilePath cms aln
         nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
         structureComparisonInfo = zip3 cms alns comparisonNodeLabels
 
-getComparisonPerModelNodeLabels :: [CmcompareResult] -> V.Vector (String, Colour Double) -> CM.CM -> V.Vector (String,V.Vector (Int,V.Vector Colour Double))
-getComparisonPerModelNodeLabels comparsionResults colorVector model = comparisonNodeLabels
+getComparisonPerModelNodeLabels :: [CmcompareResult] -> V.Vector (String, Colour Double) -> CM.CM -> V.Vector (String, V.Vector (Int,V.Vector (Colour Double)))
+getComparisonPerModelNodeLabels comparsionResults colorVector model = modelComparisonLabels
    where modelName = T.unpack (CM._name model)
          relevantComparisons1 = filter ((modelName==) . model1Name) comparsionResults
          modelNodeInterval1 = map (\a -> (model2Name a,model2matchednodes a))  relevantComparisons1 
@@ -143,24 +144,25 @@ getComparisonPerModelNodeLabels comparsionResults colorVector model = comparison
          nodeNumber = CM._nodesInModel model
          modelComparisonLabels = V.map (getModelComparisonLabels modelName nodeNumber colorVector) modelNodeIntervals
 
-getModelComparisonLabels String -> Int -> V.Vector (String, Colour Double) -> (String,[Int])-> (String,V.Vector (Int,V.Vector Colour Double))
+getModelComparisonLabels :: String -> Int -> V.Vector (String, Colour Double) -> (String,[Int])-> (String,V.Vector (Int,V.Vector (Colour Double)))
 getModelComparisonLabels modelName nodeNumber colorVector (compModel,matchedNodes) = (compModel,comparisonNodeLabels)
-  where modelColorInterval = modelToColor colorVector modelNodeInterval
-        comparisonNodeLabels = V.generate (nodeNumber +1) (makeModelComparisonNodeLabel colorNodeInterval)
+  where modelColorInterval = modelToColor colorVector (compModel,matchedNodes)
+        comparisonNodeLabels = V.generate (nodeNumber +1) (makeModelComparisonNodeLabel modelColorInterval)
 
-makeModelComparisonNodeLabel :: (Colour Double,[Int]) -> Int -> (Int,V.Vector Colour Double)
-makeModelComparisonNodeLabel (modelColor, nodeInterval) nodeNumber = comparisonNodeLabel
-  where relevantColorNodeInterval = V.filter (\(_,b) -> elem nodeNumber b) colorNodeInterval        
-        comparisonNodeLabel = if elem nodeNumber nodeInterval then (nodeNumber,V.singleton modelColor) else (nodeNumber,V.singleton white)    
+makeModelComparisonNodeLabel :: (Colour Double,[Int]) -> Int -> (Int,V.Vector (Colour Double))
+makeModelComparisonNodeLabel (modelColor, nodeInterval) nodeNumber 
+  | elem nodeNumber nodeInterval = (nodeNumber,V.singleton modelColor)
+  | otherwise = (nodeNumber,V.singleton white)
 
-buildR2RperModelInput :: String -> (CM.CM, Maybe StockholmAlignment,V.Vector (String,V.Vector (Int,V.Vector Colour Double)) -> [(String,String)]
+buildR2RperModelInput :: String -> (CM.CM, Maybe StockholmAlignment,V.Vector (String,V.Vector (Int,V.Vector (Colour Double)))) -> [(String,String)]
 buildR2RperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabels)
-  | isNothing maybeAln = ([],[])
-  | otherwise = (r2rInput,[])
+  | isNothing maybeAln = []
+  | otherwise = V.toList r2rInputs
   where cm = fromLeft (CM._cm inputCM) -- select Flexible Model
+        modelName = T.unpack (CM._name inputCM)
         nodes = V.fromList (M.elems (CM._fmNodes cm))
         aln = fromJust maybeAln
-        r2rInputPrefix = sHeader ++ sConsensusStructure ++ sConsensusSequence ++ sConsensusSequenceColor ++ sCovarianceAnnotation -- ++ sComparisonHighlight ++ sBackboneColorLabel
+        r2rInputPrefix = sHeader ++ sConsensusStructure ++ sConsensusSequence ++ sConsensusSequenceColor ++ sCovarianceAnnotation 
         allColumnAnnotations = columnAnnotations aln
         consensusSequenceList = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
         consensusSequence = if null consensusSequenceList then "" else T.unpack (head consensusSequenceList)
@@ -175,10 +177,11 @@ buildR2RperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabels)
         sConsensusSequenceColor = "#=GC conss            " ++ replicate (length consensusStructure) '2' ++ "\n"
         sCovarianceAnnotation =   "#=GC cov_SS_cons      " ++ replicate (length consensusStructure) '.' ++ "\n"
         -- for multiple comparisons we need to return different filenames and labels
+        r2rInputs = V.map (buildR2RperModelComparisonInput modelName structureFilePath maxEntryLength nodeAlignmentColIndices r2rInputPrefix) comparisonNodeLabels
 
-comparisonLabelsAndColor :: String -> String -> Int -> V.Vector Int -> String -> (String,V.Vector (Int,V.Vector Colour Double)) -> [(String,String)]
-comparisonLabelsAndColor modelName structureFilePath maxEntryLength nodeAlignmentColIndices r2rInputPrefix (compModelName,comparisonNodeLabels)
-        schemeFilePath = structureFilePath ++ modelName ++ "." ++ compModelName ++ ".r2r"
+buildR2RperModelComparisonInput :: String -> String -> Int -> V.Vector Int -> String -> (String,V.Vector (Int,V.Vector (Colour Double))) -> (String,String)
+buildR2RperModelComparisonInput modelName structureFilePath maxEntryLength nodeAlignmentColIndices r2rInputPrefix (compModelName,comparisonNodeLabels) = (schemeFilePath,r2rInput)
+  where schemeFilePath = structureFilePath ++ modelName ++ "." ++ compModelName ++ ".r2r"
         colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabels
         sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
         fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
@@ -189,16 +192,16 @@ comparisonLabelsAndColor modelName structureFilePath maxEntryLength nodeAlignmen
         --sBackboneColorLabel =     "#=GF R2R shade_along_backbone s rgb:200,0,0\n"
         r2rInput = r2rInputPrefix ++ sComparisonHighlight ++ sBackboneColorLabel
 
-setBackboneColor :: V.Vector (Int,V.Vector Colour Double) -> String
+setBackboneColor :: V.Vector (Int,V.Vector (Colour Double)) -> String
 setBackboneColor comparisonNodeLabels
   | V.null comparisonNodeLabels = "200,0,0"
   | otherwise = show (R.channelRed currentColor) ++ "," ++ show (R.channelGreen currentColor) ++ "," ++ show (R.channelBlue currentColor)
-    where currentColor = snd V.head comparisonNodeLabels
+    where currentColor = R.toRGB $ V.head (snd (V.head comparisonNodeLabels))
 
-buildFornaperModelInput :: String -> (CM.CM,Maybe StockholmAlignment,V.Vector (String,V.Vector (Int,V.Vector Colour Double))) -> [(String, String)]
+buildFornaperModelInput :: String -> (CM.CM,Maybe StockholmAlignment,V.Vector (String,V.Vector (Int,V.Vector (Colour Double)))) -> [(String, String)]
 buildFornaperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabelsPerModels)
-  | isNothing maybeAln = ([],[])
-  | otherwise = (fornaInput colorScheme)
+  | isNothing maybeAln = []
+  | otherwise = fornaInput:colorSchemes
   where cm = fromLeft (CM._cm inputCM) -- select Flexible Model
         nodes = V.fromList (M.elems (CM._fmNodes cm))
         aln = fromJust maybeAln
@@ -214,12 +217,12 @@ buildFornaperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabels
         modelName = T.unpack (CM._name inputCM)
         nodeAlignmentColIndices = V.map CM._nodeColL nodes
         maxEntryLength = length consensusStructure
-        colorSchemes = V.map (makeColorScheme modelName nodeAlignmentColIndices maxEntryLength) comparisonNodeLabelsPerModels
+        colorSchemes = V.toList (V.map (makeColorScheme modelName  structureFilePath nodeAlignmentColIndices maxEntryLength) comparisonNodeLabelsPerModels)
 
-makeColorScheme ::  String -> String -> V.Vector Int -> Int -> (String,V.Vector (Int,V.Vector Colour Double)) -> (String,String)
+makeColorScheme ::  String -> String -> V.Vector Int -> Int -> (String,V.Vector (Int,V.Vector (Colour Double))) -> (String,String)
 makeColorScheme modelName structureFilePath nodeAlignmentColIndices maxEntryLength (compModelName,comparisonNodeLabelsPerModel) = (schemeFilePath,singleColorLabels)
   where schemeFilePath = structureFilePath ++ modelName ++ "." ++ compModelName ++ ".fornacolor"
-        colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeToColIndicesPerModel comparisonNodeLabelsPerModel
+        colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabelsPerModel
         sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
         fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
         --forna only supports a single color per node, which has to be supplied as additional color scheme
@@ -232,8 +235,8 @@ mergedSecondaryStructureVisualisation selectedTool _ cms alns comparisons
   | selectedTool == "forna" = fornaVis
   | selectedTool == "r2r" = r2rVis
   | otherwise = []
-  where fornaVis = map buildFornaInput structureComparisonInfo
-        r2rVis = map buildR2RInput structureComparisonInfo
+  where fornaVis = map buildMergedFornaInput structureComparisonInfo
+        r2rVis = map buildMergedR2RInput structureComparisonInfo
         modelNumber = length cms
         comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) cms
         colorVector = makeColorVector modelNumber
@@ -241,8 +244,8 @@ mergedSecondaryStructureVisualisation selectedTool _ cms alns comparisons
         nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
         structureComparisonInfo = zip3 cms alns comparisonNodeLabels
         
-mergedBuildFornaInput :: (CM.CM,Maybe StockholmAlignment,V.Vector (Int, V.Vector (Colour Double))) -> (String, String)
-mergedBuildFornaInput (inputCM,maybeAln,comparisonNodeLabels)
+buildMergedFornaInput :: (CM.CM,Maybe StockholmAlignment,V.Vector (Int, V.Vector (Colour Double))) -> (String, String)
+buildMergedFornaInput (inputCM,maybeAln,comparisonNodeLabels)
   | isNothing maybeAln = ([],[])
   | otherwise = (fornaInput, colorScheme)
   where cm = fromLeft (CM._cm inputCM) -- select Flexible Model
@@ -271,8 +274,8 @@ comparisonColLabelsToFornaLabel (nodeNr,colorVector)
   | V.head colorVector /= white =  " " ++ show nodeNr ++ ":red "
   | otherwise = ""
         
-mergedBuildR2RInput :: (CM.CM, Maybe StockholmAlignment,V.Vector (Int,V.Vector (Colour Double))) -> (String,String)
-mergedBuildR2RInput (inputCM,maybeAln,comparisonNodeLabels)
+buildMergedR2RInput :: (CM.CM, Maybe StockholmAlignment,V.Vector (Int,V.Vector (Colour Double))) -> (String,String)
+buildMergedR2RInput (inputCM,maybeAln,comparisonNodeLabels)
    | isNothing maybeAln = ([],[])
    | otherwise = (r2rInput,[])
   where cm = fromLeft (CM._cm inputCM) -- select Flexible Model
@@ -307,11 +310,6 @@ comparisonColLabelsToR2RLabel (_,colorVector)
 
 nodeToColIndices :: (Int,(Int,V.Vector (Colour Double))) -> (Int,V.Vector (Colour Double))
 nodeToColIndices (colIndex,(_,colors)) = (colIndex,colors)
-
-makeFullComparisonColLabel :: V.Vector (Int, V.Vector (Colour Double)) -> Int -> (Int, V.Vector (Colour Double))
-makeFullComparisonColLabel sparseComparisonColLabels colIndex = fullComparisonColLabel
-  where availableLabel = V.find (\(a,_)-> colIndex == a) sparseComparisonColLabels
-        fullComparisonColLabel = fromMaybe (colIndex,V.singleton white) availableLabel
 
 fillComparisonColLabels :: Int -> V.Vector (Int, V.Vector (Colour Double)) ->  V.Vector (Int, V.Vector (Colour Double))
 fillComparisonColLabels maxEntryLength sparseComparisonColLabels = fullComparisonColLabels

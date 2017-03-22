@@ -79,7 +79,6 @@ main = do
        let outputName = diagramName "cmcv" outputFormat
        let modelNumber = length cms
        let alns = if isRight alnInput then map (\a -> Just a) (E.fromRight alnInput) else replicate modelNumber Nothing
-       let structureVisInputs = secondaryStructureVisualisation secondaryStructureVisTool maxWidth cms alns comparisons
        let currentModelNames = map (T.unpack . CM._name) cms
        currentWD <- getCurrentDirectory
        let dirPath = if null outputDirectoryPath then currentWD else outputDirectoryPath
@@ -91,9 +90,18 @@ main = do
        let (modelVis,alignmentVis) = unzip $ drawSingleCMComparisons modelDetail alignmentEntries transitionCutoff modelLayout emissionLayout maxWidth scalingFactor cms alns comparisons
        mapM_ (\(a,b) -> printCM a svgsize b) (zip modelFileNames modelVis)
        mapM_ (\(a,b) -> printCM a svgsize b) (zip alignmentFileNames alignmentVis)
-       mapM_ (\(structureFilePath,(structureVis,_)) -> writeFile structureFilePath structureVis) (zip structureFilePaths structureVisInputs)
-       mapM_ (\(structureFilePath,(_,colorScheme)) -> writeFile (structureFilePath ++"Color") colorScheme) (zip structureFilePaths structureVisInputs)
-       setCurrentDirectory currentWD
+       let structureVisType = "perModel"
+       if structureVisType == "perModel"
+         then do
+           let structureFilePath = outputDirectoryPath ++ "/"
+           let structureVisInputs = perModelSecondaryStructureVisualisation secondaryStructureVisTool maxWidth structureFilePath cms alns []
+           mapM_ (\(structureFileName,structureVis) -> writeFile structureFileName structureVis) structureVisInputs
+           setCurrentDirectory currentWD
+         else do
+           let structureFilePaths = map (\m -> outputDirectoryPath ++ "/" ++ m ++ "." ++ secondaryStructureVisTool) currentModelNames
+           let structureVisInputs = mergedSecondaryStructureVisualisation secondaryStructureVisTool maxWidth cms alns []
+           mapM_ (\(structureFileName,(structureVis,_)) -> writeFile structureFileName structureVis) (zip structureFilePaths structureVisInputs)
+           mapM_ (\(structureFileName,(_,colorScheme)) -> writeFile (structureFileName ++"Color") colorScheme) (zip structureFilePaths structureVisInputs)
      else do
        Control.Monad.unless modelFileExists $ putStrLn "Model file not found"
        Control.Monad.unless cmcFileExists $ putStrLn "Comparison file not found"
