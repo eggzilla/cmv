@@ -71,7 +71,7 @@ main = do
            setCurrentDirectory dirPath
            let modelFileNames = map (\m -> m ++ "." ++ outputFormat) currentModelNames
            let alignmentFileNames = map (\m -> m ++ ".aln" ++ "." ++ outputFormat) currentModelNames
-           writeModelNameFile modelNameToggle outputDirectoryPath currentModelNames
+           writeModelNameFile modelNameToggle dirPath currentModelNames
            let (modelVis,alignmentVis) = unzip $ drawSingleHMMER3s modelDetail alignmentEntries transitionCutoff maxWidth scalingFactor emissionLayout currentModels alns
            mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelFileNames modelVis)
            mapM_ (\(a,b) -> printHMM a svgsize b) (zip alignmentFileNames alignmentVis)
