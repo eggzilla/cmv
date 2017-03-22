@@ -68,13 +68,13 @@ main = do
         then do
           alnInput <- SP.readExistingStockholm alignmentFile
           Control.Monad.when (isLeft alnInput) $ print (fromLeft alnInput)
-          let outputName = diagramName "cmv" outputFormat
+          --let outputName = diagramName "cmv" outputFormat
           let modelNumber = length cms
           let alns = if isRight alnInput then map (\a -> Just a) (fromRight alnInput) else replicate modelNumber Nothing
           let currentModelNames = map (T.unpack . CM._name) cms
           currentWD <- getCurrentDirectory
           let dirPath = if null outputDirectoryPath then currentWD else outputDirectoryPath
-          writeModelNameFile modelNameToggle outputDirectoryPath currentModelNames
+          writeModelNameFile modelNameToggle dirPath currentModelNames
           let modelFileNames = map (\m -> m ++ "." ++ outputFormat) currentModelNames
           let alignmentFileNames = map (\m -> m ++ ".aln" ++ "." ++ outputFormat) currentModelNames
           setCurrentDirectory dirPath
@@ -84,12 +84,12 @@ main = do
           let structureVisType = "perModel"
           if structureVisType == "perModel"
             then do
-              let structureFilePath = outputDirectoryPath ++ "/"
+              let structureFilePath = dirPath ++ "/"
               let structureVisInputs = perModelSecondaryStructureVisualisation secondaryStructureVisTool maxWidth structureFilePath cms alns []
               mapM_ (\(structureFileName,structureVis) -> writeFile structureFileName structureVis) structureVisInputs
               setCurrentDirectory currentWD
             else do
-              let structureFilePaths = map (\m -> outputDirectoryPath ++ "/" ++ m ++ "." ++ secondaryStructureVisTool) currentModelNames
+              let structureFilePaths = map (\m -> dirPath ++ "/" ++ m ++ "." ++ secondaryStructureVisTool) currentModelNames
               let structureVisInputs = mergedSecondaryStructureVisualisation secondaryStructureVisTool maxWidth cms alns []
               mapM_ (\(structureFileName,(structureVis,_)) -> writeFile structureFileName structureVis) (zip structureFilePaths structureVisInputs)
               mapM_ (\(structureFileName,(_,colorScheme)) -> writeFile (structureFileName ++"Color") colorScheme) (zip structureFilePaths structureVisInputs)
