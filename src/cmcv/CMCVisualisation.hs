@@ -93,12 +93,12 @@ main = do
        if structureVisType == "perModel"
          then do
            let structureFilePath =  dirPath ++ "/"
-           let structureVisInputs = perModelSecondaryStructureVisualisation secondaryStructureVisTool maxWidth structureFilePath cms alns []
+           let structureVisInputs = perModelSecondaryStructureVisualisation secondaryStructureVisTool maxWidth structureFilePath cms alns comparisons
            mapM_ (\(structureFileName,structureVis) -> writeFile structureFileName structureVis) structureVisInputs
            setCurrentDirectory currentWD
          else do
            let structureFilePaths = map (\m -> dirPath ++ "/" ++ m ++ "." ++ secondaryStructureVisTool) currentModelNames
-           let structureVisInputs = mergedSecondaryStructureVisualisation secondaryStructureVisTool maxWidth cms alns []
+           let structureVisInputs = mergedSecondaryStructureVisualisation secondaryStructureVisTool maxWidth cms alns comparisons
            mapM_ (\(structureFileName,(structureVis,_)) -> writeFile structureFileName structureVis) (zip structureFilePaths structureVisInputs)
            mapM_ (\(structureFileName,(_,colorScheme)) -> writeFile (structureFileName ++"Color") colorScheme) (zip structureFilePaths structureVisInputs)
      else do

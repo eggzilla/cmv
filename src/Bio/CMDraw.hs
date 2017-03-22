@@ -157,7 +157,7 @@ makeModelComparisonNodeLabel (modelColor, nodeInterval) nodeNumber
 buildR2RperModelInput :: String -> (CM.CM, Maybe StockholmAlignment,V.Vector (String,V.Vector (Int,V.Vector (Colour Double)))) -> [(String,String)]
 buildR2RperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabels)
   | isNothing maybeAln = []
-  | otherwise = V.toList r2rInputs
+  | otherwise = if V.null comparisonNodeLabels then singler2rInput else V.toList r2rComparisonInputs
   where cm = fromLeft (CM._cm inputCM) -- select Flexible Model
         modelName = T.unpack (CM._name inputCM)
         nodes = V.fromList (M.elems (CM._fmNodes cm))
@@ -176,8 +176,10 @@ buildR2RperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabels)
         sConsensusSequence =      "#=GC cons             " ++ gapfreeConsensusSequence ++ "\n"
         sConsensusSequenceColor = "#=GC conss            " ++ replicate (length consensusStructure) '2' ++ "\n"
         sCovarianceAnnotation =   "#=GC cov_SS_cons      " ++ replicate (length consensusStructure) '.' ++ "\n"
+        singleFilePath = structureFilePath ++ modelName ++ ".r2r"                        
+        singler2rInput = [(singleFilePath,r2rInputPrefix)]
         -- for multiple comparisons we need to return different filenames and labels
-        r2rInputs = V.map (buildR2RperModelComparisonInput modelName structureFilePath maxEntryLength nodeAlignmentColIndices r2rInputPrefix) comparisonNodeLabels
+        r2rComparisonInputs = V.map (buildR2RperModelComparisonInput modelName structureFilePath maxEntryLength nodeAlignmentColIndices r2rInputPrefix) comparisonNodeLabels
 
 buildR2RperModelComparisonInput :: String -> String -> Int -> V.Vector Int -> String -> (String,V.Vector (Int,V.Vector (Colour Double))) -> (String,String)
 buildR2RperModelComparisonInput modelName structureFilePath maxEntryLength nodeAlignmentColIndices r2rInputPrefix (compModelName,comparisonNodeLabels) = (schemeFilePath,r2rInput)
@@ -217,7 +219,7 @@ buildFornaperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabels
         modelName = T.unpack (CM._name inputCM)
         nodeAlignmentColIndices = V.map CM._nodeColL nodes
         maxEntryLength = length consensusStructure
-        colorSchemes = V.toList (V.map (makeColorScheme modelName  structureFilePath nodeAlignmentColIndices maxEntryLength) comparisonNodeLabelsPerModels)
+        colorSchemes = V.toList (V.map (makeColorScheme modelName structureFilePath nodeAlignmentColIndices maxEntryLength) comparisonNodeLabelsPerModels)
 
 makeColorScheme ::  String -> String -> V.Vector Int -> Int -> (String,V.Vector (Int,V.Vector (Colour Double))) -> (String,String)
 makeColorScheme modelName structureFilePath nodeAlignmentColIndices maxEntryLength (compModelName,comparisonNodeLabelsPerModel) = (schemeFilePath,singleColorLabels)
@@ -227,7 +229,6 @@ makeColorScheme modelName structureFilePath nodeAlignmentColIndices maxEntryLeng
         fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
         --forna only supports a single color per node, which has to be supplied as additional color scheme
         singleColorLabels = concatMap comparisonColLabelsToFornaLabel (V.toList fullComparisonColLabels)
-
         
 -- | Extracts consensus secondary structure from alignment and annotates cmcompare nodes for all comparisons in one merged output
 mergedSecondaryStructureVisualisation :: String -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [CmcompareResult] -> [(String,String)]
