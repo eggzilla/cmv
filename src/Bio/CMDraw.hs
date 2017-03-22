@@ -400,7 +400,7 @@ makeModelLegend nameColorVector
         maxNameLength = fromIntegral $ V.maximum nameLengths
         entryNumber = fromIntegral $ V.length nameColorVector
         boxX = maxNameLength * 6
-        boxY = entryNumber * 15
+        boxY = entryNumber * 15 + 10
 
 makeLegendEntry :: (String,Colour Double) -> QDiagram Cairo V2 Double Any
 makeLegendEntry (mName,mColor) = setLegendLabel mName ||| strutX 0.5 ||| rect 4 4 # lw 0.1 # fc mColor # translate (r2 (negate 0, 2))
