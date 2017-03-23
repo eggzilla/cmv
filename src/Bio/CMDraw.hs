@@ -123,8 +123,10 @@ perModelSecondaryStructureVisualisation :: String -> Double -> String -> [CM.CM]
 perModelSecondaryStructureVisualisation selectedTool _ structureFilePath cms alns comparisons
   | selectedTool == "forna" = fornaVis
   | selectedTool == "r2r" = r2rVis
+  | selectedTool == "fornaLink" = fornaLink
   | otherwise = []
   where fornaVis = concatMap (buildFornaperModelInput structureFilePath) structureComparisonInfo
+        fornaLink = concatMap (buildFornaLinksInput structureFilePath) structureComparisonInfo
         r2rVis = concatMap (buildR2RperModelInput structureFilePath) structureComparisonInfo
         modelNumber = length cms
         comparisonNodeLabels = map (getComparisonPerModelNodeLabels comparisons nameColorVector) cms
@@ -145,7 +147,7 @@ getComparisonPerModelNodeLabels comparsionResults colorVector model = modelCompa
          modelComparisonLabels = V.map (getModelComparisonLabels modelName nodeNumber colorVector) modelNodeIntervals
 
 getModelComparisonLabels :: String -> Int -> V.Vector (String, Colour Double) -> (String,[Int])-> (String,Colour Double,V.Vector (Int,V.Vector (Colour Double)))
-getModelComparisonLabels modelName nodeNumber colorVector (compModel,matchedNodes) = (compModel,modelColor,comparisonNodeLabels)
+getModelComparisonLabels _ nodeNumber colorVector (compModel,matchedNodes) = (compModel,modelColor,comparisonNodeLabels)
   where (modelColor,modelInterval) = modelToColor colorVector (compModel,matchedNodes)
         comparisonNodeLabels = V.generate (nodeNumber +1) (makeModelComparisonNodeLabel (modelColor,modelInterval))
 
@@ -219,8 +221,48 @@ buildFornaperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabels
         maxEntryLength = length consensusStructure
         colorSchemes = V.toList (V.map (makeColorScheme modelName structureFilePath nodeAlignmentColIndices maxEntryLength) comparisonNodeLabelsPerModels)
 
+buildFornaLinksInput :: String -> (CM.CM,Maybe StockholmAlignment,V.Vector (String,Colour Double,V.Vector (Int,V.Vector (Colour Double)))) -> [(String, String)]
+buildFornaLinksInput structureFilePath (inputCM,maybeAln,comparisonNodeLabelsPerModels)
+  | isNothing maybeAln = []
+  | otherwise = if V.null comparisonNodeLabelsPerModels then singleFornaLink else fornaComparisons
+  where cm = fromLeft (CM._cm inputCM) -- select Flexible Model
+        nodes = V.fromList (M.elems (CM._fmNodes cm))
+        aln = fromJust maybeAln
+        --http://nibiru.tbi.univie.ac.at/forna/forna.html?id=fasta&file=%3Eheader\nAACGUUAGUU\n(((....)))&colors=%3Eheader\n0\n0.1\n0.2\n0.3\n0.4\n0.5\n0.6\n0.7\n0.8\n0.9\n1
+        fornaURLPrefix = "http://rna.tbi.univie.ac.at/forna/forna.html?id=fasta&file=%3Eheader\n" ++ gapfreeConsensusSequence ++ "\n" ++ consensusStructure 
+        singleFornaLink = [(fornaFilePath,fornaURLPrefix)]
+        fornaFilePath = structureFilePath ++ modelName ++ ".fornalink"
+        allColumnAnnotations = columnAnnotations aln
+        consensusSequenceList = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
+        consensusSequence = if null consensusSequenceList then "" else T.unpack (head consensusSequenceList)
+        gapfreeConsensusSequence = map C.toUpper (filter (not . isGap) consensusSequence)
+        consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
+        consensusStructure = if null consensusStructureList then "" else extractGapfreeStructure consensusSequence (T.unpack (head consensusStructureList))
+        modelName = T.unpack (CM._name inputCM)
+        nodeAlignmentColIndices = V.map CM._nodeColL nodes
+        maxEntryLength = length consensusStructure
+        fornaComparisonLinks = V.toList (V.map (makeFornaComparisonLink modelName fornaURLPrefix nodeAlignmentColIndices maxEntryLength) comparisonNodeLabelsPerModels)
+        fornaComparisonString = intercalate "\n" fornaComparisonLinks
+        fornaComparisons = [(fornaFilePath ,fornaComparisonString)]
+
+makeFornaComparisonLink ::  String -> String -> V.Vector Int -> Int -> (String,Colour Double,V.Vector (Int,V.Vector (Colour Double))) -> String
+makeFornaComparisonLink modelName fornaURLPrefix nodeAlignmentColIndices maxEntryLength (compModelName,_,comparisonNodeLabelsPerModel) = comparisonLink
+  where comparisonLink = modelName ++ "," ++ compModelName ++ "," ++ fornaURLPrefix ++ labelPrefix ++ singleColorLabels 
+        labelPrefix = "&colors=%3Eheader\n"
+        colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabelsPerModel
+        sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
+        fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
+        --forna only supports a single color per node, which has to be supplied as additional color scheme
+        singleColorLabels = concatMap comparisonColLabelsToFornaLinkLabel (V.toList fullComparisonColLabels)
+        
+comparisonColLabelsToFornaLinkLabel :: (Int, V.Vector (Colour Double)) -> String
+comparisonColLabelsToFornaLinkLabel (_,colorVector)
+  | V.null colorVector = ""
+  | V.head colorVector /= white =  "1\n"
+  | otherwise = "0\n"
+    
 makeColorScheme ::  String -> String -> V.Vector Int -> Int -> (String,Colour Double,V.Vector (Int,V.Vector (Colour Double))) -> (String,String)
-makeColorScheme modelName structureFilePath nodeAlignmentColIndices maxEntryLength (compModelName,modelColor,comparisonNodeLabelsPerModel) = (schemeFilePath,singleColorLabels)
+makeColorScheme modelName structureFilePath nodeAlignmentColIndices maxEntryLength (compModelName,_,comparisonNodeLabelsPerModel) = (schemeFilePath,singleColorLabels)
   where schemeFilePath = structureFilePath ++ modelName ++ "." ++ compModelName ++ ".fornacolor"
         colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabelsPerModel
         sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
@@ -270,7 +312,7 @@ buildMergedFornaInput (inputCM,maybeAln,comparisonNodeLabels)
 comparisonColLabelsToFornaLabel :: (Int, V.Vector (Colour Double)) -> String
 comparisonColLabelsToFornaLabel (nodeNr,colorVector)
   | V.null colorVector = ""
-  | V.head colorVector /= white =  " " ++ show nodeNr ++ ":red "
+  | V.head colorVector /= white =  " " ++ show nodeNr ++ ":blue "
   | otherwise = ""
         
 buildMergedR2RInput :: (CM.CM, Maybe StockholmAlignment,V.Vector (Int,V.Vector (Colour Double))) -> (String,String)
