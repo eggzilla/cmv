@@ -231,7 +231,7 @@ buildFornaLinksInput structureFilePath (inputCM,maybeAln,comparisonNodeLabelsPer
         nodes = V.fromList (M.elems (CM._fmNodes cm))
         aln = fromJust maybeAln
         --http://nibiru.tbi.univie.ac.at/forna/forna.html?id=fasta&file=%3Eheader\nAACGUUAGUU\n(((....)))&colors=%3Eheader\n0\n0.1\n0.2\n0.3\n0.4\n0.5\n0.6\n0.7\n0.8\n0.9\n1
-        fornaURLPrefix = "http://rna.tbi.univie.ac.at/forna/forna.html?id=fasta&file=%3Eheader\n" ++ gapfreeConsensusSequence ++ "\n" ++ consensusStructure 
+        fornaURLPrefix = "http://rna.tbi.univie.ac.at/forna/forna.html?id=fasta&file=%3Eheader\\n" ++ gapfreeConsensusSequence ++ "\\n" ++ consensusStructure 
         singleFornaLink = [(fornaFilePath,fornaURLPrefix)]
         fornaFilePath = structureFilePath ++ modelName ++ ".fornalink"
         allColumnAnnotations = columnAnnotations aln
@@ -250,7 +250,7 @@ buildFornaLinksInput structureFilePath (inputCM,maybeAln,comparisonNodeLabelsPer
 makeFornaComparisonLink ::  String -> String -> V.Vector Int -> Int -> (String,Colour Double,V.Vector (Int,V.Vector (Colour Double))) -> String
 makeFornaComparisonLink modelName fornaURLPrefix nodeAlignmentColIndices maxEntryLength (compModelName,_,comparisonNodeLabelsPerModel) = comparisonLink
   where comparisonLink = modelName ++ "," ++ compModelName ++ "," ++ fornaURLPrefix ++ labelPrefix ++ singleColorLabels 
-        labelPrefix = "&colors=%3Eheader\n"
+        labelPrefix = "&colors=%3Eheader\\n"
         colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabelsPerModel
         sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
         fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
@@ -260,8 +260,8 @@ makeFornaComparisonLink modelName fornaURLPrefix nodeAlignmentColIndices maxEntr
 comparisonColLabelsToFornaLinkLabel :: (Int, V.Vector (Colour Double)) -> String
 comparisonColLabelsToFornaLinkLabel (_,colorVector)
   | V.null colorVector = ""
-  | V.head colorVector /= white =  "1\n"
-  | otherwise = "0\n"
+  | V.head colorVector /= white =  "1\\n"
+  | otherwise = "0\\n"
     
 makeColorScheme ::  String -> String -> V.Vector Int -> Int -> (String,Colour Double,V.Vector (Int,V.Vector (Colour Double))) -> (String,String)
 makeColorScheme modelName structureFilePath nodeAlignmentColIndices maxEntryLength (compModelName,_,comparisonNodeLabelsPerModel) = (schemeFilePath,singleColorLabels)
