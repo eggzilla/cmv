@@ -124,6 +124,8 @@ perModelSecondaryStructureVisualisation selectedTool _ structureFilePath cms aln
   | selectedTool == "forna" = fornaVis
   | selectedTool == "r2r" = r2rVis
   | selectedTool == "fornaLink" = fornaLink
+  | selectedTool == "r2rfornaLink" = fornaLink ++ r2rVis
+  | selectedTool == "all" = fornaLink ++ r2rVis ++ fornaVis
   | otherwise = []
   where fornaVis = concatMap (buildFornaperModelInput structureFilePath) structureComparisonInfo
         fornaLink = concatMap (buildFornaLinksInput structureFilePath) structureComparisonInfo
@@ -800,27 +802,27 @@ makeLabel (n1,n2,weight) =
   withName ("s" ++ n2) $ \b2 ->
     let v = location b2 .-. location b1
         midpoint = location b1 .+^ (v ^/ 2)
-        (xOffset,yOffset,lclass) = setLabelOffset (location b1 ^. _x) (location b2 ^. _x) (location b1 ^. _y) (location b2 ^. _y)
+        (xOffset,yOffset) = setLabelOffset (location b1 ^. _x) (location b2 ^. _x) (location b1 ^. _y) (location b2 ^. _y)
       in
         Diagrams.Prelude.atop (position [(midpoint # translateX xOffset # translateY yOffset, setTransition ((show (roundPos 3 weight))))])
         --Diagrams.Prelude.atop (position [(midpoint # translateX xOffset # translateY yOffset, setTransition (lclass ++"," ++ (show (roundPos 3 weight))))])         
         --Diagrams.Prelude.atop (position [(midpoint # translateX xOffset # translateY yOffset, setTransition (n1 ++"," ++ n2 ++"," ++lclass ++"," ++ (show (roundPos 3 weight))))]) 
 
-setLabelOffset :: Double -> Double -> Double -> Double -> (Double,Double,String)
+setLabelOffset :: Double -> Double -> Double -> Double -> (Double,Double)
 setLabelOffset x1 x2 y1 y2
   -- 
-  | ydiff < 2 = (0,0,"F")
-  | xdiff < 2 = (negate 1,negate 1,"C")
+  | ydiff < 2 = (0,0)
+  | xdiff < 2 = (negate 1,negate 1)
     -- 
-  | x1 > x2 && (ydiff > 30) = (negate 1,negate 10,"D")
+  | x1 > x2 && (ydiff > 30) = (negate 1,negate 10)
   -- 
-  | x1 < x2 && (ydiff > 30) = (1,negate 10,"E")             
+  | x1 < x2 && (ydiff > 30) = (1,negate 10)             
   -- between split and insert state of same node - left upper(A)
-  | x1 > x2 && (ydiff < 30) = (negate 1,negate 12,"A")
+  | x1 > x2 && (ydiff < 30) = (negate 1,negate 12)
   -- between split and insert state of same node - right upper (B)
-  | x1 < x2 && (ydiff < 30) = (0,negate 12,"B")
+  | x1 < x2 && (ydiff < 30) = (0,negate 12)
   -- between same split states of different nodes (C)
-  | otherwise = (0,0,"R")
+  | otherwise = (0,0)
     where ydiff = abs (abs y1 - abs y2)
           xdiff = abs (abs x1 - abs x2)
                 
