@@ -61,7 +61,7 @@ main = do
            alnInput <- SP.readExistingStockholm alignmentFile
            Control.Monad.when (isLeft alnInput) $ print (fromLeft alnInput)
            -- cairo outputFormat check
-           let outputName = diagramName "hmmv" outputFormat
+           --let outputName = diagramName "hmmv" outputFormat
            let currentModels = fromRight inputModels
            let modelNumber = length currentModels
            let alns = if isRight alnInput then map (\a -> Just a) (fromRight alnInput) else replicate modelNumber Nothing

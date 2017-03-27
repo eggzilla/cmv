@@ -81,7 +81,7 @@ main = do
           if isRight hmmCResultParsed
             then do
               let rightHMMCResultsParsed = E.fromRight hmmCResultParsed
-              let outputName = diagramName "hmmcv" outputFormat
+              --let outputName = diagramName "hmmcv" outputFormat
               setCurrentDirectory dirPath
               let modelFileNames = map (\m -> m ++ "." ++ outputFormat) currentModelNames
               let alignmentFileNames = map (\m -> m ++ ".aln" ++ "." ++ outputFormat) currentModelNames
