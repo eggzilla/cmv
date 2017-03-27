@@ -243,13 +243,14 @@ buildFornaLinksInput structureFilePath (inputCM,maybeAln,comparisonNodeLabelsPer
         modelName = T.unpack (CM._name inputCM)
         nodeAlignmentColIndices = V.map CM._nodeColL nodes
         maxEntryLength = length consensusStructure
-        fornaComparisonLinks = V.toList (V.map (makeFornaComparisonLink modelName fornaURLPrefix nodeAlignmentColIndices maxEntryLength) comparisonNodeLabelsPerModels)
-        fornaComparisonString = intercalate "\n" fornaComparisonLinks
-        fornaComparisons = [(fornaFilePath ,fornaComparisonString)]
+        fornaComparisons = V.toList (V.map (makeFornaComparisonLink modelName structureFilePath fornaURLPrefix nodeAlignmentColIndices maxEntryLength) comparisonNodeLabelsPerModels)
+        --fornaComparisonString = intercalate "\n" fornaComparisonLinks
+        --fornaComparisons = [(fornaFilePath ,fornaComparisonString)]
 
-makeFornaComparisonLink ::  String -> String -> V.Vector Int -> Int -> (String,Colour Double,V.Vector (Int,V.Vector (Colour Double))) -> String
-makeFornaComparisonLink modelName fornaURLPrefix nodeAlignmentColIndices maxEntryLength (compModelName,_,comparisonNodeLabelsPerModel) = comparisonLink
-  where comparisonLink = modelName ++ "," ++ compModelName ++ "," ++ fornaURLPrefix ++ labelPrefix ++ singleColorLabels 
+makeFornaComparisonLink ::  String -> String -> String -> V.Vector Int -> Int -> (String,Colour Double,V.Vector (Int,V.Vector (Colour Double))) -> (String,String)
+makeFornaComparisonLink modelName structureFilePath fornaURLPrefix nodeAlignmentColIndices maxEntryLength (compModelName,_,comparisonNodeLabelsPerModel) = (comparisonPath,comparisonLink)
+  where comparisonPath = structureFilePath ++ modelName ++ "." ++ compModelName ++ ".fornalink"
+        comparisonLink = fornaURLPrefix ++ labelPrefix ++ singleColorLabels 
         labelPrefix = "&colors=%3Eheader\\n"
         colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabelsPerModel
         sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
