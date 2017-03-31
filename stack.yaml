@@ -1,40 +1,24 @@
-
-# For more information, see: https://github.com/commercialhaskell/stack/blob/master/doc/yaml_configuration.md
-
-# Specifies the GHC version and set of packages available (e.g., lts-3.5, nightly-2015-09-21, ghc-7.10.2)
-resolver: lts-3.22
-# Local packages, usually specified by relative directory name
-ghc-options:
-  "*": -j
-packages:
-- '../Lib-BiobaseInfernal'
-- '.'
-
-# Packages to be pulled from upstream that are not in the resolver (e.g., acme-missiles-0.3)
-extra-deps:
-- ADPfusion-0.5.0.0
-- bimaps-0.0.0.4
-- BiobaseTypes-0.1.1.1
-- BiobaseXNA-0.9.2.1
-- cereal-text-0.1.0.1
-- OrderedBits-0.0.1.0
-- PrimitiveArray-0.7.0.0
-- storable-record-0.0.3
-- storable-tuple-0.0.2
-- utility-ht-0.0.11
-- vector-0.11.0.0
-- aeson-0.9.0.1
-- attoparsec-0.13.0.2
-- ParsecTools-0.0.2.0
-- either-unwrap-1.1
-- diagrams-lib-1.4.0.1
-- linear-1.20.3
-- SVGFonts-1.6.0.1
-- diagrams-cairo-1.4
-- diagrams-core-1.4
-- optparse-applicative-0.13.0.0
-- BioHMM-1.0.4
-- StockholmAlignment-1.0.1
-# Override default flag values for local packages and extra-deps
 flags: {}
-
+ghc-options:
+  ! '*': -j
+packages:
+- '.'
+extra-deps:
+- BioHMM-1.0.7
+- BiobaseInfernal-0.8.1.0
+- BiobaseTypes-0.1.2.1
+- BiobaseXNA-0.9.3.1
+- DPutils-0.0.1.0
+- OrderedBits-0.0.1.2
+- ParsecTools-0.0.2.0
+- PrimitiveArray-0.8.0.1
+- SVGFonts-1.6.0.1
+- StockholmAlignment-1.0.1
+- bimaps-0.1.0.2
+- diagrams-cairo-1.4
+- intern-0.9.1.4
+- optparse-applicative-0.13.2.0
+- pipes-zlib-0.4.4.1
+- storable-tuple-0.0.3.2
+- aeson-1.1.1.0
+resolver: lts-7.20
