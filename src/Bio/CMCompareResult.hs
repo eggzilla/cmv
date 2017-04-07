@@ -22,6 +22,7 @@ module Bio.CMCompareResult
 import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Token
 import Text.ParserCombinators.Parsec.Language (emptyDef)
+import Data.List
 
 -- | Datastructure for result strings of comparisons between covariance models by CMCompare
 data CmcompareResult = CmcompareResult
@@ -34,9 +35,13 @@ data CmcompareResult = CmcompareResult
     model2structure :: String,
     model1matchednodes :: [Int],
     model2matchednodes :: [Int]
-  } deriving (Show)
+  } deriving ()
 
--- | Type alias for matched nodes
+instance Show CmcompareResult where
+  show (CmcompareResult model1Name model2Name linkscore1 linkscore2 linksequence model1structure model2structure model1matchednodes model2matchednodes) =  model1Name ++ "   " ++ model2Name ++ "     " ++ show linkscore1 ++ "     " ++ show linkscore2 ++ " " ++ linksequence ++ " " ++ model1structure ++ " " ++ model2structure ++ " " ++ formatMatchedNodes model1matchednodes ++ " " ++ formatMatchedNodes model2matchednodes ++ "\n"
+  
+formatMatchedNodes :: [Int] -> String
+formatMatchedNodes nodes = "[" ++ intercalate "," (map show nodes) ++ "]"
 
 readDouble :: String -> Double
 readDouble = read
