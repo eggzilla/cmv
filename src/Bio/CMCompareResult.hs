@@ -20,8 +20,6 @@ module Bio.CMCompareResult
     ) where
 
 import Text.ParserCombinators.Parsec
-import Text.ParserCombinators.Parsec.Token
-import Text.ParserCombinators.Parsec.Language (emptyDef)
 import Data.List
 
 -- | Datastructure for result strings of comparisons between covariance models by CMCompare
@@ -38,7 +36,7 @@ data CmcompareResult = CmcompareResult
   } deriving ()
 
 instance Show CmcompareResult where
-  show (CmcompareResult model1Name model2Name linkscore1 linkscore2 linksequence model1structure model2structure model1matchednodes model2matchednodes) =  model1Name ++ "   " ++ model2Name ++ "     " ++ show linkscore1 ++ "     " ++ show linkscore2 ++ " " ++ linksequence ++ " " ++ model1structure ++ " " ++ model2structure ++ " " ++ formatMatchedNodes model1matchednodes ++ " " ++ formatMatchedNodes model2matchednodes ++ "\n"
+  show (CmcompareResult _model1Name _model2Name _linkscore1 _linkscore2 _linksequence _model1structure _model2structure _model1matchednodes _model2matchednodes) =  _model1Name ++ "   " ++ _model2Name ++ "     " ++ show _linkscore1 ++ "     " ++ show _linkscore2 ++ " " ++ _linksequence ++ " " ++ _model1structure ++ " " ++ _model2structure ++ " " ++ formatMatchedNodes _model1matchednodes ++ " " ++ formatMatchedNodes _model2matchednodes ++ "\n"
   
 formatMatchedNodes :: [Int] -> String
 formatMatchedNodes nodes = "[" ++ intercalate "," (map show nodes) ++ "]"
@@ -48,13 +46,6 @@ readDouble = read
 
 readInt :: String -> Int
 readInt = read
-
--- | Parse a floating point number.
-parseFloat :: GenParser Char st Double
-parseFloat = do sign <- option 1 (do s <- oneOf "+-"
-                                     return $ if s == '-' then-1.0 else 1.0)
-                x  <- float $ makeTokenParser emptyDef
-                return $ sign * x
 
 -- | Parse a CMcompare result string
 parseCmcompareResult :: GenParser Char st CmcompareResult
@@ -94,9 +85,6 @@ getCmcompareResults :: FilePath -> IO [Either ParseError CmcompareResult]
 getCmcompareResults filePath = let
         fp = filePath
         doParseLine' = parse parseCmcompareResult "parseCMCompareResults"
-        doParseLine l = case doParseLine' l of
-            Right x -> x
-            Left _  -> error "Failed to parse line"
     in do
         fileContent <- fmap lines $ readFile fp
         return $ map doParseLine' fileContent

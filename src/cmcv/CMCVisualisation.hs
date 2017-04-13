@@ -25,6 +25,7 @@ import Paths_cmv (version)
 import Data.Version (showVersion)
 import Data.List (intercalate)
 import Control.Monad
+import Data.Maybe
 
 options :: Options
 data Options = Options
@@ -88,7 +89,7 @@ main = do
        setCurrentDirectory dirPath
        let (modelVis,alignmentVis) = unzip $ drawSingleCMComparisons modelDetail alignmentEntries transitionCutoff modelLayout emissionLayout maxWidth scalingFactor cms alns comparisons
        mapM_ (\(a,b) -> printCM a svgsize b) (zip modelFileNames modelVis)
-       mapM_ (\(a,b) -> printCM a svgsize b) (zip alignmentFileNames alignmentVis)
+       mapM_ (\(alnPath,stockholm) -> if isJust stockholm then printCM alnPath svgsize (fromJust stockholm) else return ()) (zip alignmentFileNames alignmentVis)
        let structureVisType = "perModel"
        if structureVisType == "perModel"
          then do

@@ -48,7 +48,7 @@ import Data.Either.Unwrap
 import qualified Data.Map as M
 
 -- | Draw one or more CM
-drawSingleCMComparisons :: String -> Int -> Double -> String -> String -> Double -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [CmcompareResult] -> [(QDiagram Cairo V2 Double Any,QDiagram Cairo V2 Double Any)]
+drawSingleCMComparisons :: String -> Int -> Double -> String -> String -> Double -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [CmcompareResult] -> [(QDiagram Cairo V2 Double Any,Maybe (QDiagram Cairo V2 Double Any))]
 drawSingleCMComparisons modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype maxWidth scalef cms alns comparisons = diagrams
   where diagrams = map (drawCM modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype maxWidth scalef nameColorVector) zippedInput
         zippedInput = zip4 cms alns comparisonNodeLabels (V.toList colorVector)
@@ -59,7 +59,7 @@ drawSingleCMComparisons modelDetail entryNumberCutoff transitionCutoff modelLayo
         nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
 
 -- | Draw one or more CM
-drawSingleCMs :: String -> Int -> Double -> String -> String -> Double -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [(QDiagram Cairo V2 Double Any,QDiagram Cairo V2 Double Any)]
+drawSingleCMs :: String -> Int -> Double -> String -> String -> Double -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [(QDiagram Cairo V2 Double Any,Maybe (QDiagram Cairo V2 Double Any))]
 drawSingleCMs modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype maxWidth scalef cms alns = map (drawCM modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype maxWidth scalef emptyColorNameVector) zippedInput
     where zippedInput = zip4 cms alns comparisonNodeLabels colorList
           comparisonNodeLabels = map getBlankComparisonNodeLabels cms
@@ -67,7 +67,7 @@ drawSingleCMs modelDetail entryNumberCutoff transitionCutoff modelLayout emissio
           emptyColorNameVector = V.empty
 
 -- | Draw the guide Tree of a single CM
-drawCM :: String -> Int -> Double -> String -> String -> Double -> Double -> V.Vector (String,Colour Double) -> (CM.CM,Maybe StockholmAlignment,V.Vector (Int,V.Vector (Colour Double)), Colour Double) -> (QDiagram Cairo V2 Double Any,QDiagram Cairo V2 Double Any)
+drawCM :: String -> Int -> Double -> String -> String -> Double -> Double -> V.Vector (String,Colour Double) -> (CM.CM,Maybe StockholmAlignment,V.Vector (Int,V.Vector (Colour Double)), Colour Double) -> (QDiagram Cairo V2 Double Any,Maybe (QDiagram Cairo V2 Double Any))
 drawCM modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype maxWidth scalef nameColorVector (inputCM,aln,comparisonNodeLabels,modelColor)
    | modelLayout == "tree" = ((applyAll ([bg white]) modelTreeLayout),alignmentDiagram)
    | modelLayout == "flat" = ((applyAll ([bg white]) modelFlatLayout),alignmentDiagram)
@@ -104,7 +104,7 @@ drawCM modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype m
          labelList = case modelDetail of
                           "detailed" -> V.toList (V.map makeLabel connectedStates V.++ V.map makeSelfLabel selfConnectedStates)
                           _ -> []
-         alignmentDiagram = maybe mempty (drawStockholmLines entryNumberCutoff maxWidth nodeAlignmentColIndices comparisonNodeLabels) aln
+         alignmentDiagram = maybe Nothing (\a -> Just (drawStockholmLines entryNumberCutoff maxWidth nodeAlignmentColIndices comparisonNodeLabels a)) aln
 
 makeAllConnectedStates :: M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (String,String,Double)
 makeAllConnectedStates allStates = allConnectedStates
