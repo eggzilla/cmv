@@ -21,6 +21,7 @@ import Paths_cmv (version)
 import Data.Version (showVersion)
 import Data.List (intercalate)
 import Control.Monad
+import Data.Maybe
 
 options :: Options
 data Options = Options
@@ -88,7 +89,7 @@ main = do
               writeModelNameFile modelNameToggle dirPath currentModelNames
               let (modelVis,alignmentVis) = unzip $ drawSingleHMMComparison modelDetail alignmentEntries transitionCutoff emissionLayout maxWidth scalingFactor models alns rightHMMCResultsParsed
               mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelFileNames modelVis)
-              mapM_ (\(a,b) -> printHMM a svgsize b) (zip alignmentFileNames alignmentVis)
+              mapM_ (\(alnPath,stockholm) -> if isJust stockholm then printHMM alnPath svgsize (fromJust stockholm) else return ()) (zip alignmentFileNames alignmentVis)
               setCurrentDirectory currentWD
             else print (E.fromLeft hmmCResultParsed)
         else print (E.fromLeft inputModels)
