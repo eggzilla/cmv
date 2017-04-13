@@ -35,7 +35,7 @@ library
   ghc-options:         -Wall
 
   -- Other library packages from which modules are imported.
-  build-depends:       base >=4.5 && <5, parsec>=3.1.9, diagrams-lib, BiobaseInfernal, text, vector, ParsecTools, diagrams-cairo, filepath, colour, PrimitiveArray, BiobaseXNA, mtl, directory, either-unwrap, SVGFonts >= 1.6, BioHMM>=1.0.8, StockholmAlignment,BiobaseTypes,containers
+  build-depends:       base >=4.5 && <5, parsec>=3.1.9, diagrams-lib, BiobaseInfernal, text, vector, ParsecTools, diagrams-cairo, filepath, colour, PrimitiveArray, BiobaseXNA, mtl, directory, either-unwrap, SVGFonts >= 1.6, BioHMM>=1.0.8, StockholmAlignment>=1.0.2,BiobaseTypes,containers
   
   -- Directories containing source files.
   hs-source-dirs:      src
@@ -44,13 +44,13 @@ executable cmcv
   Hs-Source-Dirs:      ./src/cmcv/
   main-is:	       CMCVisualisation.hs
   ghc-options:         -Wall
-  build-depends:       base >=4.5, cmdargs, BiobaseInfernal==0.8.1.0, BiobaseXNA, diagrams-lib, parsec, colour, containers, bytestring, template-haskell, text, vector, directory, cmv, either-unwrap, filepath, StockholmAlignment
+  build-depends:       base >=4.5, cmdargs, BiobaseInfernal==0.8.1.0, BiobaseXNA, diagrams-lib, parsec, colour, containers, bytestring, template-haskell, text, vector, directory, cmv, either-unwrap, filepath, StockholmAlignment>=1.0.2
 
 executable cmv
   Hs-Source-Dirs:      ./src/cmv/
   main-is:	       CMVisualisation.hs
   ghc-options:         -Wall 
-  build-depends:       base >=4.5, cmdargs, BiobaseInfernal==0.8.1.0, BiobaseXNA, diagrams-lib>=1.3.1.0, parsec, colour, containers, bytestring, template-haskell, text, vector, directory, cmv, either-unwrap, filepath, StockholmAlignment
+  build-depends:       base >=4.5, cmdargs, BiobaseInfernal==0.8.1.0, BiobaseXNA, diagrams-lib>=1.3.1.0, parsec, colour, containers, bytestring, template-haskell, text, vector, directory, cmv, either-unwrap, filepath, StockholmAlignment>=1.0.2
 
 executable cmcwsvtocmcv
   Hs-Source-Dirs:      ./src/cmcv/
@@ -68,10 +68,10 @@ executable hmmcv
   Hs-Source-Dirs:      ./src/hmmcv/
   main-is:	       HMMCVisualisation.hs
   ghc-options:         -Wall
-  build-depends:       base >=4.5, cmdargs, diagrams-lib>=1.3.1.0, parsec, colour, containers, bytestring, text, vector, directory, cmv, either-unwrap, filepath, BioHMM>=1.0.8, StockholmAlignment
+  build-depends:       base >=4.5, cmdargs, diagrams-lib>=1.3.1.0, parsec, colour, containers, bytestring, text, vector, directory, cmv, either-unwrap, filepath, BioHMM>=1.0.8, StockholmAlignment>=1.0.2
 
 executable hmmv
   Hs-Source-Dirs:      ./src/hmmv/
   main-is:	       HMMVisualisation.hs
   ghc-options:         -Wall
-  build-depends:       base >=4.5, cmdargs, diagrams-lib>=1.3.1.0, parsec, colour, containers, bytestring, text, vector, directory, cmv, either-unwrap, filepath, BioHMM>=1.0.8, StockholmAlignment
+  build-depends:       base >=4.5, cmdargs, diagrams-lib>=1.3.1.0, parsec, colour, containers, bytestring, text, vector, directory, cmv, either-unwrap, filepath, BioHMM>=1.0.8, StockholmAlignment>=1.0.2

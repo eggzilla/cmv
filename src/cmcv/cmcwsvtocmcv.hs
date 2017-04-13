@@ -12,17 +12,14 @@
 module Main where
 
 import Bio.CMCompareResult
---import Bio.CMDraw
 import qualified Biobase.SElab.CM as CM
 import Biobase.SElab.CM.Import (cmFromFile)
 import System.Console.CmdArgs
 import Data.Either
---import qualified Data.Either.Unwrap as E
 import System.Directory
 import qualified Data.Text as T
 import Paths_cmv (version)
 import Data.Version (showVersion)
---import Data.List (intercalate)
 
 options :: Options
 data Options = Options
