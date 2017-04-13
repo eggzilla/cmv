@@ -24,7 +24,6 @@ module Bio.CMDraw
 import Diagrams.Prelude
 import Bio.CMCompareResult
 import Data.List
---import Text.Parsec.Error
 import qualified Data.Text as T
 import qualified Data.Vector as V
 import Bio.StockholmData
@@ -33,8 +32,6 @@ import Diagrams.Backend.Cairo
 import qualified Data.Vector.Unboxed as VU
 import qualified Data.PrimitiveArray.Index.PhantomInt as PI
 import Biobase.Types.Bitscore (Bitscore(..), score2Prob)
---import Biobase.Primary.Nuc.RNA
---import qualified Data.PrimitiveArray.Index.Class as PAI
 import Text.Printf
 import qualified Data.Colour.SRGB.Linear as R
 import Data.Maybe
@@ -764,16 +761,19 @@ makeColorVector modelNumber = V.map (\(a,b,c) -> R.rgb a b c) modelRGBTupel
          modelRGBTupel = V.map (makeRGBTupel stepSize) indexVector
 
 makeRGBTupel :: Double -> Int -> (Double,Double,Double)
-makeRGBTupel stepSize modelNumber = (a,b,c)
+makeRGBTupel stepSize modelNumber = (normA,normB,normC)
   where  totalSize = fromIntegral modelNumber * stepSize
-         a = rgbBoundries (totalSize  - 255)/255
-         b = rgbBoundries (totalSize - a - 255)/255
-         c = rgbBoundries (totalSize - a - b)/255
+         a = rgbBoundries (totalSize  - 510)
+         b = rgbBoundries (totalSize - 255)
+         c = rgbBoundries totalSize 
+         normA = a/255 
+         normB = b/255
+         normC = c/255 
 
 rgbBoundries :: Double -> Double
 rgbBoundries rgbValue
-  | rgbValue>210 = 210
-  | rgbValue<50 = 50
+  | rgbValue>240 = 240
+  | rgbValue<10 = 10
   | otherwise = rgbValue
 
 -- deConsSnd :: ((PAI.Z PAI.:. PInt () CM.StateIndex) PAI.:. Int) (PInt () CM.StateIndex, Bitscore) -> String
