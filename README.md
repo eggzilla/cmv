@@ -38,4 +38,8 @@ For instruction how to use *cmv* please see the [Help page.](192.52.2.124/cmvs/h
 
    ### <u>Precompiled Executables</u>
 
+    *   Archlinux (ghc-8.0.1) [hmmv 1.1.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmv/hmmv-1.0.0)
+    *   Archlinux (ghc-8.0.1) [hmmcv 1.1.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmv/hmmcv-1.0.0)
     *   Archlinux (ghc-8.0.1) [cmv 1.1.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmv/cmv-1.0.0)
+    *   Archlinux (ghc-8.0.1) [cmcv 1.1.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmv/cmcv-1.0.0)
+   
