@@ -1,15 +1,15 @@
 ![cmv](http://www.bioinf.uni-freiburg.de/~egg/cmvlogo.png "cmv") 
 =========
 *cmv* is a collection of tools four the visualisation of Hidden Markov Models (*hmmv*) and RNA-family models (*cmv*).
-Moreover it can visualise comparisons of these models (HMMCV,CMCV), the stuctural alignments they were constructed from and via 3rd party tools their consensus secondary structure.
+Moreover it can visualise comparisons of these models (*hmmcv*,*cmcv*), and annotate linked regions in the structural alignments they were constructed from and via, 3rd party tools, in their consensus secondary structure.
 
-They are available as a commandline tools and as a webservice [CMVS](http://www.bioinf.uni-freiburg.de/~egg/cmvs).
+They are available as a commandline tools and as a webservice [cmvs](http://www.bioinf.uni-freiburg.de/~egg/cmvs).
 
-The source code of cmv is open source and available via GitHub and Hackage (License GPL-3):
+The source code of *cmv* is open source and available via GitHub and Hackage (License GPL-3):
 
-*   [![GitHub](https://img.shields.io/github/tag/eggzilla/CMV.svg)](https://github.com/eggzilla/CMV) [![Build Status](https://travis-ci.org/eggzilla/CMV.svg?branch=master)](https://travis-ci.org/eggzilla/CMV) [![Hackage](https://img.shields.io/hackage/v/RNAlien.svg)](https://hackage.haskell.org/package/RNAlien) [![Bioconda](https://anaconda.org/bioconda/rnalien/badges/version.svg)](https://anaconda.org/bioconda/rnalien)
+*   [![GitHub](https://img.shields.io/github/tag/eggzilla/cmv.svg)](https://github.com/eggzilla/cmv) [![Build Status](https://travis-ci.org/eggzilla/cmv.svg?branch=master)](https://travis-ci.org/eggzilla/cmv) [![Hackage](https://img.shields.io/hackage/v/cmv.svg)](https://hackage.haskell.org/package/cmv) [![Bioconda](https://anaconda.org/bioconda/cmv/badges/version.svg)](https://anaconda.org/bioconda/cmv)
 
-For instruction how to use RNAlien please see the [Help page.](192.52.2.124/cmvs/help)
+For instruction how to use *cmv* please see the [Help page.](192.52.2.124/cmvs/help)
 
     ### <u>Optional Dependencies:</u>
 
@@ -37,4 +37,4 @@ For instruction how to use RNAlien please see the [Help page.](192.52.2.124/cmvs
 
    ### <u>Precompiled Executables</u>
 
-    *   Archlinux (ghc-8.0.1) [cmv 1.1.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg//~egg/cmv/cmv-1.0.0)
+    *   Archlinux (ghc-8.0.1) [cmv 1.1.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmv/cmv-1.0.0)
