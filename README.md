@@ -1,9 +1,3 @@
-CMV
-====
-
-Visualise RNA family models in different levels of detail and
-in context with structural alignments
-Visualise comparisons between RNA family model
 ![cmv](http://www.bioinf.uni-freiburg.de/~egg/cmvlogo.png "cmv") 
 =========
 *cmv* is a collection of tools four the visualisation of Hidden Markov Models (*hmmv*) and RNA-family models (*cmv*).
