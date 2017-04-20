@@ -12,26 +12,26 @@ The source code of *cmv* is open source and available via GitHub and Hackage (Li
 For instruction how to use *cmv* please see the [Help page.](192.52.2.124/cmvs/help)
 
    ### <u>Optional Dependencies:</u>
-     cmv creates output which can be visualised via following optional dependencies.
+   cmv creates output which can be visualised via following optional dependencies.
 
     *   [R2R] (http://breaker.research.yale.edu/R2R/)
     *   [forna](http://rna.tbi.univie.ac.at/forna/)
     
    ### <u>Installation via bioconda</u>
 
-     cmv can be installed with all dependencies via [conda](https://conda.io/docs/install/quick.html). Once you have conda installed simply type:
+   cmv can be installed with all dependencies via [conda](https://conda.io/docs/install/quick.html). Once you have conda installed simply type:
 
          conda install -c bioconda cmv=1.0.0 
 
    ### <u>Installation via cabal-install</u>
 
-    cmv is implemented in Haskell and can be installed via the Haskell package distribution sytem [cabal](https://www.haskell.org/cabal/). Once you have cabal installed simply type:
+   cmv is implemented in Haskell and can be installed via the Haskell package distribution sytem [cabal](https://www.haskell.org/cabal/). Once you have cabal installed simply type:
 
          cabal install cmv
 
    ### <u>Installation via stackage</u>
 
-     cmv can also be install via the Haskell package distribution sytem [Stackage](https://www.stackage.org/), which guarantees consistent package builds. Once you have stackage installed simply type:
+   cmv can also be install via the Haskell package distribution sytem [Stackage](https://www.stackage.org/), which guarantees consistent package builds. Once you have stackage installed simply type:
 
          stack install cmv
 
