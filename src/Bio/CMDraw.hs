@@ -43,6 +43,7 @@ import qualified Biobase.SElab.CM.Types as CM
 import qualified Biobase.SElab.CM.ModelStructure as CM
 import Data.Either.Unwrap
 import qualified Data.Map as M
+import Data.Colour.Names
 
 -- | Draw one or more CM
 drawSingleCMComparisons :: String -> Int -> Double -> String -> String -> Double -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [CmcompareResult] -> [(QDiagram Cairo V2 Double Any,Maybe (QDiagram Cairo V2 Double Any))]
@@ -755,26 +756,31 @@ makeComparisonNodeLabel colorNodeIntervals nodeNumber = comparisonNodeLabel
         comparisonNodeLabel = if null modelColors then (nodeNumber,V.singleton white) else (nodeNumber,modelColors)
 
 makeColorVector :: Int -> V.Vector (Colour Double)
-makeColorVector modelNumber = V.map (\(a,b,c) -> R.rgb a b c) modelRGBTupel
-   where indexVector = V.iterateN modelNumber (1+) 0
-         stepSize = (765 :: Double) / fromIntegral modelNumber
-         modelRGBTupel = V.map (makeRGBTupel stepSize) indexVector
+makeColorVector modelNumber = V.take modelNumber colorVector
+   where colorVector = V.fromList [crimson, moccasin, lime, seagreen, aqua ,darkorange ,blue, blueviolet ,brown ,burlywood ,cadetblue ,chartreuse ,chocolate ,coral ,cornflowerblue ,cornsilk ,cyan ,darkblue ,darkcyan ,darkgoldenrod ,darkgray ,darkgreen ,darkgrey ,darkkhaki ,darkmagenta ,darkolivegreen ,darkorchid ,darkred ,darksalmon ,darkseagreen ,darkslateblue ,darkslategray ,darkslategrey ,darkturquoise ,darkviolet ,deeppink ,deepskyblue ,dimgray ,dimgrey ,dodgerblue ,firebrick ,forestgreen ,fuchsia ,gainsboro ,gold ,goldenrod ,gray ,grey ,green ,greenyellow ,honeydew ,hotpink ,indianred,indigo ,ivory ,khaki ,lavender ,lavenderblush ,lawngreen ,lemonchiffon ,lime ,limegreen ,linen ,magenta ,maroon ,mediumaquamarine ,mediumblue ,mediumorchid ,mediumpurple ,mediumseagreen ,mediumslateblue ,mediumspringgreen ,mediumturquoise ,mediumvioletred ,midnightblue ,mintcream ,mistyrose ,navy ,oldlace ,olive ,olivedrab ,orange ,orangered ,orchid ,papayawhip ,peachpuff ,peru ,pink ,plum ,powderblue ,purple ,red ,rosybrown ,royalblue ,saddlebrown ,salmon ,sandybrown ,seagreen]
 
-makeRGBTupel :: Double -> Int -> (Double,Double,Double)
-makeRGBTupel stepSize modelNumber = (normA,normB,normC)
-  where  totalSize = fromIntegral modelNumber * stepSize
-         a = rgbBoundries (totalSize  - 510)
-         b = rgbBoundries (totalSize - 255)
-         c = rgbBoundries totalSize 
-         normA = a/255 
-         normB = b/255
-         normC = c/255 
 
-rgbBoundries :: Double -> Double
-rgbBoundries rgbValue
-  | rgbValue>240 = 240
-  | rgbValue<10 = 10
-  | otherwise = rgbValue
+-- makeColorVector :: Int -> V.Vector (Colour Double)
+-- makeColorVector modelNumber = V.map (\(a,b,c) -> R.rgb a b c) modelRGBTupel
+--    where indexVector = V.iterateN modelNumber (1+) 0
+--          stepSize = (382 :: Double) / fromIntegral modelNumber
+--          modelRGBTupel = V.map (makeRGBTupel stepSize) indexVector
+
+-- makeRGBTupel :: Double -> Int -> (Double,Double,Double)
+-- makeRGBTupel stepSize modelNumber = (normA,normB,normC)
+--   where  totalSize = fromIntegral modelNumber * stepSize
+--          a = rgbBoundries (totalSize  - 510 + 125)
+--          b = rgbBoundries (totalSize - 255 + 125)
+--          c = rgbBoundries totalSize + 125 
+--          normA = a/255 
+--          normB = b/255
+--          normC = c/255 
+
+-- rgbBoundries :: Double -> Double
+-- rgbBoundries rgbValue
+--   | rgbValue>240 = 240
+--   | rgbValue<125 = 125
+--   | otherwise = rgbValue
 
 -- deConsSnd :: ((PAI.Z PAI.:. PInt () CM.StateIndex) PAI.:. Int) (PInt () CM.StateIndex, Bitscore) -> String
 --deConstr (PAI.Z PAI.:. a PAI.:. b) = PI.getPInt a
