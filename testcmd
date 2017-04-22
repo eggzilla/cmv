@@ -1,5 +1,5 @@
-.stack-work/dist/x86_64-linux/Cabal-1.22.4.0/build/hmmv/hmmv -d detailed -m Piwi.hmm -s PF02171_seed.txt 
-.stack-work/dist/x86_64-linux/Cabal-1.22.4.0/build/hmmcv/hmmcv -d detailed -m /home/egg/Desktop/tRNAClan/clan.hmm -s /home/egg/Desktop/tRNAClan/clan.stockholm.txt -r /home/egg/Desktop/tRNAClan/result1_modelnames.hmmc -f pdf
-.stack-work/dist/x86_64-linux/Cabal-1.22.4.0/build/cmv/cmv  -m tRNA.cm -s RF00005.stockholm.txt -f pdf   
-.stack-work/dist/x86_64-linux/Cabal-1.22.4.0/build/cmcv/cmcv -d detailed -m /home/egg/Desktop/tRNAClan/clan.cm -s /home/egg/Desktop/tRNAClan/clan.stockholm.txt -r /home/egg/Desktop/tRNAClan/result1_modelnames.cmc -f pdf
-.stack-work/dist/x86_64-linux/Cabal-1.22.4.0/build/cmcv/cmcv -d simple -m /home/egg/current/Talks/PhD_defensio/hammerheadClan/Hammerhead_HH9andAlienHH9.cm -s /home/egg/current/Talks/PhD_defensio/hammerheadClan/Hammerhead_HH9andAlienHH9.sto -r /home/egg/current/Talks/PhD_defensio/hammerheadClan/Hammerhead_HH9andAlienHH9.result -f pdf -l tree
+.cabal-sandbox/bin/hmmv -d detailed -m Piwi.hmm -s PF02171_seed.txt 
+.cabal-sandbox/bin/hmmcv -d detailed -m /home/egg/Desktop/tRNAClan/clan.hmm -s /home/egg/Desktop/tRNAClan/clan.stockholm.txt -r /home/egg/Desktop/tRNAClan/result1_modelnames.hmmc -f pdf
+.cabal-sandbox/bin/cmv  -m tRNA.cm -s RF00005.stockholm.txt -f pdf   
+.cabal-sandbox/bin/cmcv -d detailed -m /home/egg/Desktop/tRNAClan/clan.cm -s /home/egg/Desktop/tRNAClan/clan.stockholm.txt -r /home/egg/Desktop/tRNAClan/result1_modelnames.cmc -f pdf
+.cabal-sandbox/bin/cmcv -d simple -m /home/egg/current/Talks/PhD_defensio/hammerheadClan/Hammerhead_HH9andAlienHH9.cm -s /home/egg/current/Talks/PhD_defensio/hammerheadClan/Hammerhead_HH9andAlienHH9.sto -r /home/egg/current/Talks/PhD_defensio/hammerheadClan/Hammerhead_HH9andAlienHH9.result -f pdf -l tree

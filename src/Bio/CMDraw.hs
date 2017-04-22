@@ -557,13 +557,15 @@ drawCMSimpleNodeBox alphabetSymbols emissiontype boxlength currentStates compari
           idNumber = nodeIndex 
           nId = show idNumber
           stateIndices = V.toList (CM._nodeStates node)
-          simpleNode = rect 10 5 # lw 0.1 # lc black <>  ((text' nId # translate (r2 (negate 7.5,0)) <> colourBoxes # translate (r2 (negate 7.5,0))) ||| text' nodeType # translate (r2 (14,0)))
+          simpleNode = rect 10 5 # lw 0.1 # lc black <>  ((text' nId # translate (r2 (negate 7.5,0)) <> colourBoxes # translate (r2 (negate 7.5, boxYoffset))) ||| text' nodeType # translate (r2 (14,0)))
           splitStatesBox = hcat (map (drawCMSimpleStateBox nId alphabetSymbols emissiontype boxlength currentStates) stateIndices)
           nodeType = getCMNodeType node
           nodeLabels = V.toList (snd (comparisonNodeLabels V.! idNumber))
           boxNumber = fromIntegral $ length nodeLabels
           totalBoxYlength = 5 
           singleBoxYLength = totalBoxYlength / boxNumber
+          -- concatenated colorboxes are placed atop the simplenode box with the first colorbox
+          boxYoffset = totalBoxYlength/2 - singleBoxYLength/2
           colourBoxes = vcat (map (colorBox singleBoxYLength) nodeLabels)
 
 drawCMSimpleStateBox :: String -> String -> String -> Int -> M.Map (PI.PInt () CM.StateIndex) CM.State -> PI.PInt () CM.StateIndex -> QDiagram Cairo V2 Double Any
