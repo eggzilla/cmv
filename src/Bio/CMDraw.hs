@@ -44,6 +44,7 @@ import qualified Biobase.SElab.CM.ModelStructure as CM
 import Data.Either.Unwrap
 import qualified Data.Map as M
 import Data.Colour.Names
+import Debug.Trace
 
 -- | Draw one or more CM
 drawSingleCMComparisons :: String -> Int -> Double -> String -> String -> Double -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [CmcompareResult] -> [(QDiagram Cairo V2 Double Any,Maybe (QDiagram Cairo V2 Double Any))]
@@ -76,7 +77,10 @@ drawCM modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype m
          allStates = CM._fmStates cm
          boxlength = fromIntegral (length alphabetSymbols) + 2
          alphabetSymbols = ['A','U','C','G']
-         nodeAlignmentColIndices = V.map CM._nodeColL nodes
+         nodeAlignmentColLIndices = V.toList $ V.map CM._nodeColL nodes
+         nodeAlignmentColRIndices = V.toList $ V.map CM._nodeColR nodes
+         nodeAlignmentColIndices = V.fromList $ nub (nodeAlignmentColLIndices ++ nodeAlignmentColRIndices)
+         --nodeAlignmentColIndices = Debug.Trace.trace ("N" ++ show nodeAlignmentColLIndices ++ "," ++ show nodeAlignmentColRIndices) (V.fromList $ nub (nodeAlignmentColLIndices ++ nodeAlignmentColRIndices))
          indices = V.toList (V.iterateN (nodeNumber-1) (1+) 0)
          (indexStructure,_)= runState (buildTreeIndexStructure 1 nodes indices) startState
          modelName = CM._name inputCM
@@ -139,9 +143,9 @@ getComparisonPerModelNodeLabels :: [CmcompareResult] -> V.Vector (String, Colour
 getComparisonPerModelNodeLabels comparsionResults colorVector model = modelComparisonLabels
    where modelName = T.unpack (CM._name model)
          relevantComparisons1 = filter ((modelName==) . model1Name) comparsionResults
-         modelNodeInterval1 = map (\a -> (model2Name a,model2matchednodes a))  relevantComparisons1 
+         modelNodeInterval1 = map (\a -> (model1Name a,model1matchednodes a))  relevantComparisons1 
          relevantComparisons2 = filter ((modelName==) . model2Name) comparsionResults
-         modelNodeInterval2 = map (\a -> (model1Name a,model1matchednodes a))  relevantComparisons2
+         modelNodeInterval2 = map (\a -> (model2Name a,model2matchednodes a))  relevantComparisons2
          modelNodeIntervals =  V.fromList (modelNodeInterval1 ++ modelNodeInterval2)
          nodeNumber = CM._nodesInModel model
          modelComparisonLabels = V.map (getModelComparisonLabels modelName nodeNumber colorVector) modelNodeIntervals
@@ -155,6 +159,47 @@ makeModelComparisonNodeLabel :: (Colour Double,[Int]) -> Int -> (Int,V.Vector (C
 makeModelComparisonNodeLabel (modelColor, nodeInterval) nodeNumber 
   | elem nodeNumber nodeInterval = (nodeNumber,V.singleton modelColor)
   | otherwise = (nodeNumber,V.singleton white)
+
+getComparisonPerModelNodeInterval :: [CmcompareResult] -> V.Vector (String, Colour Double) -> CM.CM -> V.Vector (String,[Int]) 
+getComparisonPerModelNodeInterval comparsionResults colorVector model = modelNodeIntervals
+   where modelName = T.unpack (CM._name model)
+         relevantComparisons1 = filter ((modelName==) . model1Name) comparsionResults
+         modelNodeInterval1 = map (\a -> (model1Name a,model1matchednodes a))  relevantComparisons1 
+         relevantComparisons2 = filter ((modelName==) . model2Name) comparsionResults
+         modelNodeInterval2 = map (\a -> (model2Name a,model2matchednodes a))  relevantComparisons2
+         modelNodeIntervals = V.fromList (modelNodeInterval1 ++ modelNodeInterval2)
+
+getComparisonPerModelNodeInterval :: [CmcompareResult] -> V.Vector (String, Colour Double) -> CM.CM -> V.Vector (String,[Int]) 
+getComparisonPerModelNodeInterval comparsionResults colorVector model = modelNodeIntervals
+   where modelName = T.unpack (CM._name model)
+         relevantComparisons1 = filter ((modelName==) . model1Name) comparsionResults
+         modelNodeInterval1 = map (\a -> (model1Name a,model1matchednodes a))  relevantComparisons1 
+         relevantComparisons2 = filter ((modelName==) . model2Name) comparsionResults
+         modelNodeInterval2 = map (\a -> (model2Name a,model2matchednodes a))  relevantComparisons2
+         modelNodeIntervals = V.fromList (modelNodeInterval1 ++ modelNodeInterval2)
+
+---------
+getComparisonPerModelNodeLabels :: [CmcompareResult] -> V.Vector (String, Colour Double) -> CM.CM -> V.Vector (String,Colour Double, V.Vector (Int,V.Vector (Colour Double)))
+getComparisonPerModelNodeLabels comparsionResults colorVector model = modelComparisonLabels
+   where modelName = T.unpack (CM._name model)
+         relevantComparisons1 = filter ((modelName==) . model1Name) comparsionResults
+         modelNodeInterval1 = map (\a -> (model1Name a,model1matchednodes a))  relevantComparisons1 
+         relevantComparisons2 = filter ((modelName==) . model2Name) comparsionResults
+         modelNodeInterval2 = map (\a -> (model2Name a,model2matchednodes a))  relevantComparisons2
+         modelNodeIntervals =  V.fromList (modelNodeInterval1 ++ modelNodeInterval2)
+         nodeNumber = CM._nodesInModel model
+         modelComparisonLabels = V.map (getModelComparisonLabels modelName nodeNumber colorVector) modelNodeIntervals
+
+getModelComparisonLabels :: String -> Int -> V.Vector (String, Colour Double) -> (String,[Int])-> (String,Colour Double,V.Vector (Int,V.Vector (Colour Double)))
+getModelComparisonLabels _ nodeNumber colorVector (compModel,matchedNodes) = (compModel,modelColor,comparisonNodeLabels)
+  where (modelColor,modelInterval) = modelToColor colorVector (compModel,matchedNodes)
+        comparisonNodeLabels = V.generate (nodeNumber +1) (makeModelComparisonNodeLabel (modelColor,modelInterval))
+
+makeModelComparisonNodeLabel :: (Colour Double,[Int]) -> Int -> (Int,V.Vector (Colour Double))
+makeModelComparisonNodeLabel (modelColor, nodeInterval) nodeNumber 
+  | elem nodeNumber nodeInterval = (nodeNumber,V.singleton modelColor)
+  | otherwise = (nodeNumber,V.singleton white)
+
 
 buildR2RperModelInput :: String -> (CM.CM, Maybe StockholmAlignment,V.Vector (String,Colour Double,V.Vector (Int,V.Vector (Colour Double)))) -> [(String,String)]
 buildR2RperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabels)
@@ -171,7 +216,9 @@ buildR2RperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabels)
         gapfreeConsensusSequence = map C.toUpper (filter (not . isGap) consensusSequence)
         consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
         consensusStructure = if null consensusStructureList then "" else extractGapfreeStructure consensusSequence (T.unpack (head consensusStructureList))
-        nodeAlignmentColIndices = V.map CM._nodeColL nodes
+        nodeAlignmentColLIndices = V.toList $ V.map CM._nodeColL nodes
+        nodeAlignmentColRIndices = V.toList $ V.map CM._nodeColR nodes
+        nodeAlignmentColIndices = V.fromList $ nub (nodeAlignmentColLIndices ++ nodeAlignmentColRIndices)
         maxEntryLength = length consensusStructure
         sHeader =  "# STOCKHOLM 1.0\n"
         sConsensusStructure =     "#=GC SS_cons          " ++ consensusStructure ++ "\n"
@@ -217,7 +264,9 @@ buildFornaperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabels
         consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
         consensusStructure = if null consensusStructureList then "" else extractGapfreeStructure consensusSequence (T.unpack (head consensusStructureList))
         modelName = T.unpack (CM._name inputCM)
-        nodeAlignmentColIndices = V.map CM._nodeColL nodes
+        nodeAlignmentColLIndices = V.toList $ V.map CM._nodeColL nodes
+        nodeAlignmentColRIndices = V.toList $ V.map CM._nodeColR nodes
+        nodeAlignmentColIndices = V.fromList $ nub (nodeAlignmentColLIndices ++ nodeAlignmentColRIndices)
         maxEntryLength = length consensusStructure
         colorSchemes = V.toList (V.map (makeColorScheme modelName structureFilePath nodeAlignmentColIndices maxEntryLength) comparisonNodeLabelsPerModels)
 
@@ -239,7 +288,9 @@ buildFornaLinksInput structureFilePath (inputCM,maybeAln,comparisonNodeLabelsPer
         consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
         consensusStructure = if null consensusStructureList then "" else extractGapfreeStructure consensusSequence (T.unpack (head consensusStructureList))
         modelName = T.unpack (CM._name inputCM)
-        nodeAlignmentColIndices = V.map CM._nodeColL nodes
+        nodeAlignmentColLIndices = V.toList $ V.map CM._nodeColL nodes
+        nodeAlignmentColRIndices = V.toList $ V.map CM._nodeColR nodes
+        nodeAlignmentColIndices = V.fromList $ nub (nodeAlignmentColLIndices ++ nodeAlignmentColRIndices)
         maxEntryLength = length consensusStructure
         fornaComparisons = V.toList (V.map (makeFornaComparisonLink modelName structureFilePath fornaURLPrefix nodeAlignmentColIndices maxEntryLength) comparisonNodeLabelsPerModels)
         --fornaComparisonString = intercalate "\n" fornaComparisonLinks
