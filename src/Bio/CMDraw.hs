@@ -160,6 +160,7 @@ makeModelComparisonNodeLabel (modelColor, nodeInterval) nodeNumber
   | elem nodeNumber nodeInterval = (nodeNumber,V.singleton modelColor)
   | otherwise = (nodeNumber,V.singleton white)
 
+-----
 getComparisonPerModelNodeInterval :: [CmcompareResult] -> V.Vector (String, Colour Double) -> CM.CM -> V.Vector (String,[Int]) 
 getComparisonPerModelNodeInterval comparsionResults colorVector model = modelNodeIntervals
    where modelName = T.unpack (CM._name model)
@@ -169,38 +170,42 @@ getComparisonPerModelNodeInterval comparsionResults colorVector model = modelNod
          modelNodeInterval2 = map (\a -> (model2Name a,model2matchednodes a))  relevantComparisons2
          modelNodeIntervals = V.fromList (modelNodeInterval1 ++ modelNodeInterval2)
 
-getComparisonPerModelNodeInterval :: [CmcompareResult] -> V.Vector (String, Colour Double) -> CM.CM -> V.Vector (String,[Int]) 
-getComparisonPerModelNodeInterval comparsionResults colorVector model = modelNodeIntervals
-   where modelName = T.unpack (CM._name model)
-         relevantComparisons1 = filter ((modelName==) . model1Name) comparsionResults
-         modelNodeInterval1 = map (\a -> (model1Name a,model1matchednodes a))  relevantComparisons1 
-         relevantComparisons2 = filter ((modelName==) . model2Name) comparsionResults
-         modelNodeInterval2 = map (\a -> (model2Name a,model2matchednodes a))  relevantComparisons2
-         modelNodeIntervals = V.fromList (modelNodeInterval1 ++ modelNodeInterval2)
 
----------
-getComparisonPerModelNodeLabels :: [CmcompareResult] -> V.Vector (String, Colour Double) -> CM.CM -> V.Vector (String,Colour Double, V.Vector (Int,V.Vector (Colour Double)))
-getComparisonPerModelNodeLabels comparsionResults colorVector model = modelComparisonLabels
+getComparisonPerModelNodeLabels2 :: V.Vector (String,[Int]) -> V.Vector (String, Colour Double) -> CM.CM -> V.Vector (String,Colour Double, V.Vector (Int,V.Vector (Colour Double)))
+getComparisonPerModelNodeLabels2 modelNodeIntervals colorVector model = modelComparisonLabels
    where modelName = T.unpack (CM._name model)
-         relevantComparisons1 = filter ((modelName==) . model1Name) comparsionResults
-         modelNodeInterval1 = map (\a -> (model1Name a,model1matchednodes a))  relevantComparisons1 
-         relevantComparisons2 = filter ((modelName==) . model2Name) comparsionResults
-         modelNodeInterval2 = map (\a -> (model2Name a,model2matchednodes a))  relevantComparisons2
-         modelNodeIntervals =  V.fromList (modelNodeInterval1 ++ modelNodeInterval2)
          nodeNumber = CM._nodesInModel model
          modelComparisonLabels = V.map (getModelComparisonLabels modelName nodeNumber colorVector) modelNodeIntervals
 
-getModelComparisonLabels :: String -> Int -> V.Vector (String, Colour Double) -> (String,[Int])-> (String,Colour Double,V.Vector (Int,V.Vector (Colour Double)))
-getModelComparisonLabels _ nodeNumber colorVector (compModel,matchedNodes) = (compModel,modelColor,comparisonNodeLabels)
-  where (modelColor,modelInterval) = modelToColor colorVector (compModel,matchedNodes)
-        comparisonNodeLabels = V.generate (nodeNumber +1) (makeModelComparisonNodeLabel (modelColor,modelInterval))
+getComparisonPerColumnLabels :: V.Vector (String,[Int]) -> V.Vector (String, Colour Double) -> CM.CM -> V.Vector (String,Colour Double, V.Vector (Int,V.Vector (Colour Double)))
+getComparisonPerColumnLabels modelNodeIntervals colorVector model = columnComparisonLabels
+   where modelName = T.unpack (CM._name model)
+         nodeNumber = CM._nodesInModel model
+         cm = fromLeft (CM._cm model) -- select Flexible Model
+         nodes = V.fromList (M.elems (CM._fmNodes cm))
+         columnNumber = CM._clen model
+         columnNodeInterval = V.map (modelNodeToColumnInterval nodes) modelNodeIntervals
+         columnComparisonLabels = V.map (getModelComparisonLabels modelName columnNumber colorVector) modelNodeIntervals
 
-makeModelComparisonNodeLabel :: (Colour Double,[Int]) -> Int -> (Int,V.Vector (Colour Double))
-makeModelComparisonNodeLabel (modelColor, nodeInterval) nodeNumber 
-  | elem nodeNumber nodeInterval = (nodeNumber,V.singleton modelColor)
-  | otherwise = (nodeNumber,V.singleton white)
+-- modelNodeToColumnInterval ::
+modelNodeToColumnInterval nodes (modelName,nodeInterval) = (modelName,columnInterval)
+  where columnInterval = concatMap (nodeToColumnInterval nodes) nodeInterval
+
+nodeToColumnInterval nodes nodeIndex = nub [CM._nodeColL currentNode,CM._nodeColR currentNode]
+  where currentNode = nodes V.! nodeIndex     
 
 
+-- getModelComparisonLabels :: String -> Int -> V.Vector (String, Colour Double) -> (String,[Int])-> (String,Colour Double,V.Vector (Int,V.Vector (Colour Double)))
+-- getModelComparisonLabels _ nodeNumber colorVector (compModel,matchedNodes) = (compModel,modelColor,comparisonNodeLabels)
+--   where (modelColor,modelInterval) = modelToColor colorVector (compModel,matchedNodes)
+--         comparisonNodeLabels = V.generate (nodeNumber +1) (makeModelComparisonNodeLabel (modelColor,modelInterval))
+
+-- makeModelComparisonNodeLabel :: (Colour Double,[Int]) -> Int -> (Int,V.Vector (Colour Double))
+-- makeModelComparisonNodeLabel (modelColor, nodeInterval) nodeNumber 
+--   | elem nodeNumber nodeInterval = (nodeNumber,V.singleton modelColor)
+--   | otherwise = (nodeNumber,V.singleton white)
+
+--
 buildR2RperModelInput :: String -> (CM.CM, Maybe StockholmAlignment,V.Vector (String,Colour Double,V.Vector (Int,V.Vector (Colour Double)))) -> [(String,String)]
 buildR2RperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabels)
   | isNothing maybeAln = []
