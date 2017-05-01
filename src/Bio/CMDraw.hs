@@ -44,7 +44,8 @@ import qualified Biobase.SElab.CM.ModelStructure as CM
 import Data.Either.Unwrap
 import qualified Data.Map as M
 import Data.Colour.Names
-import Debug.Trace
+--import Debug.Trace
+import Data.Function    
 
 -- | Draw one or more CM
 drawSingleCMComparisons :: String -> Int -> Double -> String -> String -> Double -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [CmcompareResult] -> [(QDiagram Cairo V2 Double Any,Maybe (QDiagram Cairo V2 Double Any))]
@@ -77,10 +78,6 @@ drawCM modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype m
          allStates = CM._fmStates cm
          boxlength = fromIntegral (length alphabetSymbols) + 2
          alphabetSymbols = ['A','U','C','G']
-         nodeAlignmentColLIndices = V.toList $ V.map CM._nodeColL nodes
-         nodeAlignmentColRIndices = V.toList $ V.map CM._nodeColR nodes
-         nodeAlignmentColIndices = V.fromList $ nub (nodeAlignmentColLIndices ++ nodeAlignmentColRIndices)
-         --nodeAlignmentColIndices = Debug.Trace.trace ("N" ++ show nodeAlignmentColLIndices ++ "," ++ show nodeAlignmentColRIndices) (V.fromList $ nub (nodeAlignmentColLIndices ++ nodeAlignmentColRIndices))
          indices = V.toList (V.iterateN (nodeNumber-1) (1+) 0)
          (indexStructure,_)= runState (buildTreeIndexStructure 1 nodes indices) startState
          modelName = CM._name inputCM
@@ -105,9 +102,17 @@ drawCM modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype m
                           _ -> []
          labelList = case modelDetail of
                           "detailed" -> V.toList (V.map makeLabel connectedStates V.++ V.map makeSelfLabel selfConnectedStates)
-                          _ -> []
-         alignmentDiagram = maybe Nothing (\a -> Just (drawStockholmLines entryNumberCutoff maxWidth nodeAlignmentColIndices comparisonNodeLabels a)) aln
+                          _ -> [] 
+         alignmentDiagram = drawStockholmLinesComparisonLabel entryNumberCutoff maxWidth comparisonNodeLabels nodes aln
 
+drawStockholmLinesComparisonLabel :: Int -> Double -> V.Vector (Int,V.Vector (Colour Double)) -> V.Vector CM.Node -> Maybe StockholmAlignment -> Maybe (QDiagram Cairo V2 Double Any)
+drawStockholmLinesComparisonLabel entryNumberCutoff maxWidth comparisonNodeLabels nodes maybeAln
+   | isJust maybeAln = Just alignmentVis
+   | otherwise = Nothing
+     where aln = fromJust maybeAln
+           columnComparisonLabels = getComparisonPerColumnLabels comparisonNodeLabels nodes
+           alignmentVis = drawStockholmLines entryNumberCutoff maxWidth columnComparisonLabels aln
+                                      
 makeAllConnectedStates :: M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (String,String,Double)
 makeAllConnectedStates allStates = allConnectedStates
   where indexStateTuples = M.assocs allStates
@@ -160,39 +165,32 @@ makeModelComparisonNodeLabel (modelColor, nodeInterval) nodeNumber
   | elem nodeNumber nodeInterval = (nodeNumber,V.singleton modelColor)
   | otherwise = (nodeNumber,V.singleton white)
 
------
-getComparisonPerModelNodeInterval :: [CmcompareResult] -> V.Vector (String, Colour Double) -> CM.CM -> V.Vector (String,[Int]) 
-getComparisonPerModelNodeInterval comparsionResults colorVector model = modelNodeIntervals
-   where modelName = T.unpack (CM._name model)
-         relevantComparisons1 = filter ((modelName==) . model1Name) comparsionResults
-         modelNodeInterval1 = map (\a -> (model1Name a,model1matchednodes a))  relevantComparisons1 
-         relevantComparisons2 = filter ((modelName==) . model2Name) comparsionResults
-         modelNodeInterval2 = map (\a -> (model2Name a,model2matchednodes a))  relevantComparisons2
-         modelNodeIntervals = V.fromList (modelNodeInterval1 ++ modelNodeInterval2)
+getComparisonPerColumnLabels :: V.Vector (Int,V.Vector (Colour Double)) -> V.Vector CM.Node -> V.Vector (Int, V.Vector (Colour Double))
+getComparisonPerColumnLabels comparisonNodeLabels nodes = columnComparisonLabels
+   where --cm = fromLeft (CM._cm model) -- select Flexible Model
+         --nodes = V.fromList (M.elems (CM._fmNodes cm))
+         nodeAlignmentColLIndices = V.toList $ V.map CM._nodeColL nodes
+         nodeAlignmentColRIndices = V.toList $ V.map CM._nodeColR nodes
+         nodeAlignmentColIndices = V.fromList $ nub (nodeAlignmentColLIndices ++ nodeAlignmentColRIndices)
+         columnNumber = V.length nodeAlignmentColIndices
+         unsortedColumnComparisonLabel = concatMap (nodeToColumnComparisonLabel nodes) (V.toList comparisonNodeLabels)
+         columnComparisonLabels = V.fromList (sortBy (compare `on` fst) unsortedColumnComparisonLabel)
+         --toDo: maxentry length is column numb
+         --fullComparisonColLabels = fillComparisonColLabels columnNumber columnComparisonLabels
 
+nodeToColumnComparisonLabel:: V.Vector CM.Node -> (Int, V.Vector (Colour Double)) -> [(Int,V.Vector (Colour Double))]
+nodeToColumnComparisonLabel nodes (nodeIndex,colors) = colLabels
+  where currentNode = (V.!) nodes nodeIndex
+        colIndices = nub [CM._nodeColL currentNode,CM._nodeColR currentNode]
+        colLabels = map (\a->(a,colors)) colIndices
+                                   
+-- -- modelNodeToColumnInterval ::
+-- modelNodeToColumnInterval nodes (modelName,nodeInterval) = (modelName,columnInterval)
+--   where columnInterval = concatMap (nodeToColumnInterval nodes) nodeInterval
 
-getComparisonPerModelNodeLabels2 :: V.Vector (String,[Int]) -> V.Vector (String, Colour Double) -> CM.CM -> V.Vector (String,Colour Double, V.Vector (Int,V.Vector (Colour Double)))
-getComparisonPerModelNodeLabels2 modelNodeIntervals colorVector model = modelComparisonLabels
-   where modelName = T.unpack (CM._name model)
-         nodeNumber = CM._nodesInModel model
-         modelComparisonLabels = V.map (getModelComparisonLabels modelName nodeNumber colorVector) modelNodeIntervals
-
-getComparisonPerColumnLabels :: V.Vector (String,[Int]) -> V.Vector (String, Colour Double) -> CM.CM -> V.Vector (String,Colour Double, V.Vector (Int,V.Vector (Colour Double)))
-getComparisonPerColumnLabels modelNodeIntervals colorVector model = columnComparisonLabels
-   where modelName = T.unpack (CM._name model)
-         nodeNumber = CM._nodesInModel model
-         cm = fromLeft (CM._cm model) -- select Flexible Model
-         nodes = V.fromList (M.elems (CM._fmNodes cm))
-         columnNumber = CM._clen model
-         columnNodeInterval = V.map (modelNodeToColumnInterval nodes) modelNodeIntervals
-         columnComparisonLabels = V.map (getModelComparisonLabels modelName columnNumber colorVector) modelNodeIntervals
-
--- modelNodeToColumnInterval ::
-modelNodeToColumnInterval nodes (modelName,nodeInterval) = (modelName,columnInterval)
-  where columnInterval = concatMap (nodeToColumnInterval nodes) nodeInterval
-
-nodeToColumnInterval nodes nodeIndex = nub [CM._nodeColL currentNode,CM._nodeColR currentNode]
-  where currentNode = nodes V.! nodeIndex     
+                         
+-- nodeToColumnInterval nodes nodeIndex = nub [CM._nodeColL currentNode,CM._nodeColR currentNode]
+--   where currentNode = (V.!) nodes nodeIndex     
 
 
 -- getModelComparisonLabels :: String -> Int -> V.Vector (String, Colour Double) -> (String,[Int])-> (String,Colour Double,V.Vector (Int,V.Vector (Colour Double)))
