@@ -43,8 +43,6 @@ import qualified Biobase.SElab.CM.Types as CM
 import qualified Biobase.SElab.CM.ModelStructure as CM
 import Data.Either.Unwrap
 import qualified Data.Map as M
-import Data.Colour.Names
---import Debug.Trace
 import Data.Function    
 
 -- | Draw one or more CM
@@ -167,16 +165,8 @@ makeModelComparisonNodeLabel (modelColor, nodeInterval) nodeNumber
 
 getComparisonPerColumnLabels :: V.Vector (Int,V.Vector (Colour Double)) -> V.Vector CM.Node -> V.Vector (Int, V.Vector (Colour Double))
 getComparisonPerColumnLabels comparisonNodeLabels nodes = columnComparisonLabels
-   where --cm = fromLeft (CM._cm model) -- select Flexible Model
-         --nodes = V.fromList (M.elems (CM._fmNodes cm))
-         nodeAlignmentColLIndices = V.toList $ V.map CM._nodeColL nodes
-         nodeAlignmentColRIndices = V.toList $ V.map CM._nodeColR nodes
-         nodeAlignmentColIndices = V.fromList $ nub (nodeAlignmentColLIndices ++ nodeAlignmentColRIndices)
-         columnNumber = V.length nodeAlignmentColIndices
-         unsortedColumnComparisonLabel = concatMap (nodeToColumnComparisonLabel nodes) (V.toList comparisonNodeLabels)
+   where unsortedColumnComparisonLabel = concatMap (nodeToColumnComparisonLabel nodes) (V.toList comparisonNodeLabels)
          columnComparisonLabels = V.fromList (sortBy (compare `on` fst) unsortedColumnComparisonLabel)
-         --toDo: maxentry length is column numb
-         --fullComparisonColLabels = fillComparisonColLabels columnNumber columnComparisonLabels
 
 nodeToColumnComparisonLabel:: V.Vector CM.Node -> (Int, V.Vector (Colour Double)) -> [(Int,V.Vector (Colour Double))]
 nodeToColumnComparisonLabel nodes (nodeIndex,colors) = colLabels
