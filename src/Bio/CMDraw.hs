@@ -108,7 +108,11 @@ drawStockholmLinesComparisonLabel entryNumberCutoff maxWidth comparisonNodeLabel
    | isJust maybeAln = Just alignmentVis
    | otherwise = Nothing
      where aln = fromJust maybeAln
-           columnComparisonLabels = getComparisonPerColumnLabels comparisonNodeLabels nodes
+           --comparison labels do not include end nodes, but no root node.
+           -- end nodes have no alignment columns associated
+           lastNodeIndex = V.length comparisonNodeLabels
+           comparisonNodeLabelsWORootEnd = V.slice 1 (lastNodeIndex - 2) comparisonNodeLabels
+           columnComparisonLabels = getComparisonPerColumnLabels comparisonNodeLabelsWORootEnd nodes
            alignmentVis = drawStockholmLines entryNumberCutoff maxWidth columnComparisonLabels aln
                                       
 makeAllConnectedStates :: M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (String,String,Double)
@@ -146,17 +150,19 @@ getComparisonPerModelNodeLabels :: [CmcompareResult] -> V.Vector (String, Colour
 getComparisonPerModelNodeLabels comparsionResults colorVector model = modelComparisonLabels
    where modelName = T.unpack (CM._name model)
          relevantComparisons1 = filter ((modelName==) . model1Name) comparsionResults
-         modelNodeInterval1 = map (\a -> (model1Name a,model1matchednodes a))  relevantComparisons1 
+         modelNodeInterval1 = map (\a -> (model2Name a,model1matchednodes a))  relevantComparisons1 
          relevantComparisons2 = filter ((modelName==) . model2Name) comparsionResults
-         modelNodeInterval2 = map (\a -> (model2Name a,model2matchednodes a))  relevantComparisons2
+         modelNodeInterval2 = map (\a -> (model1Name a,model2matchednodes a))  relevantComparisons2
          modelNodeIntervals =  V.fromList (modelNodeInterval1 ++ modelNodeInterval2)
-         nodeNumber = CM._nodesInModel model
+         nodeNumber = (CM._nodesInModel model) 
          modelComparisonLabels = V.map (getModelComparisonLabels modelName nodeNumber colorVector) modelNodeIntervals
 
 getModelComparisonLabels :: String -> Int -> V.Vector (String, Colour Double) -> (String,[Int])-> (String,Colour Double,V.Vector (Int,V.Vector (Colour Double)))
 getModelComparisonLabels _ nodeNumber colorVector (compModel,matchedNodes) = (compModel,modelColor,comparisonNodeLabels)
   where (modelColor,modelInterval) = modelToColor colorVector (compModel,matchedNodes)
-        comparisonNodeLabels = V.generate (nodeNumber +1) (makeModelComparisonNodeLabel (modelColor,modelInterval))
+        -- cm starts at node index 0 for root node and ends with end node
+        -- cmcompare does not include root node, but end node 
+        comparisonNodeLabels = V.generate (nodeNumber -1) (makeModelComparisonNodeLabel (modelColor,modelInterval))
 
 makeModelComparisonNodeLabel :: (Colour Double,[Int]) -> Int -> (Int,V.Vector (Colour Double))
 makeModelComparisonNodeLabel (modelColor, nodeInterval) nodeNumber 
@@ -170,7 +176,7 @@ getComparisonPerColumnLabels comparisonNodeLabels nodes = columnComparisonLabels
 
 nodeToColumnComparisonLabel:: V.Vector CM.Node -> (Int, V.Vector (Colour Double)) -> [(Int,V.Vector (Colour Double))]
 nodeToColumnComparisonLabel nodes (nodeIndex,colors) = colLabels
-  where currentNode = (V.!) nodes nodeIndex
+  where currentNode = (V.!) nodes nodeIndex 
         colIndices = nub [CM._nodeColL currentNode,CM._nodeColR currentNode]
         colLabels = map (\a->(a,colors)) colIndices
                                    
