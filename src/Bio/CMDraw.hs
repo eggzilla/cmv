@@ -108,11 +108,9 @@ drawStockholmLinesComparisonLabel entryNumberCutoff maxWidth comparisonNodeLabel
    | isJust maybeAln = Just alignmentVis
    | otherwise = Nothing
      where aln = fromJust maybeAln
-           --comparison labels do not include end nodes, but no root node.
+           -- comparison labels do not include end nodes, but no root node.
            -- end nodes have no alignment columns associated
-           lastNodeIndex = V.length comparisonNodeLabels
-           comparisonNodeLabelsWORootEnd = V.slice 1 (lastNodeIndex - 2) comparisonNodeLabels
-           columnComparisonLabels = getComparisonPerColumnLabels comparisonNodeLabelsWORootEnd nodes
+           columnComparisonLabels = getComparisonPerColumnLabels comparisonNodeLabels nodes
            alignmentVis = drawStockholmLines entryNumberCutoff maxWidth columnComparisonLabels aln
                                       
 makeAllConnectedStates :: M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (String,String,Double)
@@ -171,7 +169,9 @@ makeModelComparisonNodeLabel (modelColor, nodeInterval) nodeNumber
 
 getComparisonPerColumnLabels :: V.Vector (Int,V.Vector (Colour Double)) -> V.Vector CM.Node -> V.Vector (Int, V.Vector (Colour Double))
 getComparisonPerColumnLabels comparisonNodeLabels nodes = columnComparisonLabels
-   where unsortedColumnComparisonLabel = concatMap (nodeToColumnComparisonLabel nodes) (V.toList comparisonNodeLabels)
+   where lastNodeIndex = V.length comparisonNodeLabels
+         comparisonNodeLabelsWORootEnd = V.slice 1 (lastNodeIndex - 2) comparisonNodeLabels
+         unsortedColumnComparisonLabel = concatMap (nodeToColumnComparisonLabel nodes) (V.toList comparisonNodeLabelsWORootEnd)
          columnComparisonLabels = V.fromList (sortBy (compare `on` fst) unsortedColumnComparisonLabel)
 
 nodeToColumnComparisonLabel:: V.Vector CM.Node -> (Int, V.Vector (Colour Double)) -> [(Int,V.Vector (Colour Double))]
@@ -214,20 +214,24 @@ buildR2RperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabels)
         consensusSequence = if null consensusSequenceList then "" else T.unpack (head consensusSequenceList)
         gapfreeConsensusSequence = map C.toUpper (filter (not . isGap) consensusSequence)
         consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
-        consensusStructure = if null consensusStructureList then "" else extractGapfreeStructure consensusSequence (T.unpack (head consensusStructureList))
+        consensusStructure = if null consensusStructureList then "" else T.unpack (head consensusStructureList)
+        gapFreeConsensusStructure = extractGapfreeStructure consensusSequence consensusStructure
+        --filter () (V.indexed (V.fromList consensusStructure))
+        --
         nodeAlignmentColLIndices = V.toList $ V.map CM._nodeColL nodes
         nodeAlignmentColRIndices = V.toList $ V.map CM._nodeColR nodes
         nodeAlignmentColIndices = V.fromList $ nub (nodeAlignmentColLIndices ++ nodeAlignmentColRIndices)
         maxEntryLength = length consensusStructure
+        columnComparisonLabels = V.map (\(mname,mcolor,comparisonNodePerModelLabels) -> (mname,mcolor,getComparisonPerColumnLabels comparisonNodePerModelLabels nodes)) comparisonNodeLabels
         sHeader =  "# STOCKHOLM 1.0\n"
-        sConsensusStructure =     "#=GC SS_cons          " ++ consensusStructure ++ "\n"
+        sConsensusStructure =     "#=GC SS_cons          " ++ gapFreeConsensusStructure ++ "\n"
         sConsensusSequence =      "#=GC cons             " ++ gapfreeConsensusSequence ++ "\n"
         sConsensusSequenceColor = "#=GC conss            " ++ replicate (length consensusStructure) '2' ++ "\n"
         sCovarianceAnnotation =   "#=GC cov_SS_cons      " ++ replicate (length consensusStructure) '.' ++ "\n"
         singleFilePath = structureFilePath ++ modelName ++ ".r2r"                        
         singler2rInput = [(singleFilePath,r2rInputPrefix)]
         -- for multiple comparisons we need to return different filenames and labels
-        r2rComparisonInputs = V.map (buildR2RperModelComparisonInput modelName structureFilePath maxEntryLength nodeAlignmentColIndices r2rInputPrefix) comparisonNodeLabels
+        r2rComparisonInputs = V.map (buildR2RperModelComparisonInput modelName structureFilePath maxEntryLength nodeAlignmentColIndices r2rInputPrefix) columnComparisonLabels
 
 buildR2RperModelComparisonInput :: String -> String -> Int -> V.Vector Int -> String -> (String,Colour Double,V.Vector (Int,V.Vector (Colour Double))) -> (String,String)
 buildR2RperModelComparisonInput modelName structureFilePath maxEntryLength nodeAlignmentColIndices r2rInputPrefix (compModelName,modelColor,comparisonNodeLabels) = (schemeFilePath,r2rInput)
@@ -239,7 +243,6 @@ buildR2RperModelComparisonInput modelName structureFilePath maxEntryLength nodeA
         sComparisonHighlight =    "#=GC R2R_LABEL        " ++ r2rLabels ++ "\n"
         backBoneColor = setBackboneColor modelColor
         sBackboneColorLabel =     "#=GF R2R shade_along_backbone s rgb:" ++ backBoneColor ++ "\n"
-        --sBackboneColorLabel =     "#=GF R2R shade_along_backbone s rgb:200,0,0\n"
         r2rInput = r2rInputPrefix ++ sComparisonHighlight ++ sBackboneColorLabel
 
 setBackboneColor :: Colour Double -> String
@@ -787,9 +790,9 @@ getComparisonNodeLabels :: [CmcompareResult] -> V.Vector (String, Colour Double)
 getComparisonNodeLabels comparsionResults colorVector model = comparisonNodeLabels
    where modelName = T.unpack (CM._name model)
          relevantComparisons1 = filter ((modelName==) . model1Name) comparsionResults
-         modelNodeInterval1 = map (\a -> (model2Name a,model2matchednodes a))  relevantComparisons1 
+         modelNodeInterval1 = map (\a -> (model2Name a,model1matchednodes a))  relevantComparisons1 
          relevantComparisons2 = filter ((modelName==) . model2Name) comparsionResults
-         modelNodeInterval2 = map (\a -> (model1Name a,model1matchednodes a))  relevantComparisons2
+         modelNodeInterval2 = map (\a -> (model1Name a,model2matchednodes a))  relevantComparisons2
          modelNodeIntervals =  V.fromList (modelNodeInterval1 ++ modelNodeInterval2)
          colorNodeIntervals = V.map (modelToColor colorVector) modelNodeIntervals
          nodeNumber = CM._nodesInModel model
