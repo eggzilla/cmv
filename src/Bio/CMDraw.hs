@@ -218,9 +218,9 @@ buildR2RperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabels)
         gapFreeConsensusStructure = extractGapfreeStructure consensusSequence consensusStructure
         --filter () (V.indexed (V.fromList consensusStructure))
         --
-        nodeAlignmentColLIndices = V.toList $ V.map CM._nodeColL nodes
-        nodeAlignmentColRIndices = V.toList $ V.map CM._nodeColR nodes
-        nodeAlignmentColIndices = V.fromList $ nub (nodeAlignmentColLIndices ++ nodeAlignmentColRIndices)
+        --nodeAlignmentColLIndices = V.toList $ V.map CM._nodeColL nodes
+        --nodeAlignmentColRIndices = V.toList $ V.map CM._nodeColR nodes
+        --nodeAlignmentColIndices = V.fromList $ nub (nodeAlignmentColLIndices ++ nodeAlignmentColRIndices)
         maxEntryLength = length consensusStructure
         columnComparisonLabels = V.map (\(mname,mcolor,comparisonNodePerModelLabels) -> (mname,mcolor,getComparisonPerColumnLabels comparisonNodePerModelLabels nodes)) comparisonNodeLabels
         sHeader =  "# STOCKHOLM 1.0\n"
@@ -231,15 +231,15 @@ buildR2RperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabels)
         singleFilePath = structureFilePath ++ modelName ++ ".r2r"                        
         singler2rInput = [(singleFilePath,r2rInputPrefix)]
         -- for multiple comparisons we need to return different filenames and labels
-        r2rComparisonInputs = V.map (buildR2RperModelComparisonInput modelName structureFilePath maxEntryLength nodeAlignmentColIndices r2rInputPrefix) columnComparisonLabels
+        r2rComparisonInputs = V.map (buildR2RperModelComparisonInput modelName structureFilePath maxEntryLength r2rInputPrefix) columnComparisonLabels
 
-buildR2RperModelComparisonInput :: String -> String -> Int -> V.Vector Int -> String -> (String,Colour Double,V.Vector (Int,V.Vector (Colour Double))) -> (String,String)
-buildR2RperModelComparisonInput modelName structureFilePath maxEntryLength nodeAlignmentColIndices r2rInputPrefix (compModelName,modelColor,comparisonNodeLabels) = (schemeFilePath,r2rInput)
+buildR2RperModelComparisonInput :: String -> String -> Int -> String -> (String,Colour Double,V.Vector (Int,V.Vector (Colour Double))) -> (String,String)
+buildR2RperModelComparisonInput modelName structureFilePath maxEntryLength r2rInputPrefix (compModelName,modelColor,comparisonNodeLabels) = (schemeFilePath,r2rInput)
   where schemeFilePath = structureFilePath ++ modelName ++ "." ++ compModelName ++ ".r2r"
-        colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabels
-        sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
-        fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
-        r2rLabels = map comparisonColLabelsToR2RLabel (V.toList fullComparisonColLabels)
+        --colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabels
+        --sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
+        --fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
+        r2rLabels = map comparisonColLabelsToR2RLabel (V.toList comparisonNodeLabels)
         sComparisonHighlight =    "#=GC R2R_LABEL        " ++ r2rLabels ++ "\n"
         backBoneColor = setBackboneColor modelColor
         sBackboneColorLabel =     "#=GF R2R shade_along_backbone s rgb:" ++ backBoneColor ++ "\n"
