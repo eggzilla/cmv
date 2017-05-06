@@ -160,7 +160,7 @@ getModelComparisonLabels _ nodeNumber colorVector (compModel,matchedNodes) = (co
   where (modelColor,modelInterval) = modelToColor colorVector (compModel,matchedNodes)
         -- cm starts at node index 0 for root node and ends with end node
         -- cmcompare does not include root node, but end node 
-        comparisonNodeLabels = V.generate (nodeNumber -1) (makeModelComparisonNodeLabel (modelColor,modelInterval))
+        comparisonNodeLabels = V.generate (nodeNumber ) (makeModelComparisonNodeLabel (modelColor,modelInterval))
 
 makeModelComparisonNodeLabel :: (Colour Double,[Int]) -> Int -> (Int,V.Vector (Colour Double))
 makeModelComparisonNodeLabel (modelColor, nodeInterval) nodeNumber 
@@ -170,13 +170,13 @@ makeModelComparisonNodeLabel (modelColor, nodeInterval) nodeNumber
 getComparisonPerColumnLabels :: V.Vector (Int,V.Vector (Colour Double)) -> V.Vector CM.Node -> V.Vector (Int, V.Vector (Colour Double))
 getComparisonPerColumnLabels comparisonNodeLabels nodes = columnComparisonLabels
    where lastNodeIndex = V.length comparisonNodeLabels
-         comparisonNodeLabelsWORootEnd = V.slice 1 (lastNodeIndex - 2) comparisonNodeLabels
+         comparisonNodeLabelsWORootEnd = V.slice 1 (lastNodeIndex -1) comparisonNodeLabels
          unsortedColumnComparisonLabel = concatMap (nodeToColumnComparisonLabel nodes) (V.toList comparisonNodeLabelsWORootEnd)
          columnComparisonLabels = V.fromList (sortBy (compare `on` fst) unsortedColumnComparisonLabel)
 
 nodeToColumnComparisonLabel:: V.Vector CM.Node -> (Int, V.Vector (Colour Double)) -> [(Int,V.Vector (Colour Double))]
 nodeToColumnComparisonLabel nodes (nodeIndex,colors) = colLabels
-  where currentNode = (V.!) nodes nodeIndex 
+  where currentNode = (V.!) nodes (nodeIndex -1)
         colIndices = nub [CM._nodeColL currentNode,CM._nodeColR currentNode]
         colLabels = map (\a->(a,colors)) colIndices
                                    
@@ -212,30 +212,30 @@ buildR2RperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabels)
         allColumnAnnotations = columnAnnotations aln
         consensusSequenceList = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
         consensusSequence = if null consensusSequenceList then "" else T.unpack (head consensusSequenceList)
-        gapfreeConsensusSequence = map C.toUpper (filter (not . isGap) consensusSequence)
+        gapFreeConsensusSequence = map C.toUpper (filter (not . isGap) consensusSequence)
         consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
         consensusStructure = if null consensusStructureList then "" else T.unpack (head consensusStructureList)
         indexedGapFreeConsensusStructure = extractGapfreeIndexedStructure consensusSequence consensusStructure
-        consensusStructureColIndices = map fst indexedGapFreeConsensusStructure
+        consensusStructureColIndices = map ((+1) . fst) indexedGapFreeConsensusStructure
         gapFreeConsensusStructure = map snd indexedGapFreeConsensusStructure
-        maxEntryLength = length consensusStructure
+        --maxEntryLength = length consensusStructure
         --convert node to column labels as needed for consensus secondary structure
         columnComparisonLabels = V.map (\(mname,mcolor,comparisonNodePerModelLabels) -> (mname,mcolor,getComparisonPerColumnLabels comparisonNodePerModelLabels nodes)) comparisonNodeLabels
         --filter for labels that are part of consensus secondary structure by index
-        consensusStructureColumnComparisonLabels = V.map (\(mname,mcolor,columnComparisonLabels) -> (mname,mcolor,V.filter (\(i,_) -> elem i consensusStructureColIndices))) comparisonNodeLabels
+        consensusStructureColumnComparisonLabels = V.map (\(mname,mcolor,colLabels) -> (mname,mcolor,V.filter (\(i,_) -> elem i consensusStructureColIndices) colLabels)) columnComparisonLabels
         --consensusStructureColumnComparisonLabels = V.filter (\(i,_) -> elem i consensusStructureColIndices) columnComparisonLabels
         sHeader =  "# STOCKHOLM 1.0\n"
         sConsensusStructure =     "#=GC SS_cons          " ++ gapFreeConsensusStructure ++ "\n"
-        sConsensusSequence =      "#=GC cons             " ++ gapfreeConsensusSequence ++ "\n"
-        sConsensusSequenceColor = "#=GC conss            " ++ replicate (length gapfreeConsensusSequence) '2' ++ "\n"
-        sCovarianceAnnotation =   "#=GC cov_SS_cons      " ++ replicate (length gapfreeConsensusSequence) '.' ++ "\n"
+        sConsensusSequence =      "#=GC cons             " ++ gapFreeConsensusSequence ++ "\n" ++ show consensusStructureColIndices ++ "\n" ++ show comparisonNodeLabels ++ "\n"
+        sConsensusSequenceColor = "#=GC conss            " ++ replicate (length gapFreeConsensusSequence) '2' ++ "\n"
+        sCovarianceAnnotation =   "#=GC cov_SS_cons      " ++ replicate (length gapFreeConsensusSequence) '.' ++ "\n"
         singleFilePath = structureFilePath ++ modelName ++ ".r2r"                        
         singler2rInput = [(singleFilePath,r2rInputPrefix)]
         -- for multiple comparisons we need to return different filenames and labels
-        r2rComparisonInputs = V.map (buildR2RperModelComparisonInput modelName structureFilePath maxEntryLength r2rInputPrefix) columnComparisonLabels
+        r2rComparisonInputs = V.map (buildR2RperModelComparisonInput modelName structureFilePath r2rInputPrefix) consensusStructureColumnComparisonLabels
 
-buildR2RperModelComparisonInput :: String -> String -> Int -> String -> (String, Colour Double, V.Vector (Int, V.Vector (Colour Double))) -> (String,String)
-buildR2RperModelComparisonInput modelName structureFilePath maxEntryLength r2rInputPrefix (compModelName,modelColor,columnComparisonLabels) = (schemeFilePath,r2rInput)
+buildR2RperModelComparisonInput :: String -> String -> String -> (String, Colour Double, V.Vector (Int, V.Vector (Colour Double))) -> (String,String)
+buildR2RperModelComparisonInput modelName structureFilePath r2rInputPrefix (compModelName,modelColor,columnComparisonLabels) = (schemeFilePath,r2rInput)
   where schemeFilePath = structureFilePath ++ modelName ++ "." ++ compModelName ++ ".r2r"
         r2rLabels = map comparisonColLabelsToR2RLabel (V.toList columnComparisonLabels)
         sComparisonHighlight =    "#=GC R2R_LABEL        " ++ r2rLabels ++ "\n"
