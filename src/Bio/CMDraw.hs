@@ -262,34 +262,42 @@ buildFornaLinksInput structureFilePath (inputCM,maybeAln,comparisonNodeLabelsPer
         nodes = V.fromList (M.elems (CM._fmNodes cm))
         aln = fromJust maybeAln
         --http://nibiru.tbi.univie.ac.at/forna/forna.html?id=fasta&file=%3Eheader\nAACGUUAGUU\n(((....)))&colors=%3Eheader\n0\n0.1\n0.2\n0.3\n0.4\n0.5\n0.6\n0.7\n0.8\n0.9\n1
-        fornaURLPrefix = "http://rna.tbi.univie.ac.at/forna/forna.html?id=fasta&file=%3Eheader\\n" ++ gapfreeConsensusSequence ++ "\\n" ++ consensusStructure 
+        fornaURLPrefix = "http://rna.tbi.univie.ac.at/forna/forna.html?id=fasta&file=%3Eheader\\n" ++ gapfreeConsensusSequence ++ "\\n" ++ gapFreeConsensusStructure
         singleFornaLink = [(fornaFilePath,fornaURLPrefix)]
         fornaFilePath = structureFilePath ++ modelName ++ ".fornalink"
         allColumnAnnotations = columnAnnotations aln
         consensusSequenceList = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
         consensusSequence = if null consensusSequenceList then "" else T.unpack (head consensusSequenceList)
         gapfreeConsensusSequence = map C.toUpper (filter (not . isGap) consensusSequence)
-        consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
-        consensusStructure = if null consensusStructureList then "" else extractGapfreeStructure consensusSequence (T.unpack (head consensusStructureList))
+        --consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
+        --consensusStructure = if null consensusStructureList then "" else extractGapfreeStructure consensusSequence (T.unpack (head consensusStructureList))
         modelName = T.unpack (CM._name inputCM)
-        nodeAlignmentColLIndices = V.toList $ V.map CM._nodeColL nodes
-        nodeAlignmentColRIndices = V.toList $ V.map CM._nodeColR nodes
-        nodeAlignmentColIndices = V.fromList $ nub (nodeAlignmentColLIndices ++ nodeAlignmentColRIndices)
-        maxEntryLength = length consensusStructure
-        fornaComparisons = V.toList (V.map (makeFornaComparisonLink modelName structureFilePath fornaURLPrefix nodeAlignmentColIndices maxEntryLength) comparisonNodeLabelsPerModels)
+        --nodeAlignmentColLIndices = V.toList $ V.map CM._nodeColL nodes
+        --nodeAlignmentColRIndices = V.toList $ V.map CM._nodeColR nodes
+        --nodeAlignmentColIndices = V.fromList $ nub (nodeAlignmentColLIndices ++ nodeAlignmentColRIndices)
+        --maxEntryLength = length consensusStructure
+        consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
+        consensusStructure = if null consensusStructureList then "" else T.unpack (head consensusStructureList)
+        indexedGapFreeConsensusStructure = extractGapfreeIndexedStructure consensusSequence consensusStructure
+        consensusStructureColIndices = map ((+1) . fst) indexedGapFreeConsensusStructure
+        gapFreeConsensusStructure = map snd indexedGapFreeConsensusStructure    
+        columnComparisonLabels = V.map (\(mname,mcolor,comparisonNodePerModelLabels) -> (mname,mcolor,getComparisonPerColumnLabels comparisonNodePerModelLabels nodes)) comparisonNodeLabelsPerModels
+        --filter for labels that are part of consensus secondary structure by index
+        consensusStructureColumnComparisonLabels = V.map (\(mname,mcolor,colLabels) -> (mname,mcolor,V.filter (\(i,_) -> elem i consensusStructureColIndices) colLabels)) columnComparisonLabels
+        fornaComparisons = V.toList (V.map (makeFornaComparisonLink modelName structureFilePath fornaURLPrefix) consensusStructureColumnComparisonLabels)
         --fornaComparisonString = intercalate "\n" fornaComparisonLinks
         --fornaComparisons = [(fornaFilePath ,fornaComparisonString)]
 
-makeFornaComparisonLink ::  String -> String -> String -> V.Vector Int -> Int -> (String,Colour Double,V.Vector (Int,V.Vector (Colour Double))) -> (String,String)
-makeFornaComparisonLink modelName structureFilePath fornaURLPrefix nodeAlignmentColIndices maxEntryLength (compModelName,_,comparisonNodeLabelsPerModel) = (comparisonPath,comparisonLink)
+makeFornaComparisonLink ::  String -> String -> String -> (String,Colour Double,V.Vector (Int,V.Vector (Colour Double))) -> (String,String)
+makeFornaComparisonLink modelName structureFilePath fornaURLPrefix (compModelName,_,comparisonColLabelsPerModel) = (comparisonPath,comparisonLink)
   where comparisonPath = structureFilePath ++ modelName ++ "." ++ compModelName ++ ".fornalink"
         comparisonLink = fornaURLPrefix ++ labelPrefix ++ singleColorLabels 
-        labelPrefix = "&colors=%3Eheader\\n"
-        colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabelsPerModel
-        sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
-        fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
+        labelPrefix = "&colors=%3Eheader\\n"            
+        --colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabelsPerModel
+        --sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
+        --fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
         --forna only supports a single color per node, which has to be supplied as additional color scheme
-        singleColorLabels = concatMap comparisonColLabelsToFornaLinkLabel (V.toList fullComparisonColLabels)
+        singleColorLabels = concatMap comparisonColLabelsToFornaLinkLabel (V.toList comparisonColLabelsPerModel)
         
 comparisonColLabelsToFornaLinkLabel :: (Int, V.Vector (Colour Double)) -> String
 comparisonColLabelsToFornaLinkLabel (_,colorVector)
@@ -298,11 +306,11 @@ comparisonColLabelsToFornaLinkLabel (_,colorVector)
   | otherwise = "0\\n"
     
 makeColorScheme ::  String -> String -> (String,Colour Double,V.Vector (Int,V.Vector (Colour Double))) -> (String,String)
-makeColorScheme modelName structureFilePath (compModelName,_,comparisonNodeLabelsPerModel) = (schemeFilePath,singleColorLabels)
+makeColorScheme modelName structureFilePath (compModelName,_,comparisonColLabelsPerModel) = (schemeFilePath,singleColorLabels)
   where schemeFilePath = structureFilePath ++ modelName ++ "." ++ compModelName ++ ".fornacolor"
-        indexedComparisonNodeLabelsPerModel = V.indexed comparisonNodeLabelsPerModel
+        indexedComparisonColLabelsPerModel = V.indexed comparisonColLabelsPerModel
         --column indexes have to be mapped to gap free consensus sequence
-        structureIndexedLabels = V.map (\(a,(_,c)) -> (a+1,c))indexedComparisonNodeLabelsPerModel
+        structureIndexedLabels = V.map (\(a,(_,c)) -> (a+1,c)) indexedComparisonColLabelsPerModel
         singleColorLabels = concatMap comparisonColLabelsToFornaLabel (V.toList structureIndexedLabels)
         
 -- | Extracts consensus secondary structure from alignment and annotates cmcompare nodes for all comparisons in one merged output
