@@ -269,13 +269,7 @@ buildFornaLinksInput structureFilePath (inputCM,maybeAln,comparisonNodeLabelsPer
         consensusSequenceList = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
         consensusSequence = if null consensusSequenceList then "" else T.unpack (head consensusSequenceList)
         gapfreeConsensusSequence = map C.toUpper (filter (not . isGap) consensusSequence)
-        --consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
-        --consensusStructure = if null consensusStructureList then "" else extractGapfreeStructure consensusSequence (T.unpack (head consensusStructureList))
         modelName = T.unpack (CM._name inputCM)
-        --nodeAlignmentColLIndices = V.toList $ V.map CM._nodeColL nodes
-        --nodeAlignmentColRIndices = V.toList $ V.map CM._nodeColR nodes
-        --nodeAlignmentColIndices = V.fromList $ nub (nodeAlignmentColLIndices ++ nodeAlignmentColRIndices)
-        --maxEntryLength = length consensusStructure
         consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
         consensusStructure = if null consensusStructureList then "" else T.unpack (head consensusStructureList)
         indexedGapFreeConsensusStructure = extractGapfreeIndexedStructure consensusSequence consensusStructure
@@ -285,17 +279,12 @@ buildFornaLinksInput structureFilePath (inputCM,maybeAln,comparisonNodeLabelsPer
         --filter for labels that are part of consensus secondary structure by index
         consensusStructureColumnComparisonLabels = V.map (\(mname,mcolor,colLabels) -> (mname,mcolor,V.filter (\(i,_) -> elem i consensusStructureColIndices) colLabels)) columnComparisonLabels
         fornaComparisons = V.toList (V.map (makeFornaComparisonLink modelName structureFilePath fornaURLPrefix) consensusStructureColumnComparisonLabels)
-        --fornaComparisonString = intercalate "\n" fornaComparisonLinks
-        --fornaComparisons = [(fornaFilePath ,fornaComparisonString)]
 
 makeFornaComparisonLink ::  String -> String -> String -> (String,Colour Double,V.Vector (Int,V.Vector (Colour Double))) -> (String,String)
 makeFornaComparisonLink modelName structureFilePath fornaURLPrefix (compModelName,_,comparisonColLabelsPerModel) = (comparisonPath,comparisonLink)
   where comparisonPath = structureFilePath ++ modelName ++ "." ++ compModelName ++ ".fornalink"
         comparisonLink = fornaURLPrefix ++ labelPrefix ++ singleColorLabels 
         labelPrefix = "&colors=%3Eheader\\n"            
-        --colIndicescomparisonNodeLabels = V.zipWith (\a b -> (a,b)) nodeAlignmentColIndices comparisonNodeLabelsPerModel
-        --sparseComparisonColLabels = V.map nodeToColIndices colIndicescomparisonNodeLabels
-        --fullComparisonColLabels = fillComparisonColLabels maxEntryLength sparseComparisonColLabels
         --forna only supports a single color per node, which has to be supplied as additional color scheme
         singleColorLabels = concatMap comparisonColLabelsToFornaLinkLabel (V.toList comparisonColLabelsPerModel)
         
@@ -802,41 +791,6 @@ makeComparisonNodeLabel colorNodeIntervals nodeNumber = comparisonNodeLabel
 makeColorVector :: Int -> V.Vector (Colour Double)
 makeColorVector modelNumber = V.take modelNumber colorVector
    where colorVector = V.fromList [crimson, moccasin, lime, seagreen, aqua ,darkorange ,blue, blueviolet ,brown ,burlywood ,cadetblue ,chartreuse ,chocolate ,coral ,cornflowerblue ,cornsilk ,cyan ,darkblue ,darkcyan ,darkgoldenrod ,darkgray ,darkgreen ,darkgrey ,darkkhaki ,darkmagenta ,darkolivegreen ,darkorchid ,darkred ,darksalmon ,darkseagreen ,darkslateblue ,darkslategray ,darkslategrey ,darkturquoise ,darkviolet ,deeppink ,deepskyblue ,dimgray ,dimgrey ,dodgerblue ,firebrick ,forestgreen ,fuchsia ,gainsboro ,gold ,goldenrod ,gray ,grey ,green ,greenyellow ,honeydew ,hotpink ,indianred,indigo ,ivory ,khaki ,lavender ,lavenderblush ,lawngreen ,lemonchiffon ,lime ,limegreen ,linen ,magenta ,maroon ,mediumaquamarine ,mediumblue ,mediumorchid ,mediumpurple ,mediumseagreen ,mediumslateblue ,mediumspringgreen ,mediumturquoise ,mediumvioletred ,midnightblue ,mintcream ,mistyrose ,navy ,oldlace ,olive ,olivedrab ,orange ,orangered ,orchid ,papayawhip ,peachpuff ,peru ,pink ,plum ,powderblue ,purple ,red ,rosybrown ,royalblue ,saddlebrown ,salmon ,sandybrown ,seagreen]
-
-
--- makeColorVector :: Int -> V.Vector (Colour Double)
--- makeColorVector modelNumber = V.map (\(a,b,c) -> R.rgb a b c) modelRGBTupel
---    where indexVector = V.iterateN modelNumber (1+) 0
---          stepSize = (382 :: Double) / fromIntegral modelNumber
---          modelRGBTupel = V.map (makeRGBTupel stepSize) indexVector
-
--- makeRGBTupel :: Double -> Int -> (Double,Double,Double)
--- makeRGBTupel stepSize modelNumber = (normA,normB,normC)
---   where  totalSize = fromIntegral modelNumber * stepSize
---          a = rgbBoundries (totalSize  - 510 + 125)
---          b = rgbBoundries (totalSize - 255 + 125)
---          c = rgbBoundries totalSize + 125 
---          normA = a/255 
---          normB = b/255
---          normC = c/255 
-
--- rgbBoundries :: Double -> Double
--- rgbBoundries rgbValue
---   | rgbValue>240 = 240
---   | rgbValue<125 = 125
---   | otherwise = rgbValue
-
--- deConsSnd :: ((PAI.Z PAI.:. PInt () CM.StateIndex) PAI.:. Int) (PInt () CM.StateIndex, Bitscore) -> String
---deConstr (PAI.Z PAI.:. a PAI.:. b) = PI.getPInt a
-
---getPhantom (PInt i p) = p
--- fromIS PAI.IndexStream a = a
-
---makeTransitionIndices n = concatMap makeTransitionSubIndices indexes
---  where indexes = [0..n]
-
---makeTransitionSubIndices n = map  (\subI -> ((show n,show (n+subI)),PAI.Z PAI.:. (PI.PInt n) PAI.:. subI)) subIndices
---  where subIndices = [0..4]
 
 makeArrow :: ([Char], [Char], Double) -> QDiagram Cairo V2 Double Any -> QDiagram Cairo V2 Double Any
 makeArrow (lab1,lab2,weight) = connectOutside' arrowStyle1 ("e" ++ lab1) ("a" ++ lab2)
