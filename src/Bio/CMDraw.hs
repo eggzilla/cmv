@@ -152,7 +152,7 @@ getComparisonPerModelNodeLabels comparsionResults colorVector model = modelCompa
          relevantComparisons2 = filter ((modelName==) . model2Name) comparsionResults
          modelNodeInterval2 = map (\a -> (model1Name a,model2matchednodes a))  relevantComparisons2
          modelNodeIntervals =  V.fromList (modelNodeInterval1 ++ modelNodeInterval2)
-         nodeNumber = (CM._nodesInModel model) 
+         nodeNumber = (CM._nodesInModel model)
          modelComparisonLabels = V.map (getModelComparisonLabels modelName nodeNumber colorVector) modelNodeIntervals
 
 getModelComparisonLabels :: String -> Int -> V.Vector (String, Colour Double) -> (String,[Int])-> (String,Colour Double,V.Vector (Int,V.Vector (Colour Double)))
@@ -160,7 +160,7 @@ getModelComparisonLabels _ nodeNumber colorVector (compModel,matchedNodes) = (co
   where (modelColor,modelInterval) = modelToColor colorVector (compModel,matchedNodes)
         -- cm starts at node index 0 for root node and ends with end node
         -- cmcompare does not include root node, but end node 
-        comparisonNodeLabels = V.generate (nodeNumber ) (makeModelComparisonNodeLabel (modelColor,modelInterval))
+        comparisonNodeLabels = V.generate (nodeNumber) (makeModelComparisonNodeLabel (modelColor,modelInterval))
 
 makeModelComparisonNodeLabel :: (Colour Double,[Int]) -> Int -> (Int,V.Vector (Colour Double))
 makeModelComparisonNodeLabel (modelColor, nodeInterval) nodeNumber 
@@ -169,14 +169,14 @@ makeModelComparisonNodeLabel (modelColor, nodeInterval) nodeNumber
 
 getComparisonPerColumnLabels :: V.Vector (Int,V.Vector (Colour Double)) -> V.Vector CM.Node -> V.Vector (Int, V.Vector (Colour Double))
 getComparisonPerColumnLabels comparisonNodeLabels nodes = columnComparisonLabels
-   where lastNodeIndex = V.length comparisonNodeLabels
+   where lastNodeIndex = V.length comparisonNodeLabels 
          comparisonNodeLabelsWORootEnd = V.slice 1 (lastNodeIndex -1) comparisonNodeLabels
          unsortedColumnComparisonLabel = concatMap (nodeToColumnComparisonLabel nodes) (V.toList comparisonNodeLabelsWORootEnd)
          columnComparisonLabels = V.fromList (sortBy (compare `on` fst) unsortedColumnComparisonLabel)
 
 nodeToColumnComparisonLabel:: V.Vector CM.Node -> (Int, V.Vector (Colour Double)) -> [(Int,V.Vector (Colour Double))]
 nodeToColumnComparisonLabel nodes (nodeIndex,colors) = colLabels
-  where currentNode = (V.!) nodes (nodeIndex -1)
+  where currentNode = (V.!) nodes (nodeIndex)
         colIndices = nub [CM._nodeColL currentNode,CM._nodeColR currentNode]
         colLabels = map (\a->(a,colors)) colIndices
                                    
@@ -756,8 +756,8 @@ printCM outputName = renderCairo outputName
 
 getBlankComparisonNodeLabels :: CM.CM -> V.Vector (Int, V.Vector (Colour Double))
 getBlankComparisonNodeLabels model = comparisonNodeLabels
-   where comparisonNodeLabels = V.generate (nodeNumber +1 ) makeBlankComparisonNodeLabel
-         nodeNumber = CM._nodesInModel model
+   where comparisonNodeLabels = V.generate (nodeNumber ) makeBlankComparisonNodeLabel
+         nodeNumber = (CM._nodesInModel model) 
 
 makeBlankComparisonNodeLabel :: Int ->  (Int,V.Vector (Colour Double))
 makeBlankComparisonNodeLabel nodeNumber = (nodeNumber,V.singleton white)
@@ -771,8 +771,8 @@ getComparisonNodeLabels comparsionResults colorVector model = comparisonNodeLabe
          modelNodeInterval2 = map (\a -> (model1Name a,model2matchednodes a))  relevantComparisons2
          modelNodeIntervals =  V.fromList (modelNodeInterval1 ++ modelNodeInterval2)
          colorNodeIntervals = V.map (modelToColor colorVector) modelNodeIntervals
-         nodeNumber = CM._nodesInModel model
-         comparisonNodeLabels = V.generate (nodeNumber +1) (makeComparisonNodeLabel colorNodeIntervals)
+         nodeNumber = (CM._nodesInModel model)
+         comparisonNodeLabels = V.generate (nodeNumber ) (makeComparisonNodeLabel colorNodeIntervals)
 
 modelToColor :: V.Vector (String,Colour Double) ->  (String,[Int]) -> (Colour Double,[Int])
 modelToColor colorVector (mName,nInterval) = nColorInterval
