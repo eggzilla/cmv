@@ -168,10 +168,8 @@ makeModelComparisonNodeLabel (modelColor, nodeInterval) nodeNumber
   | otherwise = (nodeNumber,V.singleton white)
 
 getComparisonPerColumnLabels :: V.Vector (Int,V.Vector (Colour Double)) -> V.Vector CM.Node -> V.Vector (Int, V.Vector (Colour Double))
-getComparisonPerColumnLabels comparisonNodeLabels nodes = columnComparisonLabels
-   where lastNodeIndex = V.length comparisonNodeLabels 
-         comparisonNodeLabelsWORootEnd = V.slice 1 (lastNodeIndex -1) comparisonNodeLabels
-         unsortedColumnComparisonLabel = concatMap (nodeToColumnComparisonLabel nodes) (V.toList comparisonNodeLabelsWORootEnd)
+getComparisonPerColumnLabels comparisonNodeLabels nodes = columnComparisonLabels   where 
+         unsortedColumnComparisonLabel = concatMap (nodeToColumnComparisonLabel nodes) (V.toList comparisonNodeLabels)
          columnComparisonLabels = V.fromList (sortBy (compare `on` fst) unsortedColumnComparisonLabel)
 
 nodeToColumnComparisonLabel:: V.Vector CM.Node -> (Int, V.Vector (Colour Double)) -> [(Int,V.Vector (Colour Double))]
@@ -788,7 +786,7 @@ makeComparisonNodeLabel colorNodeIntervals nodeNumber = comparisonNodeLabel
 
 makeColorVector :: Int -> V.Vector (Colour Double)
 makeColorVector modelNumber = V.take modelNumber colorVector
-   where colorVector = V.fromList [crimson, moccasin, lime, seagreen, aqua ,darkorange ,blue, blueviolet ,brown ,burlywood ,cadetblue ,chartreuse ,chocolate ,coral ,cornflowerblue ,cornsilk ,cyan ,darkblue ,darkcyan ,darkgoldenrod ,darkgray ,darkgreen ,darkgrey ,darkkhaki ,darkmagenta ,darkolivegreen ,darkorchid ,darkred ,darksalmon ,darkseagreen ,darkslateblue ,darkslategray ,darkslategrey ,darkturquoise ,darkviolet ,deeppink ,deepskyblue ,dimgray ,dimgrey ,dodgerblue ,firebrick ,forestgreen ,fuchsia ,gainsboro ,gold ,goldenrod ,gray ,grey ,green ,greenyellow ,honeydew ,hotpink ,indianred,indigo ,ivory ,khaki ,lavender ,lavenderblush ,lawngreen ,lemonchiffon ,lime ,limegreen ,linen ,magenta ,maroon ,mediumaquamarine ,mediumblue ,mediumorchid ,mediumpurple ,mediumseagreen ,mediumslateblue ,mediumspringgreen ,mediumturquoise ,mediumvioletred ,midnightblue ,mintcream ,mistyrose ,navy ,oldlace ,olive ,olivedrab ,orange ,orangered ,orchid ,papayawhip ,peachpuff ,peru ,pink ,plum ,powderblue ,purple ,red ,rosybrown ,royalblue ,saddlebrown ,salmon ,sandybrown ,seagreen]
+   where colorVector = V.fromList [R.rgb 166 206 227, R.rgb 31 120 180, R.rgb 178 223 138, R.rgb 51 160 44, R.rgb 251 154 153, R.rgb 227 26 28, R.rgb 253 191 111, R.rgb 255 127 0, R.rgb 202 178 214, R.rgb 106 61 154, R.rgb 255 255 153, R.rgb 177 89 40, moccasin, lime, seagreen, aqua ,darkorange ,blue, blueviolet ,brown ,burlywood ,cadetblue ,chartreuse ,chocolate ,coral ,cornflowerblue ,cornsilk ,cyan ,darkblue ,darkcyan ,darkgoldenrod ,darkgray ,darkgreen ,darkgrey ,darkkhaki ,darkmagenta ,darkolivegreen ,darkorchid ,darkred ,darksalmon ,darkseagreen ,darkslateblue ,darkslategray ,darkslategrey ,darkturquoise ,darkviolet ,deeppink ,deepskyblue ,dimgray ,dimgrey ,dodgerblue ,firebrick ,forestgreen ,fuchsia ,gainsboro ,gold ,goldenrod ,gray ,grey ,green ,greenyellow ,honeydew ,hotpink ,indianred,indigo ,ivory ,khaki ,lavender ,lavenderblush ,lawngreen ,lemonchiffon ,lime ,limegreen ,linen ,magenta ,maroon ,mediumaquamarine ,mediumblue ,mediumorchid ,mediumpurple ,mediumseagreen ,mediumslateblue ,mediumspringgreen ,mediumturquoise ,mediumvioletred ,midnightblue ,mintcream ,mistyrose ,navy ,oldlace ,olive ,olivedrab ,orange ,orangered ,orchid ,papayawhip ,peachpuff ,peru ,pink ,plum ,powderblue ,purple ,red ,rosybrown ,royalblue ,saddlebrown ,salmon ,sandybrown ,seagreen]
 
 makeArrow :: ([Char], [Char], Double) -> QDiagram Cairo V2 Double Any -> QDiagram Cairo V2 Double Any
 makeArrow (lab1,lab2,weight) = connectOutside' arrowStyle1 ("e" ++ lab1) ("a" ++ lab2)
