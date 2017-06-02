@@ -56,7 +56,7 @@ options = Options
     outputDirectoryPath = "" &= name "p" &= help "Output directory path (Default: none)",
     secondaryStructureVisTool = "" &= name "x" &= help "Select tool for secondary structure visualisation: forna, r2r (Default: none)",
     modelNameToggle = False  &= name "b" &= help "Write all comma separted model names to modelNames file (Default: False)"
-  } &= summary ("cmv " ++ toolVersion) &= help "Florian Eggenhofer - 2013-2016" &= verbosity
+  } &= summary ("CMV " ++ toolVersion) &= help "Florian Eggenhofer - 2013-2016" &= verbosity
 
 main :: IO ()
 main = do

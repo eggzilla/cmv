@@ -29,7 +29,6 @@ data Options = Options
     modelsFile :: String,
     alignmentFile :: String,
     modelDetail :: String,
-    modelLayout :: String,
     emissionLayout :: String,
     alignmentEntries :: Int,
     maxWidth :: Double,
@@ -45,8 +44,7 @@ options = Options
   { hmmCompareResultFile = def &= name "r" &= help "Path to HMMCompare result file",
     modelsFile = def &= name "m" &= help "Path to covariance model file",
     alignmentFile = "" &= name "s" &= help "Path to stockholm alignment file",
-    modelDetail = "detailed" &= name "d" &= help "Set verbosity of drawn models: simple, detailed",
-    modelLayout = "flat" &= name "l" &= help "Set layout of drawn models: flat, tree",
+    modelDetail = "detailed" &= name "d" &= help "Set verbosity of drawn models: minimal, simple, detailed",
     emissionLayout = "box" &= name "e" &= help "Set layout of drawn models: score, probability, box (Default: box)",
     alignmentEntries = (50 :: Int) &= name "n" &= help "Set cutoff for included stockholm alignment entries (Default: 50)",
     maxWidth = (180:: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)",
@@ -56,7 +54,7 @@ options = Options
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
     outputDirectoryPath = "" &= name "p" &= help "Output directory path (Default: none)",
     modelNameToggle = False  &= name "b" &= help "Write all comma separted model names to modelNames file (Default: False)"
-  } &= summary ("hmmcv " ++ toolVersion) &= help "Florian Eggenhofer - 2013-2016" &= verbosity
+  } &= summary ("HMMCV " ++ toolVersion) &= help "Florian Eggenhofer - 2013-2016" &= verbosity
 
 main :: IO ()
 main = do
