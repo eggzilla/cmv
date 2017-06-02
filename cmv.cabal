@@ -40,13 +40,13 @@ library
   -- Directories containing source files.
   hs-source-dirs:      src
 
-executable cmcv
+executable CMCV
   Hs-Source-Dirs:      ./src/cmcv/
   main-is:	       CMCVisualisation.hs
   ghc-options:         -Wall
   build-depends:       base >=4.5, cmdargs, BiobaseInfernal==0.8.1.0, BiobaseXNA, diagrams-lib, parsec, colour, containers, bytestring, template-haskell, text, vector, directory, cmv, either-unwrap, filepath, StockholmAlignment>=1.1.1
 
-executable cmv
+executable CMV
   Hs-Source-Dirs:      ./src/cmv/
   main-is:	       CMVisualisation.hs
   ghc-options:         -Wall 
@@ -58,19 +58,19 @@ executable cmcwsvtocmcv
   ghc-options:         -Wall 
   build-depends:       base >=4.5, cmdargs, BiobaseInfernal==0.8.1.0, BiobaseXNA, diagrams-lib>=1.3.1.0, parsec, colour, containers, bytestring, template-haskell, text, vector, directory, cmv, either-unwrap, filepath
 
-executable cmvJson
+executable CMVJson
   Hs-Source-Dirs:      ./src/cmv/
   main-is:	       CMVJson.hs
   ghc-options:         -Wall
   build-depends:       base >=4.5, cmdargs, BiobaseInfernal==0.8.1.0, BiobaseXNA, containers, bytestring, template-haskell, text, vector, directory, cmv, either-unwrap, filepath, aeson
 
-executable hmmcv
+executable HMMCV
   Hs-Source-Dirs:      ./src/hmmcv/
   main-is:	       HMMCVisualisation.hs
   ghc-options:         -Wall
   build-depends:       base >=4.5, cmdargs, diagrams-lib>=1.3.1.0, parsec, colour, containers, bytestring, text, vector, directory, cmv, either-unwrap, filepath, BioHMM>=1.1.6, StockholmAlignment>=1.1.1
 
-executable hmmv
+executable HMMV
   Hs-Source-Dirs:      ./src/hmmv/
   main-is:	       HMMVisualisation.hs
   ghc-options:         -Wall
