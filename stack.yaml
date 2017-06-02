@@ -2,23 +2,20 @@ flags: {}
 ghc-options:
   ! '*': -j
 packages:
-- '.'
+- .
 extra-deps:
-- BioHMM-1.0.8
+- BioHMM-1.1.6
 - BiobaseInfernal-0.8.1.0
 - BiobaseTypes-0.1.2.1
 - BiobaseXNA-0.9.3.1
 - DPutils-0.0.1.0
 - OrderedBits-0.0.1.2
-- ParsecTools-0.0.2.0
 - PrimitiveArray-0.8.0.1
-- SVGFonts-1.6.0.1
-- StockholmAlignment-1.0.1
-- bimaps-0.1.0.2
-- diagrams-cairo-1.4
-- intern-0.9.1.4
-- optparse-applicative-0.13.2.0
-- pipes-zlib-0.4.4.1
-- storable-tuple-0.0.3.2
+- StockholmAlignment-1.1.1
 - aeson-1.1.1.0
-resolver: lts-7.20
+- bimaps-0.1.0.2
+- intern-0.9.1.4
+- pipes-4.2.0
+- pipes-safe-2.2.4
+- pipes-zlib-0.4.4.1
+resolver: lts-8.16
