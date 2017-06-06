@@ -42,7 +42,7 @@ options = Options
     modelDetail = "detailed" &= name "d" &= help "Set verbosity of drawn models: minimal, simple, detailed",
     emissionLayout = "box" &= name "e" &= help "Set layout of drawn models: score, probability, box (Default: box)",
     alignmentEntries = (50 :: Int) &= name "n" &= help "Set cutoff for included stockholm alignment entries (Default: 50)",
-    maxWidth = (200:: Double) &= name "w" &= help "Set maximal width of result figure (Default: 200)",
+    maxWidth = (100 :: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)",
     scalingFactor = (2 :: Double) &= name "c" &= help "Set uniform scaling factor for image size (Default: 2)",
     transitionCutoff = (0.01 :: Double) &= name "t" &= help "Minimal value for a transition probability to be displayed (Default: 0.01)",
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
