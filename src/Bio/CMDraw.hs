@@ -455,7 +455,7 @@ getIndexEnd nodes indices
          ntype = CM._nodeType currentNode
 
 makeModelHeader :: String -> Colour Double -> V.Vector (String,Colour Double) -> QDiagram Cairo V2 Double Any
-makeModelHeader mName modelColor nameColorVector = strutX 2 ||| setModelName mName ||| strutX 1 ||| rect 12 12 # lw 0.1 # fc modelColor # translate (r2 (negate 0, 5)) ||| strutX 30 ||| modelLegend
+makeModelHeader mName modelColor nameColorVector = (strutX 2 ||| setModelName mName ||| strutX 1 ||| rect 12 12 # lw 0.1 # fc modelColor # translate (r2 (negate 0, 5))) === strutY 1 === (strutX 30 ||| modelLegend)
   where modelLegend = makeModelLegend otherModelsNameColorVector
         otherModelsNameColorVector = V.filter ((/=mName) . fst) nameColorVector
 
