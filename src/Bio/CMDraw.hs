@@ -149,9 +149,9 @@ getComparisonPerModelNodeLabels :: [CmcompareResult] -> V.Vector (String, Colour
 getComparisonPerModelNodeLabels comparsionResults colorVector model = modelComparisonLabels
    where modelName = T.unpack (CM._name model)
          relevantComparisons1 = filter ((modelName==) . model1Name) comparsionResults
-         modelNodeInterval1 = map (\a -> (model2Name a,model1matchednodes a))  relevantComparisons1 
+         modelNodeInterval1 = map (\a -> (model2Name a,nub (model1matchednodes a)))  relevantComparisons1 
          relevantComparisons2 = filter ((modelName==) . model2Name) comparsionResults
-         modelNodeInterval2 = map (\a -> (model1Name a,model2matchednodes a))  relevantComparisons2
+         modelNodeInterval2 = map (\a -> (model1Name a,nub (model2matchednodes a)))  relevantComparisons2
          modelNodeIntervals =  V.fromList (modelNodeInterval1 ++ modelNodeInterval2)
          nodeNumber = (CM._nodesInModel model)
          modelComparisonLabels = V.map (getModelComparisonLabels modelName nodeNumber colorVector) modelNodeIntervals
