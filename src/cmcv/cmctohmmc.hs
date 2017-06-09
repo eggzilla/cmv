@@ -63,7 +63,7 @@ main = do
        --currentWD <- getCurrentDirectory
        --let dirPath = if null outputDirectoryPath then currentWD else outputDirectoryPath
        --setCurrentDirectory dirPath
-       let hmmcs = map (cmctohmmv cmModelNames hmmModelNames cmVector hmmVector) comparisons
+       let hmmcs = map (cmctohmmc cmModelNames hmmModelNames cmVector hmmVector) comparisons
        mapM_ (putStr . show) hmmcs
      else do
        Control.Monad.unless cmmodelFileExists $ putStrLn "CM Model file not found"
@@ -73,8 +73,8 @@ main = do
 toolVersion :: String
 toolVersion = showVersion version
 
-cmctohmmv :: [String] -> [String] -> V.Vector CM.CM -> V.Vector HM.HMMER3 -> CmcompareResult -> HC.HMMCompareResult 
-cmctohmmv cmModelNames hmmModelNames cmVector hmmVector comparison = hmmcompare
+cmctohmmc :: [String] -> [String] -> V.Vector CM.CM -> V.Vector HM.HMMER3 -> CmcompareResult -> HC.HMMCompareResult 
+cmctohmmc cmModelNames hmmModelNames cmVector hmmVector comparison = hmmcompare
   where cm1Index = fromJust (elemIndex (model1Name comparison) cmModelNames)
         cm2Index = fromJust (elemIndex (model2Name comparison) cmModelNames)
         inputCM1 = cmVector V.! cm1Index
@@ -96,8 +96,6 @@ cmctohmmv cmModelNames hmmModelNames cmVector hmmVector comparison = hmmcompare
         intervalcm2nodes = map (\i -> nodeToColumnIndices(cm2nodes !! i)) cm2nodeIndices
         aln1colIndices = concat intervalcm1nodes
         aln2colIndices = concat intervalcm2nodes 
-        -- aln1colIndices = concatMap nodeToColumnIndices cm1nodes
-        -- aln2colIndices = concatMap nodeToColumnIndices cm2nodes
         linkedhmm1nodes = V.filter (\node -> elem (fromJust (HM.nma node)) aln1colIndices) hmm1nodes
         linkedhmm2nodes = V.filter (\node -> elem (fromJust (HM.nma node)) aln2colIndices) hmm2nodes
         hmm1interval = V.map HM.nodeId linkedhmm1nodes
