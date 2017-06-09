@@ -4,16 +4,7 @@
 
 module Bio.CMCompareResult
     (
-     CmcompareResult,
-     model1Name,
-     model2Name,
-     linkscore1,
-     linkscore2,
-     linksequence,
-     model1structure,
-     model2structure,
-     model1matchednodes,
-     model2matchednodes,
+     CmcompareResult(..),
      getCmcompareResults,
      getModelsNames,
      getModelNames

@@ -69,7 +69,7 @@ main = do
       if isRight inputModels
         then do
           let models = E.fromRight inputModels
-          hmmCResultParsed <- readHMMCompareResult hmmCompareResultFile
+          hmmCResultParsed <- getHMMCompareResults hmmCompareResultFile
           let modelNumber = length models
           alnInput <- SP.readExistingStockholm alignmentFile
           Control.Monad.when (isLeft alnInput) $ print (E.fromLeft alnInput)
@@ -77,9 +77,9 @@ main = do
           let currentModelNames = map HM.name models
           currentWD <- getCurrentDirectory
           let dirPath = if null outputDirectoryPath then currentWD else outputDirectoryPath
-          if isRight hmmCResultParsed
+          if and $ map isRight hmmCResultParsed
             then do
-              let rightHMMCResultsParsed = E.fromRight hmmCResultParsed
+              let rightHMMCResultsParsed = rights hmmCResultParsed
               --let outputName = diagramName "hmmcv" outputFormat
               setCurrentDirectory dirPath
               let modelFileNames = map (\m -> m ++ "." ++ outputFormat) currentModelNames
@@ -89,7 +89,7 @@ main = do
               mapM_ (\(a,b) -> printHMM a svgsize b) (zip modelFileNames modelVis)
               mapM_ (\(alnPath,stockholm) -> if isJust stockholm then printHMM alnPath svgsize (fromJust stockholm) else return ()) (zip alignmentFileNames alignmentVis)
               setCurrentDirectory currentWD
-            else print (E.fromLeft hmmCResultParsed)
+            else print (lefts hmmCResultParsed)
         else print (E.fromLeft inputModels)
     else do
       Control.Monad.unless modelFileExists $ putStrLn "Model file not found"
