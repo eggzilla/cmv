@@ -4,7 +4,7 @@ ghc-options:
 packages:
 - .
 extra-deps:
-- BioHMM-1.1.7
+- BioHMM-1.1.8
 - BiobaseInfernal-0.8.1.0
 - BiobaseTypes-0.1.2.1
 - BiobaseXNA-0.9.3.1

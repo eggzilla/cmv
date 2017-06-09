@@ -64,7 +64,7 @@ main = do
        --let dirPath = if null outputDirectoryPath then currentWD else outputDirectoryPath
        --setCurrentDirectory dirPath
        let hmmcs = map (cmctohmmv cmModelNames hmmModelNames cmVector hmmVector) comparisons
-       print hmmcs
+       mapM_ (putStr . show) hmmcs
      else do
        Control.Monad.unless cmmodelFileExists $ putStrLn "CM Model file not found"
        Control.Monad.unless hmmmodelFileExists $ putStrLn "HMM Model file not found"
@@ -73,7 +73,7 @@ main = do
 toolVersion :: String
 toolVersion = showVersion version
 
-cmctohmmv :: [String] -> [String] -> V.Vector CM.CM -> V.Vector HM.HMMER3 -> CmcompareResult -> HC.HMMCompareResult -- > HMMCompareResult
+cmctohmmv :: [String] -> [String] -> V.Vector CM.CM -> V.Vector HM.HMMER3 -> CmcompareResult -> HC.HMMCompareResult 
 cmctohmmv cmModelNames hmmModelNames cmVector hmmVector comparison = hmmcompare
   where cm1Index = fromJust (elemIndex (model1Name comparison) cmModelNames)
         cm2Index = fromJust (elemIndex (model2Name comparison) cmModelNames)
@@ -81,8 +81,10 @@ cmctohmmv cmModelNames hmmModelNames cmVector hmmVector comparison = hmmcompare
         cm1 = E.fromLeft (CM._cm inputCM1)     
         inputCM2 = cmVector V.! cm2Index
         cm2 = E.fromLeft (CM._cm inputCM2)
-        hmm1 = hmmVector V.! cm1Index
-        hmm2 = hmmVector V.! cm2Index
+        hmm1Index = fromJust (elemIndex (model1Name comparison) hmmModelNames)
+        hmm2Index = fromJust (elemIndex (model2Name comparison) hmmModelNames)
+        hmm1 = hmmVector V.! hmm1Index
+        hmm2 = hmmVector V.! hmm2Index
         cm1nodeIndices = nub (model1matchednodes comparison)
         cm2nodeIndices = nub (model2matchednodes comparison)
         cm1nodes = (M.elems (CM._fmNodes cm1))
@@ -90,10 +92,12 @@ cmctohmmv cmModelNames hmmModelNames cmVector hmmVector comparison = hmmcompare
         hmm1nodes = HM.nodes hmm1
         hmm2nodes = HM.nodes hmm2
         --filter cmnodes
-        intervalcm1nodes =
-        intervalcm1nodes =
-        aln1colIndices = concatMap nodeToColumnIndices cm1nodes
-        aln2colIndices = concatMap nodeToColumnIndices cm2nodes
+        intervalcm1nodes = map (\i -> nodeToColumnIndices (cm1nodes !! i)) cm1nodeIndices
+        intervalcm2nodes = map (\i -> nodeToColumnIndices(cm2nodes !! i)) cm2nodeIndices
+        aln1colIndices = concat intervalcm1nodes
+        aln2colIndices = concat intervalcm2nodes 
+        -- aln1colIndices = concatMap nodeToColumnIndices cm1nodes
+        -- aln2colIndices = concatMap nodeToColumnIndices cm2nodes
         linkedhmm1nodes = V.filter (\node -> elem (fromJust (HM.nma node)) aln1colIndices) hmm1nodes
         linkedhmm2nodes = V.filter (\node -> elem (fromJust (HM.nma node)) aln2colIndices) hmm2nodes
         hmm1interval = V.map HM.nodeId linkedhmm1nodes
