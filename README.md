@@ -14,8 +14,8 @@ For instruction how to use *cmv* please see the [Help page.](192.52.2.124/cmvs/h
    ### Optional Dependencies:
    *cmv* creates output which can be visualised via following optional dependencies.
 
-    *   [R2R] (http://breaker.research.yale.edu/R2R/)
-    *   [forna](http://rna.tbi.univie.ac.at/forna/)
+    * [R2R](http://breaker.research.yale.edu/R2R/)
+    * [forna](http://rna.tbi.univie.ac.at/forna/)
     
    ### <u>Installation via bioconda</u>
 
@@ -31,8 +31,8 @@ For instruction how to use *cmv* please see the [Help page.](192.52.2.124/cmvs/h
 
    ### Precompiled Executables
 
-    *   Linux (ghc-8.0.1) [HMMV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMV)
-    *   Linux (ghc-8.0.1) [HMMCV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMCV)
-    *   Linux (ghc-8.0.1) [CMV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMV)
-    *   Linux (ghc-8.0.1) [CMCV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMCV)
+    * Linux (ghc-8.0.1) [HMMV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMV)
+    * Linux (ghc-8.0.1) [HMMCV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMCV)
+    * Linux (ghc-8.0.1) [CMV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMV)
+    * Linux (ghc-8.0.1) [CMCV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMCV)
    
