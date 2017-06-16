@@ -1,7 +1,7 @@
 ![cmv](http://www.bioinf.uni-freiburg.de/~egg/cmvlogo.png "cmv") 
 =========
-*cmv* is a collection of tools four the visualisation of Hidden Markov Models (*hmmv*) and RNA-family models (*cmv*).
-Moreover it can visualise comparisons of these models (*hmmcv*,*cmcv*), and annotate linked regions in the structural alignments they were constructed from and via, 3rd party tools, in their consensus secondary structure.
+*cmv* is a collection of tools for the visualisation of Hidden Markov Models (*HMMV*) and RNA-family models (*CMV*).
+Moreover it can visualise comparisons of these models (*HMMCV*,*CMCV*), and annotate linked regions in the structural alignments they were constructed from and via, 3rd party tools, in their consensus secondary structure.
 
 They are available as a commandline tools and as a webservice [cmvs](http://www.bioinf.uni-freiburg.de/~egg/cmvs).
 
@@ -12,7 +12,7 @@ The source code of *cmv* is open source and available via GitHub and Hackage (Li
 For instruction how to use *cmv* please see the [Help page.](192.52.2.124/cmvs/help)
 
    ### <u>Optional Dependencies:</u>
-   cmv creates output which can be visualised via following optional dependencies.
+   *cmv* creates output which can be visualised via following optional dependencies.
 
     *   [R2R] (http://breaker.research.yale.edu/R2R/)
     *   [forna](http://rna.tbi.univie.ac.at/forna/)
@@ -38,8 +38,8 @@ For instruction how to use *cmv* please see the [Help page.](192.52.2.124/cmvs/h
 
    ### <u>Precompiled Executables</u>
 
-    *   Archlinux (ghc-8.0.1) [hmmv 1.1.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmv/hmmv-1.0.0)
-    *   Archlinux (ghc-8.0.1) [hmmcv 1.1.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmv/hmmcv-1.0.0)
-    *   Archlinux (ghc-8.0.1) [cmv 1.1.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmv/cmv-1.0.0)
-    *   Archlinux (ghc-8.0.1) [cmcv 1.1.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmv/cmcv-1.0.0)
+    *   Archlinux (ghc-8.0.1) [HMMV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMV)
+    *   Archlinux (ghc-8.0.1) [HMMCV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMCV)
+    *   Archlinux (ghc-8.0.1) [CMV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMV)
+    *   Archlinux (ghc-8.0.1) [CMCV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMCV)
    
