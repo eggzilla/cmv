@@ -11,28 +11,27 @@ The source code of *cmv* is open source and available via GitHub and Hackage (Li
 
 For instruction how to use *cmv* please see the [Help page.](192.52.2.124/cmvs/help)
 
-   ### Optional Dependencies:
-   *cmv* creates output which can be visualised via following optional dependencies.
-
-    * [R2R](http://breaker.research.yale.edu/R2R/)
-    * [forna](http://rna.tbi.univie.ac.at/forna/)
+### Optional Dependencies:
+*cmv* creates output which can be visualised via following optional dependencies.
+* [R2R](http://breaker.research.yale.edu/R2R/)
+* [forna](http://rna.tbi.univie.ac.at/forna/)
     
-   ### <u>Installation via bioconda</u>
+### Installation via bioconda
 
-   cmv can be installed with all dependencies via [conda](https://conda.io/docs/install/quick.html). Once you have conda installed simply type:
+*cmv* can be installed with all dependencies via [conda](https://conda.io/docs/install/quick.html). Once you have conda installed simply type:
 
-         conda install -c bioconda cmv=1.0.0 
+       conda install -c bioconda cmv=1.0.0 
 
-   ### Installation via cabal-install
+### Installation via cabal-install
 
    cmv is implemented in Haskell and can be installed via the Haskell package distribution sytem [cabal](https://www.haskell.org/cabal/). Once you have cabal installed simply type:
 
          cabal install cmv
 
-   ### Precompiled Executables
+### Precompiled Executables
 
-    * Linux (ghc-8.0.1) [HMMV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMV)
-    * Linux (ghc-8.0.1) [HMMCV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMCV)
-    * Linux (ghc-8.0.1) [CMV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMV)
-    * Linux (ghc-8.0.1) [CMCV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMCV)
+* Linux (ghc-8.0.1) [HMMV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMV)
+* Linux (ghc-8.0.1) [HMMCV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMCV)
+* Linux (ghc-8.0.1) [CMV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMV)
+* Linux (ghc-8.0.1) [CMCV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMCV)
    
