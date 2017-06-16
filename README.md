@@ -3,7 +3,7 @@
 *cmv* is a collection of tools for the visualisation of Hidden Markov Models (*HMMV*) and RNA-family models (*CMV*).
 Moreover it can visualise comparisons of these models (*HMMCV*,*CMCV*), and annotate linked regions in the structural alignments they were constructed from and via, 3rd party tools, in their consensus secondary structure.
 
-They are available as a commandline tools and as a webservice [cmvs](http://www.bioinf.uni-freiburg.de/~egg/cmvs).
+They are available as a commandline tools and as a webservice [cmvs](http://rna.informatik.uni-freiburg.de/CMVS/).
 
 The source code of *cmv* is open source and available via GitHub and Hackage (License GPL-3):
 
@@ -11,7 +11,7 @@ The source code of *cmv* is open source and available via GitHub and Hackage (Li
 
 For instruction how to use *cmv* please see the [Help page.](192.52.2.124/cmvs/help)
 
-   ### <u>Optional Dependencies:</u>
+   ### Optional Dependencies:
    *cmv* creates output which can be visualised via following optional dependencies.
 
     *   [R2R] (http://breaker.research.yale.edu/R2R/)
@@ -23,23 +23,16 @@ For instruction how to use *cmv* please see the [Help page.](192.52.2.124/cmvs/h
 
          conda install -c bioconda cmv=1.0.0 
 
-   ### <u>Installation via cabal-install</u>
+   ### Installation via cabal-install
 
    cmv is implemented in Haskell and can be installed via the Haskell package distribution sytem [cabal](https://www.haskell.org/cabal/). Once you have cabal installed simply type:
 
          cabal install cmv
 
-   ### <u>Installation via stackage</u>
+   ### Precompiled Executables
 
-   cmv can also be install via the Haskell package distribution sytem [Stackage](https://www.stackage.org/), which guarantees consistent package builds. Once you have stackage installed simply type:
-
-         stack install cmv
-
-
-   ### <u>Precompiled Executables</u>
-
-    *   Archlinux (ghc-8.0.1) [HMMV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMV)
-    *   Archlinux (ghc-8.0.1) [HMMCV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMCV)
-    *   Archlinux (ghc-8.0.1) [CMV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMV)
-    *   Archlinux (ghc-8.0.1) [CMCV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMCV)
+    *   Linux (ghc-8.0.1) [HMMV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMV)
+    *   Linux (ghc-8.0.1) [HMMCV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMCV)
+    *   Linux (ghc-8.0.1) [CMV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMV)
+    *   Linux (ghc-8.0.1) [CMCV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMCV)
    
