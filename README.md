@@ -10,23 +10,27 @@ The source code of *cmv* is open source and available via GitHub and Hackage (Li
 *   [![GitHub](https://img.shields.io/github/tag/eggzilla/cmv.svg)](https://github.com/eggzilla/cmv) [![Build Status](https://travis-ci.org/eggzilla/cmv.svg?branch=master)](https://travis-ci.org/eggzilla/cmv) [![Hackage](https://img.shields.io/hackage/v/cmv.svg)](https://hackage.haskell.org/package/cmv) [![Bioconda](https://anaconda.org/bioconda/cmv/badges/version.svg)](https://anaconda.org/bioconda/cmv)
 
 For instruction how to use *cmv* please see the [Help page.](192.52.2.124/cmvs/help)
-
-### Optional Dependencies:
-*cmv* creates output which can be visualised via following optional dependencies.
-* [R2R](http://breaker.research.yale.edu/R2R/)
-* [forna](http://rna.tbi.univie.ac.at/forna/)
     
 ### Installation via bioconda
 
 *cmv* can be installed with all dependencies via [conda](https://conda.io/docs/install/quick.html). Once you have conda installed simply type:
 
-       conda install -c bioconda cmv=1.0.0 
-
+       conda install -c bioconda
+       
 ### Installation via cabal-install
 
-   cmv is implemented in Haskell and can be installed via the Haskell package distribution sytem [cabal](https://www.haskell.org/cabal/). Once you have cabal installed simply type:
+cmv is implemented in Haskell and can be installed via the Haskell package distribution sytem [cabal](https://www.haskell.org/cabal/). CMV is implemented in Haskell and can be installed via the Haskell package distribution sytem cabal. Additionally to cabal you require [cairo](https://cairographics.org/), [pango](http://www.pango.org/), [happy](https://www.haskell.org/happy/) and [alex](https://www.haskell.org/alex/) which can be installed via the distribution package manager e.g. Ubuntu: 
+        
+        sudo apt-get install libcairo2 libpango1.0-0 happy alex
+   
+Once you have cabal installed simply type:
 
          cabal install cmv
+
+### Optional Dependencies:
+*cmv* creates output which can be visualised via following optional dependencies.
+* [R2R](http://breaker.research.yale.edu/R2R/)
+* [forna](http://rna.tbi.univie.ac.at/forna/)
 
 ### Precompiled Executables
 
