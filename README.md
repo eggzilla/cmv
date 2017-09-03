@@ -15,7 +15,7 @@ For instruction how to use *cmv* please see the [Help page.](192.52.2.124/cmvs/h
 
 *cmv* can be installed with all dependencies via [conda](https://conda.io/docs/install/quick.html). Once you have conda installed simply type:
 
-       conda install -c bioconda
+       conda install -c bioconda -c conda-forge
        
 ### Installation via cabal-install
 
