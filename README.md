@@ -15,7 +15,7 @@ For instruction how to use *cmv* please see the [Help page.](192.52.2.124/cmvs/h
 
 *cmv* can be installed with all dependencies via [conda](https://conda.io/docs/install/quick.html). Once you have conda installed simply type:
 
-       conda install -c bioconda -c conda-forge
+       conda install -c bioconda -c conda-forge cmv
        
 ### Installation via cabal-install
 
@@ -34,8 +34,9 @@ Once you have cabal installed simply type:
 
 ### Precompiled Executables
 
-* Linux (ghc-8.0.1) [HMMV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMV)
-* Linux (ghc-8.0.1) [HMMCV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMCV)
-* Linux (ghc-8.0.1) [CMV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMV)
-* Linux (ghc-8.0.1) [CMCV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMCV)
+* Linux (ghc-8.0.2) [HMMV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMV)
+* Linux (ghc-8.0.2) [HMMCV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMCV)
+* Linux (ghc-8.0.2) [CMV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMV)
+* Linux (ghc-8.0.2) [CMCV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMCV)
+* Linux (ghc-8.0.2) [CMCV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMCWStoCMCV)
    

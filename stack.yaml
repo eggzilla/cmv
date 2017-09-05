@@ -18,4 +18,4 @@ extra-deps:
 - pipes-4.2.0
 - pipes-safe-2.2.4
 - pipes-zlib-0.4.4.1
-resolver: lts-8.16
+resolver: lts-9.3
