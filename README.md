@@ -34,9 +34,9 @@ Once you have cabal installed simply type:
 
 ### Precompiled Executables
 
-* Linux (ghc-8.0.2) [HMMV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMV)
-* Linux (ghc-8.0.2) [HMMCV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMCV)
-* Linux (ghc-8.0.2) [CMV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMV)
-* Linux (ghc-8.0.2) [CMCV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMCV)
-* Linux (ghc-8.0.2) [CMCV 1.0.0 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMCWStoCMCV)
+* Linux (ghc-8.0.2) [HMMV 1.0.2 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMV)
+* Linux (ghc-8.0.2) [HMMCV 1.0.2 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMCV)
+* Linux (ghc-8.0.2) [CMV 1.0.2 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMV)
+* Linux (ghc-8.0.2) [CMCV 1.0.2 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMCV)
+* Linux (ghc-8.0.2) [CMCV 1.0.2 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMCWStoCMCV)
    
