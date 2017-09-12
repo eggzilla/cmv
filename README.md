@@ -21,7 +21,7 @@ For instruction how to use *cmv* please see the [Help page.](192.52.2.124/cmvs/h
 
 cmv is implemented in Haskell and can be installed via the Haskell package distribution sytem [cabal](https://www.haskell.org/cabal/). CMV is implemented in Haskell and can be installed via the Haskell package distribution sytem cabal. Additionally to cabal you require [cairo](https://cairographics.org/), [pango](http://www.pango.org/), [happy](https://www.haskell.org/happy/) and [alex](https://www.haskell.org/alex/) which can be installed via the distribution package manager e.g. Ubuntu: 
         
-        sudo apt-get install libcairo2 libpango1.0-0 happy alex
+        sudo apt-get install libcairo2 libpango1.0-0 libpangomm-1.4-dev happy alex
    
 Once you have cabal installed simply type:
 
@@ -34,8 +34,8 @@ Once you have cabal installed simply type:
 
 ### Precompiled Executables
 
-* Linux (ghc-8.0.2) [HMMV 1.0.2 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMV)
-* Linux (ghc-8.0.2) [HMMCV 1.0.2 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMCV)
+* Linux (ghc-8.0.2) [HMMV 1.0.3 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMV)
+* Linux (ghc-8.0.2) [HMMCV 1.0.3 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMCV)
 * Linux (ghc-8.0.2) [CMV 1.0.2 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMV)
 * Linux (ghc-8.0.2) [CMCV 1.0.2 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMCV)
 * Linux (ghc-8.0.2) [CMCV 1.0.2 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMCWStoCMCV)
