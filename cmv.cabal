@@ -1,12 +1,12 @@
 name:                cmv
-version:             1.0.3
+version:             1.0.4
 synopsis:            Detailed visualization of CMs, HMMs and their comparisions
 description:         cmv is a collection of tools for the visualisation of Hidden Markov Models (HMMV) and RNA-family models (CMV). Moreover it can visualise comparisons of these models (HMMCV,CMCV), and annotate linked regions in the structural alignments they were constructed from and via, 3rd party tools, in their consensus secondary structure.
 license:             GPL-3
 license-file:        LICENSE
 author:              Florian Eggenhofer
 maintainer:          egg@informatik.uni-freiburg.de
-Tested-With: GHC == 7.10.3, GHC == 8.0.2           
+Tested-With: GHC == 7.10.3, GHC == 8.0.2, GHC == 8.2.1          
 category:            Bioinformatics
 build-type:          Simple
 cabal-version:       >=1.8
@@ -20,8 +20,8 @@ source-repository head
 
 source-repository this
   type:     git
-  location: https://github.com/eggzilla/cmv/tree/1.0.3
-  tag:      1.0.3
+  location: https://github.com/eggzilla/cmv/tree/1.0.4
+  tag:      1.0.4
 
 library
   -- Modules exported by the library.
