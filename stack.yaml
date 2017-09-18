@@ -4,7 +4,6 @@ ghc-options:
 packages:
 - .
 extra-deps:
-- Cabal-1.24.2.0
 - BioHMM-1.2.0
 - BiobaseInfernal-0.8.1.0
 - BiobaseTypes-0.1.2.1
@@ -19,18 +18,4 @@ extra-deps:
 - pipes-4.2.0
 - pipes-safe-2.2.4
 - pipes-zlib-0.4.4.1
-- mmorph-1.0.9
-- SVGFonts-1.6.0.2
-- diagrams-cairo-1.4
-- diagrams-core-1.4.0.1
-- diagrams-lib-1.4.1.2
-- log-domain-0.11.2
-- cairo-0.13.3.1
-- diagrams-solve-0.1.1
-- dual-tree-0.2.1
-- pango-0.13.3.1
-- statestack-0.2.0.5
-- glib-0.13.4.1
-- gtk2hs-buildtools-0.13.2.2
-- process-1.4.3.0
-resolver: nightly-2017-09-14 
+resolver: lts-9.4
