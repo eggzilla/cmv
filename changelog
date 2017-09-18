@@ -1,4 +1,6 @@
 -*-change-log-*-
+1.0.5 Florian Eggenhofer <egg@informatik.uni-freiburg.de> 18. September 2017
+	* Changed used stack lts due to problems with build tool dependencies
 1.0.4 Florian Eggenhofer <egg@informatik.uni-freiburg.de> 14. September 2017
 	* Initial compatiblity with GHC 8.2.1
 1.0.3 Florian Eggenhofer <egg@informatik.uni-freiburg.de> 12. September 2017
