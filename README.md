@@ -10,7 +10,13 @@ The source code of *cmv* is open source and available via GitHub and Hackage (Li
 *   [![GitHub](https://img.shields.io/github/tag/eggzilla/cmv.svg)](https://github.com/eggzilla/cmv) [![Build Status](https://travis-ci.org/eggzilla/cmv.svg?branch=master)](https://travis-ci.org/eggzilla/cmv) [![Hackage](https://img.shields.io/hackage/v/cmv.svg)](https://hackage.haskell.org/package/cmv) [![Bioconda](https://anaconda.org/bioconda/cmv/badges/version.svg)](https://anaconda.org/bioconda/cmv) [![Docker Repository on Quay](https://quay.io/repository/biocontainers/cmv/status "Docker Repository on Quay")](https://quay.io/repository/repository/biocontainers/cmv)
 
 For instruction how to use *cmv* please see the [Help page.](192.52.2.124/cmvs/help)
-    
+
+### Usage via biocontainer (docker)
+
+*cmv* can be retrieved and used as docker container with all dependencies via [docker](https://docs.docker.com/engine/installation/). Once you have docker installed simply type:
+
+       docker run -i -t quay.io/biocontainers/cmv:1.0.5--0 /bin/bash
+
 ### Installation via bioconda
 
 *cmv* can be installed with all dependencies via [conda](https://conda.io/docs/install/quick.html). Once you have conda installed simply type:
