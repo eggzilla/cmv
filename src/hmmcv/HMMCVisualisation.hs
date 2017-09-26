@@ -54,7 +54,7 @@ options = Options
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
     outputDirectoryPath = "" &= name "p" &= help "Output directory path (Default: none)",
     modelNameToggle = False  &= name "b" &= help "Write all comma separted model names to modelNames file (Default: False)"
-  } &= summary ("HMMCV " ++ toolVersion) &= help "Florian Eggenhofer - 2013-2016" &= verbosity
+  } &= summary ("HMMCV " ++ toolVersion) &= help "Florian Eggenhofer - 2013-2017" &= verbosity
 
 main :: IO ()
 main = do
@@ -63,7 +63,7 @@ main = do
   modelFileExists <- doesFileExist modelsFile
   hmmCFileExists <- doesFileExist hmmCompareResultFile
   alnFileExists <- doesFileExist alignmentFile
-  if modelFileExists && hmmCFileExists && alnFileExists
+  if modelFileExists && hmmCFileExists
     then do
       inputModels <- HM.readHMMER3 modelsFile
       if isRight inputModels
@@ -80,7 +80,6 @@ main = do
           if and $ map isRight hmmCResultParsed
             then do
               let rightHMMCResultsParsed = rights hmmCResultParsed
-              --let outputName = diagramName "hmmcv" outputFormat
               setCurrentDirectory dirPath
               let modelFileNames = map (\m -> m ++ "." ++ outputFormat) currentModelNames
               let alignmentFileNames = map (\m -> m ++ ".aln" ++ "." ++ outputFormat) currentModelNames

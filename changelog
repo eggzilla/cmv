@@ -1,4 +1,6 @@
 -*-change-log-*-
+1.0.6 Florian Eggenhofer <egg@informatik.uni-freiburg.de> 26. September 2017
+	* Fixed a missing output bug in HMMCV
 1.0.5 Florian Eggenhofer <egg@informatik.uni-freiburg.de> 18. September 2017
 	* Changed used stack lts due to problems with build tool dependencies
 1.0.4 Florian Eggenhofer <egg@informatik.uni-freiburg.de> 14. September 2017
