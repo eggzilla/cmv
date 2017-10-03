@@ -29,6 +29,7 @@ options :: Options
 data Options = Options
   { modelFile :: String,
     alignmentFile :: String,
+    layoutDirection :: String,
     modelDetail :: String,
     modelLayout :: String,
     emissionLayout :: String,
@@ -45,7 +46,8 @@ data Options = Options
 options = Options
   { modelFile = def &= name "m" &= help "Path to covariance model file",
     alignmentFile = "" &= name "s" &= help "Path to stockholm alignment file",
-    modelDetail = "detailed" &= name "d" &= help "Set verbosity of drawn models: minimal, simple, detailed",
+    layoutDirection = "vertical" &= name "b" &= help "Set in which direction the model is drawn: vertical, horizontal (Default: vertical)",
+    modelDetail = "detailed" &= name "g" &= help "Set verbosity of drawn models: minimal, simple, detailed",
     modelLayout = "tree" &= name "l" &= help "Set layout of drawn models: flat, tree",
     emissionLayout = "box" &= name "e" &= help "Set layout of drawn models: score, probability, box (Default: box)",
     alignmentEntries = (50 :: Int) &= name "n" &= help "Set cutoff for included stockholm alignment entries (Default: 50)",
@@ -79,7 +81,7 @@ main = do
           let modelFileNames = map (\m -> m ++ "." ++ outputFormat) currentModelNames
           let alignmentFileNames = map (\m -> m ++ ".aln" ++ "." ++ outputFormat) currentModelNames
           setCurrentDirectory dirPath
-          let (modelVis,alignmentVis)= unzip $ drawSingleCMs modelDetail alignmentEntries transitionCutoff modelLayout emissionLayout maxWidth scalingFactor cms alns
+          let (modelVis,alignmentVis)= unzip $ drawSingleCMs layoutDirection modelDetail alignmentEntries transitionCutoff modelLayout emissionLayout maxWidth scalingFactor cms alns
           mapM_ (\(a,b) -> printCM a svgsize b) (zip modelFileNames modelVis)
           mapM_ (\(alnPath,stockholm) -> if isJust stockholm then printCM alnPath svgsize (fromJust stockholm) else return ()) (zip alignmentFileNames alignmentVis)
           let structureVisType = "perModel"
