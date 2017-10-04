@@ -46,8 +46,8 @@ data Options = Options
 options = Options
   { modelFile = def &= name "m" &= help "Path to covariance model file",
     alignmentFile = "" &= name "s" &= help "Path to stockholm alignment file",
-    layoutDirection = "vertical" &= name "d" &= help "Set in which direction the model is drawn: vertical, horizontal (Default: vertical)",
-    modelDetail = "detailed" &= name "g" &= help "Set verbosity of drawn models: minimal, simple, detailed",
+    layoutDirection = "vertical" &= name "g" &= help "Set in which direction the model is drawn: vertical, horizontal (Default: vertical)",
+    modelDetail = "detailed" &= name "d" &= help "Set verbosity of drawn models: minimal, simple, detailed",
     modelLayout = "tree" &= name "l" &= help "Set layout of drawn models: flat, tree",
     emissionLayout = "box" &= name "e" &= help "Set layout of drawn models: score, probability, box (Default: box)",
     alignmentEntries = (50 :: Int) &= name "n" &= help "Set cutoff for included stockholm alignment entries (Default: 50)",
