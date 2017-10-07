@@ -585,13 +585,14 @@ drawCMMinimalNodeBox layoutDirection alphabetSymbols emissiontype boxlength curr
 
 drawCMSimpleNodeBox :: String -> String -> String -> Int -> M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (Int, V.Vector (Colour Double)) -> CM.Node -> Int -> QDiagram Cairo V2 Double Any
 drawCMSimpleNodeBox layoutDirection alphabetSymbols emissiontype boxlength currentStates comparisonNodeLabels node nodeIndex
-  | ntype == CM.Bif = simpleNode === splitStatesBox -- bifNode 
-  | ntype == CM.BegL = splitStatesBox === simpleNode -- begLNode 
-  | ntype == CM.BegR = splitStatesBox === simpleNode -- begRNode 
+  | ntype == CM.Bif = currentCat simpleNode splitStatesBox -- bifNode 
+  | ntype == CM.BegL = currentCat splitStatesBox simpleNode -- begLNode 
+  | ntype == CM.BegR = currentCat splitStatesBox simpleNode -- begRNode 
   | otherwise = simpleNode
     where ntype = CM._nodeType node
           idNumber = nodeIndex 
           nId = show idNumber
+          currentCat = if layoutDirection == "vertical" then (===) else (|||)
           stateIndices = V.toList (CM._nodeStates node)
           simpleNode = rect 10 5 # lw 0.1 # lc black <>  ((text' nId # translate (r2 (negate 7.5,0)) <> colourBoxes # translate (r2 (negate 7.5, boxYoffset))) ||| text' nodeType # translate (r2 (14,0)))
           splitStatesBox = hcat (map (drawCMSimpleStateBox nId alphabetSymbols emissiontype boxlength currentStates) stateIndices)
