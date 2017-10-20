@@ -15,7 +15,7 @@ For instruction how to use *cmv* please see the [Help page.](http://192.52.2.124
 
 *cmv* can be retrieved and used as docker container with all dependencies via [docker](https://docs.docker.com/engine/installation/). Once you have docker installed simply type:
 
-       docker run -i -t quay.io/biocontainers/cmv:1.0.5--0 /bin/bash
+       docker run -i -t quay.io/biocontainers/cmv:1.0.6--0 /bin/bash
 
 ### Installation via bioconda
 
