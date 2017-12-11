@@ -9,10 +9,11 @@ The source code of *cmv* is open source and available via GitHub and Hackage (Li
 
 *   [![GitHub](https://img.shields.io/github/tag/eggzilla/cmv.svg)](https://github.com/eggzilla/cmv) [![Build Status](https://travis-ci.org/eggzilla/cmv.svg?branch=master)](https://travis-ci.org/eggzilla/cmv) [![Hackage](https://img.shields.io/hackage/v/cmv.svg)](https://hackage.haskell.org/package/cmv) [![Bioconda](https://anaconda.org/bioconda/cmv/badges/version.svg)](https://anaconda.org/bioconda/cmv) [![Docker Repository on Quay](https://quay.io/repository/biocontainers/cmv/status "Docker Repository on Quay")](https://quay.io/repository/repository/biocontainers/cmv)
 
-For instruction how to use *cmv* please see the [Help page.](http://192.52.2.124/cmvs/help)
+For instruction how to use *cmv* please see the [Help page.](http://www.gapjunction.eu/cmvs/help)
 
 ## Installation
 For Linux we recommend installation via bioconda, for macOS usage of the docker container.
+The example input files used in the webservice (EGF, Piwi, Hammerhead Clan, tRNA Clan) can be retrieved here: [Example input](http://www.gapjunction.eu/data/cmvs/exampleInput.zip)
 
 ### Installation via bioconda - Linux
 
