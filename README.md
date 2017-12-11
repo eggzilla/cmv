@@ -11,18 +11,21 @@ The source code of *cmv* is open source and available via GitHub and Hackage (Li
 
 For instruction how to use *cmv* please see the [Help page.](http://192.52.2.124/cmvs/help)
 
-### Usage via biocontainer (docker)
+## Installation
+For Linux we recommend installation via bioconda, for macOS usage of the docker container.
 
-*cmv* can be retrieved and used as docker container with all dependencies via [docker](https://docs.docker.com/engine/installation/). Once you have docker installed simply type:
-
-       docker run -i -t quay.io/biocontainers/cmv:1.0.6--0 /bin/bash
-
-### Installation via bioconda
+### Installation via bioconda - Linux
 
 *cmv* can be installed with all dependencies via [conda](https://conda.io/docs/install/quick.html). Once you have conda installed simply type:
 
        conda install -c bioconda -c conda-forge cmv
        
+### Usage via biocontainer docker - MacOS
+
+*cmv* can be retrieved and used as docker container with all dependencies via [docker](https://docs.docker.com/engine/installation/). Once you have docker installed simply type:
+
+       docker run -i -t quay.io/biocontainers/cmv:1.0.6--0 /bin/bash
+
 ### Installation via cabal-install
 
 cmv is implemented in Haskell and can be installed via the Haskell package distribution sytem [cabal](https://www.haskell.org/cabal/). CMV is implemented in Haskell and can be installed via the Haskell package distribution sytem cabal. Additionally to cabal you require [cairo](https://cairographics.org/), [pango](http://www.pango.org/), [happy](https://www.haskell.org/happy/) and [alex](https://www.haskell.org/alex/) which can be installed via the distribution package manager e.g. Ubuntu: 
