@@ -29,7 +29,7 @@ options :: Options
 data Options = Options
   { modelFile :: String,
     alignmentFile :: String,
-    layoutDirection :: String,
+--    layoutDirection :: String,
     modelDetail :: String,
     modelLayout :: String,
     emissionLayout :: String,
@@ -46,7 +46,7 @@ data Options = Options
 options = Options
   { modelFile = def &= name "m" &= help "Path to covariance model file",
     alignmentFile = "" &= name "s" &= help "Path to stockholm alignment file",
-    layoutDirection = "vertical" &= name "g" &= help "Set in which direction the model is drawn: vertical, horizontal (Default: vertical)",
+--    layoutDirection = "vertical" &= name "g" &= help "Set in which direction the model is drawn: vertical, horizontal (Default: vertical)",
     modelDetail = "detailed" &= name "d" &= help "Set verbosity of drawn models: minimal, simple, detailed",
     modelLayout = "tree" &= name "l" &= help "Set layout of drawn models: flat, tree",
     emissionLayout = "box" &= name "e" &= help "Set layout of drawn models: score, probability, box (Default: box)",
@@ -73,6 +73,7 @@ main = do
           Control.Monad.when (isLeft alnInput) $ print (fromLeft alnInput)
           --let outputName = diagramName "cmv" outputFormat
           let modelNumber = length cms
+	  let layoutDirection = "vertical"
           let alns = if isRight alnInput then map (\a -> Just a) (fromRight alnInput) else replicate modelNumber Nothing
           let currentModelNames = map (T.unpack . CM._name) cms
           currentWD <- getCurrentDirectory
