@@ -1,4 +1,7 @@
 -*-change-log-*-
+1.0.7 Florian Eggenhofer <egg@informatik.uni-freiburg.de> 15. January 2018
+	* Improved placment of index labels
+	* Prepared for layout direction extension
 1.0.6 Florian Eggenhofer <egg@informatik.uni-freiburg.de> 26. September 2017
 	* Fixed a missing output bug in HMMCV
 1.0.5 Florian Eggenhofer <egg@informatik.uni-freiburg.de> 18. September 2017

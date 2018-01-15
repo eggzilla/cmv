@@ -32,6 +32,7 @@ data Options = Options
   { cmcompareResultFile :: String,
     modelsFile :: String,
     alignmentFile :: String,
+--    layoutDirection :: String,
     modelDetail :: String,
     modelLayout :: String,
     emissionLayout :: String,
@@ -50,6 +51,7 @@ options = Options
   { cmcompareResultFile = def &= name "r" &= help "Path to CMCompare result file",
     modelsFile = def &= name "m" &= help "Path to covariance model file",
     alignmentFile = "" &= name "s" &= help "Path to stockholm alignment file",
+--    layoutDirection = "vertical" &= name "g" &= help "Set in which direction the model is drawn: vertical, horizontal (Default: vertical)",
     modelDetail = "detailed" &= name "d" &= help "Set verbosity of drawn models: minimal, simple, detailed",
     modelLayout = "tree" &= name "l" &= help "Set layout of drawn models: flat, tree",
     emissionLayout = "box" &= name "e" &= help "Set layout of drawn models: score, probability, box (Default: box)",
@@ -79,6 +81,7 @@ main = do
        Control.Monad.when (isLeft alnInput) $ print (E.fromLeft alnInput)
        --let outputName = diagramName "cmcv" outputFormat
        let modelNumber = length cms
+       let layoutDirection = "vertical"
        let alns = if isRight alnInput then map (\a -> Just a) (E.fromRight alnInput) else replicate modelNumber Nothing
        let currentModelNames = map (T.unpack . CM._name) cms
        currentWD <- getCurrentDirectory
@@ -87,7 +90,7 @@ main = do
        let modelFileNames = map (\m -> m ++ "." ++ outputFormat) currentModelNames
        let alignmentFileNames = map (\m -> m ++ ".aln" ++ "." ++ outputFormat) currentModelNames
        setCurrentDirectory dirPath
-       let (modelVis,alignmentVis) = unzip $ drawSingleCMComparisons modelDetail alignmentEntries transitionCutoff modelLayout emissionLayout maxWidth scalingFactor cms alns comparisons
+       let (modelVis,alignmentVis) = unzip $ drawSingleCMComparisons layoutDirection modelDetail alignmentEntries transitionCutoff modelLayout emissionLayout maxWidth scalingFactor cms alns comparisons
        mapM_ (\(a,b) -> printCM a svgsize b) (zip modelFileNames modelVis)
        mapM_ (\(alnPath,stockholm) -> if isJust stockholm then printCM alnPath svgsize (fromJust stockholm) else return ()) (zip alignmentFileNames alignmentVis)
        let structureVisType = "perModel"

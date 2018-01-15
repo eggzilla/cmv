@@ -1,21 +1,18 @@
 flags: {}
-ghc-options:
-  ! '*': -j
 packages:
 - .
-extra-deps:
-- BioHMM-1.2.0
-- BiobaseInfernal-0.8.1.0
-- BiobaseTypes-0.1.2.1
-- BiobaseXNA-0.9.3.1
-- DPutils-0.0.1.0
-- OrderedBits-0.0.1.2
-- PrimitiveArray-0.8.0.1
-- StockholmAlignment-1.1.1
-- aeson-1.1.1.0
-- bimaps-0.1.0.2
-- intern-0.9.1.4
-- pipes-4.2.0
-- pipes-safe-2.2.4
-- pipes-zlib-0.4.4.1
-resolver: lts-9.6
+extra-deps: 
+  - BioHMM-1.2.0
+  - BiobaseInfernal-0.8.1.0
+  - BiobaseTypes-0.1.2.1
+  - BiobaseXNA-0.9.3.1
+  - PrimitiveArray-0.8.0.1
+  - StockholmAlignment-1.1.2
+  - DPutils-0.0.1.0
+  - OrderedBits-0.0.1.2
+  - bimaps-0.1.0.2
+  - pipes-zlib-0.4.4.1
+  - pipes-4.2.0
+  - mmorph-1.0.9
+  - pipes-safe-2.2.4
+resolver: lts-10.3

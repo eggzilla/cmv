@@ -47,9 +47,9 @@ import qualified Data.Map as M
 import Data.Function    
 
 -- | Draw one or more CM
-drawSingleCMComparisons :: String -> Int -> Double -> String -> String -> Double -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [CmcompareResult] -> [(QDiagram Cairo V2 Double Any,Maybe (QDiagram Cairo V2 Double Any))]
-drawSingleCMComparisons modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype maxWidth scalef cms alns comparisons = diagrams
-  where diagrams = map (drawCM modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype maxWidth scalef nameColorVector) zippedInput
+drawSingleCMComparisons :: String -> String -> Int -> Double -> String -> String -> Double -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [CmcompareResult] -> [(QDiagram Cairo V2 Double Any,Maybe (QDiagram Cairo V2 Double Any))]
+drawSingleCMComparisons layoutDirection modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype maxWidth scalef cms alns comparisons = diagrams
+  where diagrams = map (drawCM layoutDirection modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype maxWidth scalef nameColorVector) zippedInput
         zippedInput = zip4 cms alns comparisonNodeLabels (V.toList colorVector)
         modelNumber = length cms
         comparisonNodeLabels = map (getComparisonNodeLabels comparisons nameColorVector) cms
@@ -58,16 +58,16 @@ drawSingleCMComparisons modelDetail entryNumberCutoff transitionCutoff modelLayo
         nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
 
 -- | Draw one or more CM
-drawSingleCMs :: String -> Int -> Double -> String -> String -> Double -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [(QDiagram Cairo V2 Double Any,Maybe (QDiagram Cairo V2 Double Any))]
-drawSingleCMs modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype maxWidth scalef cms alns = map (drawCM modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype maxWidth scalef emptyColorNameVector) zippedInput
+drawSingleCMs :: String -> String -> Int -> Double -> String -> String -> Double -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [(QDiagram Cairo V2 Double Any,Maybe (QDiagram Cairo V2 Double Any))]
+drawSingleCMs layoutDirection modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype maxWidth scalef cms alns = map (drawCM layoutDirection modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype maxWidth scalef emptyColorNameVector) zippedInput
     where zippedInput = zip4 cms alns comparisonNodeLabels colorList
           comparisonNodeLabels = map getBlankComparisonNodeLabels cms
           colorList = replicate (length cms) white
           emptyColorNameVector = V.empty
 
 -- | Draw the guide Tree of a single CM
-drawCM :: String -> Int -> Double -> String -> String -> Double -> Double -> V.Vector (String,Colour Double) -> (CM.CM,Maybe StockholmAlignment,V.Vector (Int,V.Vector (Colour Double)), Colour Double) -> (QDiagram Cairo V2 Double Any,Maybe (QDiagram Cairo V2 Double Any))
-drawCM modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype maxWidth scalef nameColorVector (inputCM,aln,comparisonNodeLabels,modelColor)
+drawCM :: String -> String -> Int -> Double -> String -> String -> Double -> Double -> V.Vector (String,Colour Double) -> (CM.CM,Maybe StockholmAlignment,V.Vector (Int,V.Vector (Colour Double)), Colour Double) -> (QDiagram Cairo V2 Double Any,Maybe (QDiagram Cairo V2 Double Any))
+drawCM layoutDirection modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype maxWidth scalef nameColorVector (inputCM,aln,comparisonNodeLabels,modelColor)
    | modelLayout == "tree" = ((applyAll ([bg white]) modelTreeLayout),alignmentDiagram)
    | modelLayout == "flat" = ((applyAll ([bg white]) modelFlatLayout),alignmentDiagram)
    | otherwise = ((applyAll ([bg white])modelTreeLayout),alignmentDiagram)
@@ -80,15 +80,16 @@ drawCM modelDetail entryNumberCutoff transitionCutoff modelLayout emissiontype m
          indices = V.toList (V.iterateN (nodeNumber-1) (1+) 0)
          (indexStructure,_)= runState (buildTreeIndexStructure 1 nodes indices) startState
          modelName = CM._name inputCM
+         currentCat = if layoutDirection == "vertical" then vcat' with {_sep=0.01} else hcat' with {_sep=0.01}
          modelFlatLayout = alignTL (vcat' with {_sep=0.1} [modelHeader,nodeTransitions]) # scale scalef
          modelTreeLayout = alignTL (vcat' with {_sep=0.1} [modelHeader,nodeTreeTransitions]) #scale scalef
          nodeTreeTransitions = applyAll (arrowList ++ labelList) nodesTree
          nodeTransitions = applyAll (arrowList ++ labelList) nodesFlat
          firstInterval = fromJust (find (\(_,p,_,_,_) -> p == 0) (fst indexStructure))
-         nodesTree = drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes (fst indexStructure) firstInterval
+         nodesTree = drawCMNodeTree layoutDirection modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes (fst indexStructure) firstInterval
          modelHeader = makeModelHeader (T.unpack modelName) modelColor nameColorVector
          nodeIndices = V.iterateN nodeNumber (1+) 0
-         nodesFlat = vcat' with {_sep=0.01} (V.toList (V.map (drawCMNode modelDetail alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) nodeIndices))
+         nodesFlat = currentCat (V.toList (V.map (drawCMNode layoutDirection modelDetail alphabetSymbols emissiontype boxlength (0 :: Int) nodeNumber nodeNumber allStates comparisonNodeLabels nodes) nodeIndices))
          allConnectedStates = makeAllConnectedStates allStates
          highConnectedStates = V.filter (\(_,_,w) -> w >= transitionCutoff) allConnectedStates
          connectedStates = V.filter (\(stateId,targetStateIndex,_) -> stateId /= targetStateIndex) highConnectedStates
@@ -489,22 +490,28 @@ setLegendLabel t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 10 10
 setModelName :: String -> QDiagram Cairo V2 Double Any
 setModelName t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 20 20) t # fc black # fillRule EvenOdd # lw 0.0 # translate (r2 (negate 0.75, negate 0.75))
 
-drawCMNodeTree :: String -> String -> String -> Int -> M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (Int, V.Vector (Colour Double))-> V.Vector CM.Node -> [(Int, Int, String, Int, Int)] -> (Int,Int,String,Int,Int) -> QDiagram Cairo V2 Double Any
-drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure (intervalId,parentId,intervalType,currentIndex,currentEnd) = nodeTree
-  where nodeTree = currentIntervalDrawing === hcat' with {_sep = 20} (map (drawCMNodeTree modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure) nextIntervals)
+drawCMNodeTree :: String -> String -> String -> String -> Int -> M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (Int, V.Vector (Colour Double))-> V.Vector CM.Node -> [(Int, Int, String, Int, Int)] -> (Int,Int,String,Int,Int) -> QDiagram Cairo V2 Double Any
+drawCMNodeTree layoutDirection modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure (intervalId,parentId,intervalType,currentIndex,currentEnd) = nodeTree
+  where nodeTree = if layoutDirection == "vertical" then verticalNodeTree else horizontalNodeTree
+        verticalNodeTree = currentIntervalDrawing === hcat' with {_sep = 20} (map (drawCMNodeTree layoutDirection modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure) nextIntervals)
+        horizontalNodeTree = currentIntervalDrawing ||| vcat' with {_sep = 20} (map (drawCMNodeTree layoutDirection modelDetail alphabetSymbols emissiontype boxlength allStates comparisonNodeLabels nodes indexStructure) nextIntervals)
         nextIntervals = filter (\(_,p,_,_,_) -> intervalId == p) indexStructure
-        currentIntervalDrawing = drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength currentIndex currentEnd currentEnd allStates comparisonNodeLabels nodes (intervalId,parentId,intervalType,currentIndex,currentEnd)  --- ||| (text' (show intervalId ++ "I" ++ show indexStructure) <> rect 100 100)
+        currentIntervalDrawing = drawCMNodeInterval layoutDirection modelDetail alphabetSymbols emissiontype boxlength currentIndex currentEnd currentEnd allStates comparisonNodeLabels nodes (intervalId,parentId,intervalType,currentIndex,currentEnd)  --- ||| (text' (show intervalId ++ "I" ++ show indexStructure) <> rect 100 100)
 
 --drawCMNodeRow :: String -> String -> String -> Int -> Int -> Int -> Int -> M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (Int, V.Vector (Colour Double))-> V.Vector CM.Node -> [(Int, Int, String, Int, Int)] -> QDiagram Cairo V2 Double Any
 --drawCMNodeRow modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes intervals = strutY 4 === hcat' with { _sep = 8 } (map (drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes) intervals)
 
-drawCMNodeInterval :: String -> String -> String -> Int -> Int -> Int -> Int -> M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (Int, V.Vector (Colour Double))-> V.Vector CM.Node -> (Int, Int, String, Int, Int) -> QDiagram Cairo V2 Double Any
-drawCMNodeInterval modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes (intervalId,_,_,currentIndex,currentEnd)
+drawCMNodeInterval :: String -> String -> String -> String -> Int -> Int -> Int -> Int -> M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (Int, V.Vector (Colour Double))-> V.Vector CM.Node -> (Int, Int, String, Int, Int) -> QDiagram Cairo V2 Double Any
+drawCMNodeInterval layoutDirection modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes (intervalId,_,_,currentIndex,currentEnd)
   | modelDetail == "interval" = intervalVis
   | otherwise = nodeVis
-  where intervalVis = rect 20 0 # named ("a" ++ intervalIdString)  # lw 0.0 === (rect 20 40 # lw 0.1 <> text' (show currentIndex ++ "-" ++ show currentEnd)) === rect 20 0 # named ("e" ++ intervalIdString)  # lw 0.0 === strutY 5.0
+  where intervalVis = if layoutDirection == "vertical" then verticalIntervalVis else horizontalIntervalVis
+        verticalIntervalVis = rect 20 0 # named ("a" ++ intervalIdString)  # lw 0.0 === (rect 20 40 # lw 0.1 <> text' (show currentIndex ++ "-" ++ show currentEnd)) === rect 20 0 # named ("e" ++ intervalIdString)  # lw 0.0 === strutY 5.0
+        horizontalIntervalVis = rect 20 0 # named ("a" ++ intervalIdString)  # lw 0.0 ||| (rect 20 40 # lw 0.1 <> text' (show currentIndex ++ "-" ++ show currentEnd)) ||| rect 20 0 # named ("e" ++ intervalIdString)  # lw 0.0 ||| strutX 5.0
         intervalIdString = show intervalId
-        nodeVis = strutY 4  ===vcat' with { _sep = nodespacer } (map (drawCMNode modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes) currentInterval)
+        nodeVis = if layoutDirection == "vertical" then verticalNodeVis else horizontalNodeVis
+        verticalNodeVis = strutY 4  === vcat' with { _sep = nodespacer } (map (drawCMNode layoutDirection modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes) currentInterval)
+        horizontalNodeVis = strutX 5 ||| hcat' with { _sep = nodespacer } (map (drawCMNode layoutDirection modelDetail alphabetSymbols emissiontype boxlength rowStart rowEnd lastIndex states comparisonNodeLabels nodes) currentInterval)
         currentInterval = [currentIndex..currentEnd]
         nodespacer = if modelDetail == "detailed" then (0 :: Double) else (0.5 :: Double)
 
@@ -541,30 +548,31 @@ text' t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 3 3) t # fc bl
 --   | label == "END"  = sRGB24 245 245 245 -- E
 --labelToColor _ = sRGB24 245 245 245
 
-drawCMNode :: String -> String -> String -> Int -> Int -> Int -> Int -> M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (Int, V.Vector (Colour Double)) -> V.Vector CM.Node -> Int -> QDiagram Cairo V2 Double Any
-drawCMNode modelDetail alphabetSymbols emissiontype boxlength _ _ _ states comparisonNodeLabels nodes nodeIndex
-  | modelDetail == "minimal" = drawCMMinimalNodeBox alphabetSymbols emissiontype boxlength states comparisonNodeLabels node nodeIndex
-  | modelDetail == "simple" = drawCMSimpleNodeBox alphabetSymbols emissiontype boxlength states comparisonNodeLabels node nodeIndex
+drawCMNode :: String -> String -> String -> String -> Int -> Int -> Int -> Int -> M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (Int, V.Vector (Colour Double)) -> V.Vector CM.Node -> Int -> QDiagram Cairo V2 Double Any
+drawCMNode layoutDirection modelDetail alphabetSymbols emissiontype boxlength _ _ _ states comparisonNodeLabels nodes nodeIndex
+  | modelDetail == "minimal" = drawCMMinimalNodeBox layoutDirection alphabetSymbols emissiontype boxlength states comparisonNodeLabels node nodeIndex
+  | modelDetail == "simple" = drawCMSimpleNodeBox layoutDirection alphabetSymbols emissiontype boxlength states comparisonNodeLabels node nodeIndex
   | otherwise = detailedNodeBox
   where node = nodes V.! nodeIndex
         --idNumber = nodeIndex
         --nId = show idNumber
-        detailedNodeBox = drawCMDetailedNodeBox alphabetSymbols emissiontype boxlength states comparisonNodeLabels node nodeIndex
+        detailedNodeBox = drawCMDetailedNodeBox layoutDirection alphabetSymbols emissiontype boxlength states comparisonNodeLabels node nodeIndex
         --nodeType = getCMNodeType node
         --nodeLabels = V.toList (snd (comparisonNodeLabels V.! idNumber))
 
 colorBox :: Double -> Colour Double -> QDiagram Cairo V2 Double Any
 colorBox singleBoxYLength colColour = rect 5 singleBoxYLength # fc colColour # lw 0.1
 
-drawCMMinimalNodeBox :: String -> String -> Int -> M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (Int, V.Vector (Colour Double)) -> CM.Node -> Int -> QDiagram Cairo V2 Double Any
-drawCMMinimalNodeBox alphabetSymbols emissiontype boxlength currentStates comparisonNodeLabels node nodeIndex
-  | ntype == CM.Bif = minimalNode === splitStatesBox -- bifNode 
-  | ntype == CM.BegL = splitStatesBox === minimalNode -- begLNode 
-  | ntype == CM.BegR = splitStatesBox === minimalNode -- begRNode 
+drawCMMinimalNodeBox :: String -> String -> String -> Int -> M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (Int, V.Vector (Colour Double)) -> CM.Node -> Int -> QDiagram Cairo V2 Double Any
+drawCMMinimalNodeBox layoutDirection alphabetSymbols emissiontype boxlength currentStates comparisonNodeLabels node nodeIndex
+  | ntype == CM.Bif = currentCat minimalNode  splitStatesBox -- bifNode 
+  | ntype == CM.BegL = currentCat splitStatesBox minimalNode -- begLNode 
+  | ntype == CM.BegR = currentCat splitStatesBox minimalNode -- begRNode 
   | otherwise = minimalNode
     where ntype = CM._nodeType node
           idNumber = nodeIndex
           nId = show idNumber
+          currentCat = if layoutDirection == "vertical" then (===) else (|||)
           stateIndices = V.toList (CM._nodeStates node)
           minimalNode = rect 5 5 # lw 0.1 # lc black <> text' nId # fontSize 2  <> wheel 2 nodeLabels # lw 0.1 # lc black
           splitStatesBox = hcat (map (drawCMSimpleStateBox nId alphabetSymbols emissiontype boxlength currentStates) stateIndices)
@@ -575,15 +583,16 @@ drawCMMinimalNodeBox alphabetSymbols emissiontype boxlength currentStates compar
           --singleBoxYLength = totalBoxYlength / boxNumber
           --colourBoxes = vcat (map (colorBox singleBoxYLength) nodeLabels)
 
-drawCMSimpleNodeBox :: String -> String -> Int -> M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (Int, V.Vector (Colour Double)) -> CM.Node -> Int -> QDiagram Cairo V2 Double Any
-drawCMSimpleNodeBox alphabetSymbols emissiontype boxlength currentStates comparisonNodeLabels node nodeIndex
-  | ntype == CM.Bif = simpleNode === splitStatesBox -- bifNode 
-  | ntype == CM.BegL = splitStatesBox === simpleNode -- begLNode 
-  | ntype == CM.BegR = splitStatesBox === simpleNode -- begRNode 
+drawCMSimpleNodeBox :: String -> String -> String -> Int -> M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (Int, V.Vector (Colour Double)) -> CM.Node -> Int -> QDiagram Cairo V2 Double Any
+drawCMSimpleNodeBox layoutDirection alphabetSymbols emissiontype boxlength currentStates comparisonNodeLabels node nodeIndex
+  | ntype == CM.Bif = currentCat simpleNode splitStatesBox -- bifNode 
+  | ntype == CM.BegL = currentCat splitStatesBox simpleNode -- begLNode 
+  | ntype == CM.BegR = currentCat splitStatesBox simpleNode -- begRNode 
   | otherwise = simpleNode
     where ntype = CM._nodeType node
           idNumber = nodeIndex 
           nId = show idNumber
+          currentCat = if layoutDirection == "vertical" then (===) else (|||)
           stateIndices = V.toList (CM._nodeStates node)
           simpleNode = rect 10 5 # lw 0.1 # lc black <>  ((text' nId # translate (r2 (negate 7.5,0)) <> colourBoxes # translate (r2 (negate 7.5, boxYoffset))) ||| text' nodeType # translate (r2 (14,0)))
           splitStatesBox = hcat (map (drawCMSimpleStateBox nId alphabetSymbols emissiontype boxlength currentStates) stateIndices)
@@ -607,8 +616,8 @@ drawCMSimpleStateBox _ _ _ _ currentStates sIndex
           sState = rect 1 0.001 # lw 0 # named ("a" ++ stateIndx)
           bState = rect 1 0.001 # lw 0 # named ("e" ++ stateIndx)
 
-drawCMDetailedNodeBox :: String -> String -> Int ->  M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (Int, V.Vector (Colour Double)) -> CM.Node -> Int -> QDiagram Cairo V2 Double Any
-drawCMDetailedNodeBox alphabetSymbols emissiontype boxlength currentStates comparisonNodeLabels node nodeIndex
+drawCMDetailedNodeBox :: String -> String -> String -> Int ->  M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (Int, V.Vector (Colour Double)) -> CM.Node -> Int -> QDiagram Cairo V2 Double Any
+drawCMDetailedNodeBox layoutDirection alphabetSymbols emissiontype boxlength currentStates comparisonNodeLabels node nodeIndex
   | ntype == CM.Bif = bifNode # translate (r2 (negate 25,25)) <> nodeBox
   | ntype == CM.MatP = matPNode # translate (r2 (negate 25,25)) <> nodeBox
   | ntype == CM.MatL = matLNode # translate (r2 (negate 25,25)) <> nodeBox
