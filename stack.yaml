@@ -7,7 +7,7 @@ extra-deps:
   - BiobaseTypes-0.1.2.1
   - BiobaseXNA-0.9.3.1
   - PrimitiveArray-0.8.0.1
-  - StockholmAlignment-1.1.1
+  - StockholmAlignment-1.1.2
   - DPutils-0.0.1.0
   - OrderedBits-0.0.1.2
   - bimaps-0.1.0.2
@@ -15,4 +15,4 @@ extra-deps:
   - pipes-4.2.0
   - mmorph-1.0.9
   - pipes-safe-2.2.4
-resolver: lts-10.0
+resolver: lts-10.3
