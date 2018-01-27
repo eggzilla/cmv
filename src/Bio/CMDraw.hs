@@ -192,7 +192,7 @@ buildR2RperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabels)
         r2rInputPrefix = sHeader ++ sConsensusStructure ++ sConsensusSequence ++ sConsensusSequenceColor ++ sCovarianceAnnotation 
         allColumnAnnotations = columnAnnotations aln
         consensusSequenceList = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
-	firstSeq = T.unpack (entrySequence (head (sequenceEntries aln)))
+        firstSeq = T.unpack (entrySequence (head (sequenceEntries aln)))
         consensusSequence = if null consensusSequenceList then firstSeq else T.unpack (head consensusSequenceList)
         gapFreeConsensusSequence = map C.toUpper (filter (not . isGap) consensusSequence)
         consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)

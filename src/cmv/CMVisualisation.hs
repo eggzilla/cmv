@@ -73,7 +73,7 @@ main = do
           Control.Monad.when (isLeft alnInput) $ print (fromLeft alnInput)
           --let outputName = diagramName "cmv" outputFormat
           let modelNumber = length cms
-	  let layoutDirection = "vertical"
+          let layoutDirection = "vertical"
           let alns = if isRight alnInput then map (\a -> Just a) (fromRight alnInput) else replicate modelNumber Nothing
           let currentModelNames = map (T.unpack . CM._name) cms
           currentWD <- getCurrentDirectory
