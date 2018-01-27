@@ -192,7 +192,8 @@ buildR2RperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabels)
         r2rInputPrefix = sHeader ++ sConsensusStructure ++ sConsensusSequence ++ sConsensusSequenceColor ++ sCovarianceAnnotation 
         allColumnAnnotations = columnAnnotations aln
         consensusSequenceList = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
-        consensusSequence = if null consensusSequenceList then "" else T.unpack (head consensusSequenceList)
+	firstSeq = T.unpack (entrySequence (head (sequenceEntries aln)))
+        consensusSequence = if null consensusSequenceList then firstSeq else T.unpack (head consensusSequenceList)
         gapFreeConsensusSequence = map C.toUpper (filter (not . isGap) consensusSequence)
         consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
         consensusStructure = if null consensusStructureList then "" else T.unpack (head consensusStructureList)
@@ -240,7 +241,8 @@ buildFornaperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabels
         fornaInput = (fornaFilePath,fornaString)
         allColumnAnnotations = columnAnnotations aln
         consensusSequenceList = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
-        consensusSequence = if null consensusSequenceList then "" else T.unpack (head consensusSequenceList)
+        firstSeq = T.unpack (entrySequence (head (sequenceEntries aln)))
+        consensusSequence = if null consensusSequenceList then firstSeq else T.unpack (head consensusSequenceList)
         gapfreeConsensusSequence = map C.toUpper (filter (not . isGap) consensusSequence)
         consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
         consensusStructure = if null consensusStructureList then "" else T.unpack (head consensusStructureList)
@@ -267,7 +269,8 @@ buildFornaLinksInput structureFilePath (inputCM,maybeAln,comparisonNodeLabelsPer
         fornaFilePath = structureFilePath ++ modelName ++ ".fornalink"
         allColumnAnnotations = columnAnnotations aln
         consensusSequenceList = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
-        consensusSequence = if null consensusSequenceList then "" else T.unpack (head consensusSequenceList)
+        firstSeq = T.unpack (entrySequence (head (sequenceEntries aln)))
+        consensusSequence = if null consensusSequenceList then firstSeq else T.unpack (head consensusSequenceList)
         gapfreeConsensusSequence = map C.toUpper (filter (not . isGap) consensusSequence)
         modelName = T.unpack (CM._name inputCM)
         consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
@@ -327,7 +330,8 @@ buildMergedFornaInput (inputCM,maybeAln,comparisonNodeLabels)
         fornaInput = ">" ++ modelName ++ "\n" ++ gapfreeConsensusSequence ++ "\n" ++ gapFreeConsensusStructure
         allColumnAnnotations = columnAnnotations aln
         consensusSequenceList = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
-        consensusSequence = if null consensusSequenceList then "" else T.unpack (head consensusSequenceList)
+        firstSeq = T.unpack (entrySequence (head (sequenceEntries aln)))
+        consensusSequence = if null consensusSequenceList then firstSeq else T.unpack (head consensusSequenceList)
         gapfreeConsensusSequence = map C.toUpper (filter (not . isGap) consensusSequence)
         modelName = T.unpack (CM._name inputCM)
         consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
@@ -356,7 +360,8 @@ buildMergedR2RInput (inputCM,maybeAln,comparisonNodeLabels)
         r2rInput = sHeader ++ sConsensusStructure ++ sConsensusSequence ++ sConsensusSequenceColor ++ sCovarianceAnnotation ++ sComparisonHighlight ++ sBackboneColorLabel
         allColumnAnnotations = columnAnnotations aln
         consensusSequenceList = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
-        consensusSequence = if null consensusSequenceList then "" else T.unpack (head consensusSequenceList)
+        firstSeq = T.unpack (entrySequence (head (sequenceEntries aln)))
+        consensusSequence = if null consensusSequenceList then firstSeq else T.unpack (head consensusSequenceList)
         gapFreeConsensusSequence = map C.toUpper (filter (not . isGap) consensusSequence)
         consensusStructureList = map (convertWUSStoDotBracket . annotation) (filter (\annotEntry -> tag annotEntry == T.pack "SS_cons") allColumnAnnotations)
         consensusStructure = if null consensusStructureList then "" else T.unpack (head consensusStructureList)

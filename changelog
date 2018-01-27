@@ -1,4 +1,7 @@
 -*-change-log-*-
+1.0.8 Florian Eggenhofer <egg@informatik.uni-freiburg.de> 27. January 2018
+	* Fixed secondary structure visualisation for missing consensus
+	secondary structure
 1.0.7 Florian Eggenhofer <egg@informatik.uni-freiburg.de> 15. January 2018
 	* Improved placment of index labels
 	* Prepared for layout direction extension
