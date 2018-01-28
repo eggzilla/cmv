@@ -25,7 +25,7 @@ The example input files used in the webservice (EGF, Piwi, Hammerhead Clan, tRNA
 
 *cmv* can be retrieved and used as docker container with all dependencies via [docker](https://docs.docker.com/engine/installation/). Once you have docker installed simply type:
 
-       docker run -i -t quay.io/biocontainers/cmv:1.0.7--0 /bin/bash
+       docker run -i -t quay.io/biocontainers/cmv:1.0.8--0 /bin/bash
 
 ### Installation via cabal-install
 
@@ -44,9 +44,9 @@ Once you have cabal installed simply type:
 
 ### Precompiled Executables
 
-* Linux (ghc-8.2.2) [HMMV 1.0.7 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMV)
-* Linux (ghc-8.2.2) [HMMCV 1.0.7 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMCV)
-* Linux (ghc-8.2.2) [CMV 1.0.7 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMV)
-* Linux (ghc-8.2.2) [CMCV 1.0.7 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMCV)
-* Linux (ghc-8.2.2) [CMCV 1.0.7 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMCWStoCMCV)
+* Linux (ghc-8.2.2) [HMMV 1.0.8 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMV)
+* Linux (ghc-8.2.2) [HMMCV 1.0.8 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/HMMCV)
+* Linux (ghc-8.2.2) [CMV 1.0.8 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMV)
+* Linux (ghc-8.2.2) [CMCV 1.0.8 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMCV)
+* Linux (ghc-8.2.2) [CMCV 1.0.8 x86_64](http://www.bioinf.uni-freiburg.de/~egg/cmvs/bin/CMCWStoCMCV)
    
