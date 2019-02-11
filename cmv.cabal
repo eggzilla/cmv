@@ -84,3 +84,9 @@ executable HMMV
   main-is:	       HMMVisualisation.hs
   ghc-options:         -Wall
   build-depends:       base >=4.5, cmdargs, diagrams-lib, parsec, colour, containers, bytestring, text, vector, directory, cmv, either-unwrap, filepath, BioHMM>=1.2.0, StockholmAlignment>=1.1.2
+
+executable StockholmV
+  Hs-Source-Dirs:      ./src/Stockholm/
+  main-is:	       StockholmVisualisation.hs
+  ghc-options:         -Wall
+  build-depends:       base >=4.5, cmdargs, diagrams-lib, parsec, colour, containers, bytestring, text, vector, directory, cmv, either-unwrap, filepath, StockholmAlignment>=1.1.2
