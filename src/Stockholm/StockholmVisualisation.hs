@@ -22,7 +22,7 @@ import Control.Monad
 import Bio.StockholmDraw
 import Bio.CMDraw
 import qualified Data.Char as C
---import qualified Data.Vector as V
+import qualified Data.Vector as V
 
 options :: Options
 data Options = Options
@@ -31,6 +31,7 @@ data Options = Options
     maxWidth :: Double,
     scalingFactor :: Double,
     outputFormat :: String,
+    withIndex :: Bool,
     outputDirectoryPath :: String,
     secondaryStructureVisTool :: String
   } deriving (Show,Data,Typeable)
@@ -41,6 +42,7 @@ options = Options
     maxWidth = (200 :: Double) &= name "w" &= help "Set maximal width of result figure (Default: 100)",
     scalingFactor = (2.0 :: Double) &= name "c" &= help "Set uniform scaling factor for image size (Default: 2)",
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
+    withIndex = True &= name "i" &= help "Print index line, True or False (Default: True)",
     outputDirectoryPath = "" &= name "p" &= help "Output directory path (Default: none)",
     secondaryStructureVisTool = "" &= name "x" &= help "Select tool for secondary structure visualisation: forna, r2r (Default: none)"
   } &= summary ("StockholmV " ++ toolVersion) &= help "Florian Eggenhofer - 2019-" &= verbosity
@@ -59,7 +61,7 @@ main = do
       let currentAlnNames = map show [1..(length alns)]
       let alignmentFileNames = map (\m -> m ++ ".aln" ++ "." ++ outputFormat) currentAlnNames
       setCurrentDirectory dirPath
-      let alignmentVis = map (drawStockholm alignmentEntries) alns
+      let alignmentVis = if withIndex then (map (drawStockholmLines alignmentEntries maxWidth V.empty) alns) else (map (drawStockholm alignmentEntries) alns)
       mapM_ (\(alnPath,stockholm) -> printCM alnPath svgsize stockholm) (zip alignmentFileNames alignmentVis)
       let structureFilePath = dirPath ++ "/"
       let structureVisInputs = zip currentAlnNames alns
