@@ -33,7 +33,8 @@ data Options = Options
     outputFormat :: String,
     withIndex :: Bool,
     outputDirectoryPath :: String,
-    secondaryStructureVisTool :: String
+    secondaryStructureVisTool :: String,
+    labelFilePath :: String
   } deriving (Show,Data,Typeable)
 
 options = Options
@@ -44,7 +45,8 @@ options = Options
     outputFormat = "pdf" &= name "f" &= help "Output image format: pdf, svg, png, ps (Default: pdf)",
     withIndex = True &= name "i" &= help "Print index line, True or False (Default: True)",
     outputDirectoryPath = "" &= name "p" &= help "Output directory path (Default: none)",
-    secondaryStructureVisTool = "" &= name "x" &= help "Select tool for secondary structure visualisation: forna, r2r (Default: none)"
+    secondaryStructureVisTool = "" &= name "x" &= help "Select tool for secondary structure visualisation: forna, r2r (Default: none)",
+    labelFilePath = "" &= name "s" &= help "Path to label file containing labels (Default:none)"
   } &= summary ("StockholmV " ++ toolVersion) &= help "Florian Eggenhofer - 2019-" &= verbosity
 
 main :: IO ()
@@ -61,6 +63,8 @@ main = do
       let currentAlnNames = map show [1..(length alns)]
       let alignmentFileNames = map (\m -> m ++ ".aln" ++ "." ++ outputFormat) currentAlnNames
       setCurrentDirectory dirPath
+      --V.Vector (Int, V.Vector (Colour Double))
+      let alignmentLabels = if null labelFilePath then V.empty else
       let alignmentVis = if withIndex then (map (drawStockholmLines alignmentEntries maxWidth V.empty) alns) else (map (drawStockholm alignmentEntries) alns)
       mapM_ (\(alnPath,stockholm) -> printCM alnPath svgsize stockholm) (zip alignmentFileNames alignmentVis)
       let structureFilePath = dirPath ++ "/"

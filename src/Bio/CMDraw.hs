@@ -44,7 +44,7 @@ import qualified Biobase.SElab.CM.Types as CM
 import qualified Biobase.SElab.CM.ModelStructure as CM
 import Data.Either.Unwrap
 import qualified Data.Map as M
-import Data.Function    
+import Data.Function
 
 -- | Draw one or more CM
 drawSingleCMComparisons :: String -> String -> Int -> Double -> String -> String -> Double -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [CmcompareResult] -> [(QDiagram Cairo V2 Double Any,Maybe (QDiagram Cairo V2 Double Any))]
@@ -102,7 +102,7 @@ drawCM layoutDirection modelDetail entryNumberCutoff transitionCutoff modelLayou
                           _ -> []
          labelList = case modelDetail of
                           "detailed" -> V.toList (V.map makeLabel connectedStates V.++ V.map makeSelfLabel selfConnectedStates)
-                          _ -> [] 
+                          _ -> []
          alignmentDiagram = drawStockholmLinesComparisonLabel entryNumberCutoff maxWidth comparisonNodeLabels nodes aln
 
 drawStockholmLinesComparisonLabel :: Int -> Double -> V.Vector (Int,V.Vector (Colour Double)) -> V.Vector CM.Node -> Maybe StockholmAlignment -> Maybe (QDiagram Cairo V2 Double Any)
@@ -114,12 +114,12 @@ drawStockholmLinesComparisonLabel entryNumberCutoff maxWidth comparisonNodeLabel
            -- end nodes have no alignment columns associated
            columnComparisonLabels = getComparisonPerColumnLabels comparisonNodeLabels nodes
            alignmentVis = drawStockholmLines entryNumberCutoff maxWidth columnComparisonLabels aln
-                                      
+
 makeAllConnectedStates :: M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (String,String,Double)
 makeAllConnectedStates allStates = allConnectedStates
   where indexStateTuples = M.assocs allStates
         allConnectedStates = V.fromList (concatMap makeStateConnections indexStateTuples)
-  
+
 makeStateConnections :: (PI.PInt () CM.StateIndex,CM.State) -> [(String,String,Double)]
 makeStateConnections (pInt,currentState) = conns
   where stateId = show (PI.getPInt pInt)
@@ -146,11 +146,12 @@ perModelSecondaryStructureVisualisation selectedTool _ structureFilePath cms aln
         nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
         structureComparisonInfo = zip3 cms alns comparisonNodeLabels
 
+
 getComparisonPerModelNodeLabels :: [CmcompareResult] -> V.Vector (String, Colour Double) -> CM.CM -> V.Vector (String,Colour Double, V.Vector (Int,V.Vector (Colour Double)))
 getComparisonPerModelNodeLabels comparsionResults colorVector model = modelComparisonLabels
    where modelName = T.unpack (CM._name model)
          relevantComparisons1 = filter ((modelName==) . model1Name) comparsionResults
-         modelNodeInterval1 = map (\a -> (model2Name a,nub (model1matchednodes a)))  relevantComparisons1 
+         modelNodeInterval1 = map (\a -> (model2Name a,nub (model1matchednodes a)))  relevantComparisons1
          relevantComparisons2 = filter ((modelName==) . model2Name) comparsionResults
          modelNodeInterval2 = map (\a -> (model1Name a,nub (model2matchednodes a)))  relevantComparisons2
          modelNodeIntervals =  V.fromList (modelNodeInterval1 ++ modelNodeInterval2)
@@ -161,16 +162,16 @@ getModelComparisonLabels :: String -> Int -> V.Vector (String, Colour Double) ->
 getModelComparisonLabels _ nodeNumber colorVector (compModel,matchedNodes) = (compModel,modelColor,comparisonNodeLabels)
   where (modelColor,modelInterval) = modelToColor colorVector (compModel,matchedNodes)
         -- cm starts at node index 0 for root node and ends with end node
-        -- cmcompare does not include root node, but end node 
+        -- cmcompare does not include root node, but end node
         comparisonNodeLabels = V.generate (nodeNumber) (makeModelComparisonNodeLabel (modelColor,modelInterval))
 
 makeModelComparisonNodeLabel :: (Colour Double,[Int]) -> Int -> (Int,V.Vector (Colour Double))
-makeModelComparisonNodeLabel (modelColor, nodeInterval) nodeNumber 
+makeModelComparisonNodeLabel (modelColor, nodeInterval) nodeNumber
   | elem nodeNumber nodeInterval = (nodeNumber,V.singleton modelColor)
   | otherwise = (nodeNumber,V.singleton white)
 
 getComparisonPerColumnLabels :: V.Vector (Int,V.Vector (Colour Double)) -> V.Vector CM.Node -> V.Vector (Int, V.Vector (Colour Double))
-getComparisonPerColumnLabels comparisonNodeLabels nodes = columnComparisonLabels   where 
+getComparisonPerColumnLabels comparisonNodeLabels nodes = columnComparisonLabels   where
          unsortedColumnComparisonLabel = concatMap (nodeToColumnComparisonLabel nodes) (V.toList comparisonNodeLabels)
          columnComparisonLabels = V.fromList (sortBy (compare `on` fst) unsortedColumnComparisonLabel)
 
@@ -179,7 +180,7 @@ nodeToColumnComparisonLabel nodes (nodeIndex,colors) = colLabels
   where currentNode = (V.!) nodes (nodeIndex)
         colIndices = nub [CM._nodeColL currentNode,CM._nodeColR currentNode]
         colLabels = map (\a->(a,colors)) colIndices
-                                   
+
 --
 buildR2RperModelInput :: String -> (CM.CM, Maybe StockholmAlignment,V.Vector (String,Colour Double,V.Vector (Int,V.Vector (Colour Double)))) -> [(String,String)]
 buildR2RperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabels)
@@ -189,7 +190,7 @@ buildR2RperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabels)
         modelName = T.unpack (CM._name inputCM)
         nodes = V.fromList (M.elems (CM._fmNodes cm))
         aln = fromJust maybeAln
-        r2rInputPrefix = sHeader ++ sConsensusStructure ++ sConsensusSequence ++ sConsensusSequenceColor ++ sCovarianceAnnotation 
+        r2rInputPrefix = sHeader ++ sConsensusStructure ++ sConsensusSequence ++ sConsensusSequenceColor ++ sCovarianceAnnotation
         allColumnAnnotations = columnAnnotations aln
         consensusSequenceList = map annotation (filter (\annotEntry -> tag annotEntry == T.pack "RF") allColumnAnnotations)
         firstSeq = T.unpack (entrySequence (head (sequenceEntries aln)))
@@ -211,7 +212,7 @@ buildR2RperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabels)
         sConsensusSequence =      "#=GC cons             " ++ gapFreeConsensusSequence ++ "\n" -- ++ show consensusStructureColIndices ++ "\n" ++ show comparisonNodeLabels ++ "\n"
         sConsensusSequenceColor = "#=GC conss            " ++ replicate (length gapFreeConsensusSequence) '2' ++ "\n"
         sCovarianceAnnotation =   "#=GC cov_SS_cons      " ++ replicate (length gapFreeConsensusSequence) '.' ++ "\n"
-        singleFilePath = structureFilePath ++ modelName ++ ".r2r"                        
+        singleFilePath = structureFilePath ++ modelName ++ ".r2r"
         singler2rInput = [(singleFilePath,r2rInputPrefix)]
         -- for multiple comparisons we need to return different filenames and labels
         r2rComparisonInputs = V.map (buildR2RperModelComparisonInput modelName structureFilePath r2rInputPrefix) consensusStructureColumnComparisonLabels
@@ -249,13 +250,13 @@ buildFornaperModelInput structureFilePath (inputCM,maybeAln,comparisonNodeLabels
         indexedGapFreeConsensusStructure = extractGapfreeIndexedStructure consensusSequence consensusStructure
         consensusStructureColIndices = map ((+1) . fst) indexedGapFreeConsensusStructure
         gapFreeConsensusStructure = map snd indexedGapFreeConsensusStructure
-        modelName = T.unpack (CM._name inputCM)           
+        modelName = T.unpack (CM._name inputCM)
         columnComparisonLabels = V.map (\(mname,mcolor,comparisonNodePerModelLabels) -> (mname,mcolor,getComparisonPerColumnLabels comparisonNodePerModelLabels nodes)) comparisonNodeLabelsPerModels
         --filter for labels that are part of consensus secondary structure by index
         consensusStructureColumnComparisonLabels = V.map (\(mname,mcolor,colLabels) -> (mname,mcolor,V.filter (\(i,_) -> elem i consensusStructureColIndices) colLabels)) columnComparisonLabels
         colorSchemes = V.toList (V.map (makeColorScheme modelName structureFilePath) consensusStructureColumnComparisonLabels)
-    
-                       
+
+
 buildFornaLinksInput :: String -> (CM.CM,Maybe StockholmAlignment,V.Vector (String,Colour Double,V.Vector (Int,V.Vector (Colour Double)))) -> [(String, String)]
 buildFornaLinksInput structureFilePath (inputCM,maybeAln,comparisonNodeLabelsPerModels)
   | isNothing maybeAln = []
@@ -277,7 +278,7 @@ buildFornaLinksInput structureFilePath (inputCM,maybeAln,comparisonNodeLabelsPer
         consensusStructure = if null consensusStructureList then "" else T.unpack (head consensusStructureList)
         indexedGapFreeConsensusStructure = extractGapfreeIndexedStructure consensusSequence consensusStructure
         consensusStructureColIndices = map ((+1) . fst) indexedGapFreeConsensusStructure
-        gapFreeConsensusStructure = map snd indexedGapFreeConsensusStructure    
+        gapFreeConsensusStructure = map snd indexedGapFreeConsensusStructure
         columnComparisonLabels = V.map (\(mname,mcolor,comparisonNodePerModelLabels) -> (mname,mcolor,getComparisonPerColumnLabels comparisonNodePerModelLabels nodes)) comparisonNodeLabelsPerModels
         --filter for labels that are part of consensus secondary structure by index
         consensusStructureColumnComparisonLabels = V.map (\(mname,mcolor,colLabels) -> (mname,mcolor,V.filter (\(i,_) -> elem i consensusStructureColIndices) colLabels)) columnComparisonLabels
@@ -286,17 +287,17 @@ buildFornaLinksInput structureFilePath (inputCM,maybeAln,comparisonNodeLabelsPer
 makeFornaComparisonLink ::  String -> String -> String -> (String,Colour Double,V.Vector (Int,V.Vector (Colour Double))) -> (String,String)
 makeFornaComparisonLink modelName structureFilePath fornaURLPrefix (compModelName,_,comparisonColLabelsPerModel) = (comparisonPath,comparisonLink)
   where comparisonPath = structureFilePath ++ modelName ++ "." ++ compModelName ++ ".fornalink"
-        comparisonLink = fornaURLPrefix ++ labelPrefix ++ singleColorLabels 
-        labelPrefix = "&colors=%3Eheader\\n"            
+        comparisonLink = fornaURLPrefix ++ labelPrefix ++ singleColorLabels
+        labelPrefix = "&colors=%3Eheader\\n"
         --forna only supports a single color per node, which has to be supplied as additional color scheme
         singleColorLabels = concatMap comparisonColLabelsToFornaLinkLabel (V.toList comparisonColLabelsPerModel)
-        
+
 comparisonColLabelsToFornaLinkLabel :: (Int, V.Vector (Colour Double)) -> String
 comparisonColLabelsToFornaLinkLabel (_,colorVector)
   | V.null colorVector = ""
   | V.head colorVector /= white =  "1\\n"
   | otherwise = "0\\n"
-    
+
 makeColorScheme ::  String -> String -> (String,Colour Double,V.Vector (Int,V.Vector (Colour Double))) -> (String,String)
 makeColorScheme modelName structureFilePath (compModelName,_,comparisonColLabelsPerModel) = (schemeFilePath,singleColorLabels)
   where schemeFilePath = structureFilePath ++ modelName ++ "." ++ compModelName ++ ".fornacolor"
@@ -304,7 +305,7 @@ makeColorScheme modelName structureFilePath (compModelName,_,comparisonColLabels
         --column indexes have to be mapped to gap free consensus sequence
         structureIndexedLabels = V.map (\(a,(_,c)) -> (a+1,c)) indexedComparisonColLabelsPerModel
         singleColorLabels = concatMap comparisonColLabelsToFornaLabel (V.toList structureIndexedLabels)
-        
+
 -- | Extracts consensus secondary structure from alignment and annotates cmcompare nodes for all comparisons in one merged output
 mergedSecondaryStructureVisualisation :: String -> Double -> [CM.CM] -> [Maybe StockholmAlignment] -> [CmcompareResult] -> [(String,String)]
 mergedSecondaryStructureVisualisation selectedTool _ cms alns comparisons
@@ -319,7 +320,7 @@ mergedSecondaryStructureVisualisation selectedTool _ cms alns comparisons
         modelNames = V.fromList (map (T.unpack . CM._name) cms)
         nameColorVector = V.zipWith (\a b -> (a,b)) modelNames colorVector
         structureComparisonInfo = zip3 cms alns comparisonNodeLabels
-        
+
 buildMergedFornaInput :: (CM.CM,Maybe StockholmAlignment,V.Vector (Int, V.Vector (Colour Double))) -> (String, String)
 buildMergedFornaInput (inputCM,maybeAln,comparisonNodeLabels)
   | isNothing maybeAln = ([],[])
@@ -349,7 +350,7 @@ comparisonColLabelsToFornaLabel (nodeNr,colorVector)
   | V.null colorVector = ""
   | V.head colorVector /= white =  " " ++ show nodeNr ++ ":blue "
   | otherwise = ""
-        
+
 buildMergedR2RInput :: (CM.CM, Maybe StockholmAlignment,V.Vector (Int,V.Vector (Colour Double))) -> (String,String)
 buildMergedR2RInput (inputCM,maybeAln,comparisonNodeLabels)
    | isNothing maybeAln = ([],[])
@@ -415,7 +416,7 @@ buildRowIndexStructure row nodes (currentIndex:xs) = do
   let currentEnd = getIndexEnd nodes (currentIndex:xs)
   let ntype = CM._nodeType currentNode
   case ntype of
-    CM.Root -> put ((row,parentId,"S,",currentIndex,currentEnd):currentInterval,parentId) -- ROOT start tree             
+    CM.Root -> put ((row,parentId,"S,",currentIndex,currentEnd):currentInterval,parentId) -- ROOT start tree
     CM.BegL -> put ((row,parentId,"L,",currentIndex,currentEnd):currentInterval,parentId) -- BEGL set current label
     CM.BegR -> put ((row,parentId,"R,",currentIndex,currentEnd):currentInterval,parentId) -- BEGR set current label
     CM.Bif -> put (currentInterval,parentId+1)
@@ -441,7 +442,7 @@ buildTreeIndexStructure intervalId nodes (currentIndex:xs) = do
 buildTreeIndexStructure _ _ [] = do
   (a,b) <- get
   return (a,b)
-  
+
 setNextId :: CM.NodeType -> Int -> Int -> Int
 setNextId ntype intervalId newId
   | ntype == CM.Root = newId
@@ -549,7 +550,7 @@ text' t = textSVG_ (TextOpts linLibertineFont INSIDE_H KERN False 3 3) t # fc bl
 --   | label == "BIF"  = sRGB24 255 069 064 -- B
 --   | label == "ROOT" = sRGB24 245 245 245 -- S
 --   | label == "BEGL" = sRGB24 211 211 211 -- S
---   | label == "BEGR" = sRGB24 211 211 211 -- S 
+--   | label == "BEGR" = sRGB24 211 211 211 -- S
 --   | label == "END"  = sRGB24 245 245 245 -- E
 --labelToColor _ = sRGB24 245 245 245
 
@@ -570,9 +571,9 @@ colorBox singleBoxYLength colColour = rect 5 singleBoxYLength # fc colColour # l
 
 drawCMMinimalNodeBox :: String -> String -> String -> Int -> M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (Int, V.Vector (Colour Double)) -> CM.Node -> Int -> QDiagram Cairo V2 Double Any
 drawCMMinimalNodeBox layoutDirection alphabetSymbols emissiontype boxlength currentStates comparisonNodeLabels node nodeIndex
-  | ntype == CM.Bif = currentCat minimalNode  splitStatesBox -- bifNode 
-  | ntype == CM.BegL = currentCat splitStatesBox minimalNode -- begLNode 
-  | ntype == CM.BegR = currentCat splitStatesBox minimalNode -- begRNode 
+  | ntype == CM.Bif = currentCat minimalNode  splitStatesBox -- bifNode
+  | ntype == CM.BegL = currentCat splitStatesBox minimalNode -- begLNode
+  | ntype == CM.BegR = currentCat splitStatesBox minimalNode -- begRNode
   | otherwise = minimalNode
     where ntype = CM._nodeType node
           idNumber = nodeIndex
@@ -584,18 +585,18 @@ drawCMMinimalNodeBox layoutDirection alphabetSymbols emissiontype boxlength curr
           --nodeType = getCMNodeType node
           nodeLabels = V.toList (snd (comparisonNodeLabels V.! idNumber))
           --boxNumber = fromIntegral $ length nodeLabels
-          --totalBoxYlength = 5 
+          --totalBoxYlength = 5
           --singleBoxYLength = totalBoxYlength / boxNumber
           --colourBoxes = vcat (map (colorBox singleBoxYLength) nodeLabels)
 
 drawCMSimpleNodeBox :: String -> String -> String -> Int -> M.Map (PI.PInt () CM.StateIndex) CM.State -> V.Vector (Int, V.Vector (Colour Double)) -> CM.Node -> Int -> QDiagram Cairo V2 Double Any
 drawCMSimpleNodeBox layoutDirection alphabetSymbols emissiontype boxlength currentStates comparisonNodeLabels node nodeIndex
-  | ntype == CM.Bif = currentCat simpleNode splitStatesBox -- bifNode 
-  | ntype == CM.BegL = currentCat splitStatesBox simpleNode -- begLNode 
-  | ntype == CM.BegR = currentCat splitStatesBox simpleNode -- begRNode 
+  | ntype == CM.Bif = currentCat simpleNode splitStatesBox -- bifNode
+  | ntype == CM.BegL = currentCat splitStatesBox simpleNode -- begLNode
+  | ntype == CM.BegR = currentCat splitStatesBox simpleNode -- begRNode
   | otherwise = simpleNode
     where ntype = CM._nodeType node
-          idNumber = nodeIndex 
+          idNumber = nodeIndex
           nId = show idNumber
           currentCat = if layoutDirection == "vertical" then (===) else (|||)
           stateIndices = V.toList (CM._nodeStates node)
@@ -604,7 +605,7 @@ drawCMSimpleNodeBox layoutDirection alphabetSymbols emissiontype boxlength curre
           nodeType = getCMNodeType node
           nodeLabels = V.toList (snd (comparisonNodeLabels V.! idNumber))
           boxNumber = fromIntegral $ length nodeLabels
-          totalBoxYlength = 5 
+          totalBoxYlength = 5
           singleBoxYLength = totalBoxYlength / boxNumber
           -- concatenated colorboxes are placed atop the simplenode box with the first colorbox
           boxYoffset = totalBoxYlength/2 - singleBoxYLength/2
@@ -612,8 +613,8 @@ drawCMSimpleNodeBox layoutDirection alphabetSymbols emissiontype boxlength curre
 
 drawCMSimpleStateBox :: String -> String -> String -> Int -> M.Map (PI.PInt () CM.StateIndex) CM.State -> PI.PInt () CM.StateIndex -> QDiagram Cairo V2 Double Any
 drawCMSimpleStateBox _ _ _ _ currentStates sIndex
-  | stype == CM.S = sState 
-  | stype == CM.B = bState 
+  | stype == CM.S = sState
+  | stype == CM.B = bState
   | otherwise = mempty
     where currentState = currentStates M.! sIndex
           stype = CM._stateType currentState
@@ -692,7 +693,7 @@ drawCMSplitStateBox _ _ emissiontype _ currentStates sIndex
           pairSymbolsAndEmissions = zip ["AA","AU","AG","AC","UU","UA","UG","UC","GG","GA","GU","GC","CC","CA","CU","CG"] (VU.toList pairEmissionEntries)
           pairSymbolsAndEmissions1 = take 8 pairSymbolsAndEmissions
           pairSymbolsAndEmissions2 = drop 8 pairSymbolsAndEmissions
-          dState = setState ("D" ++ stateIndx) (negate 0.5) (negate 1)  === strutY 1 
+          dState = setState ("D" ++ stateIndx) (negate 0.5) (negate 1)  === strutY 1
           mpState = setState ("MP" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === (vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions1) ||| strutX 0.5 ||| vcat (map (emissionEntry emissiontype) pairSymbolsAndEmissions2))
           mlState = setState ("ML" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions)
           mrState = setState ("MR" ++ stateIndx) (negate 0.5) (negate 1) === strutY 1 === vcat (map (emissionEntry emissiontype) singleSymbolsAndEmissions)
@@ -763,14 +764,14 @@ diagramName filename fileformat
   | fileformat == "png" = Right (filename ++ "." ++ fileformat )
   | fileformat == "ps" = Right (filename ++ "." ++ fileformat )
   | otherwise = Left "Unsupported output format requested (use svg, pdf, ps, png)"
-                
+
 printCM :: FilePath -> SizeSpec V2 Double -> QDiagram Cairo V2 Double Any -> IO ()
 printCM outputName = renderCairo outputName
 
 getBlankComparisonNodeLabels :: CM.CM -> V.Vector (Int, V.Vector (Colour Double))
 getBlankComparisonNodeLabels model = comparisonNodeLabels
    where comparisonNodeLabels = V.generate (nodeNumber ) makeBlankComparisonNodeLabel
-         nodeNumber = (CM._nodesInModel model) 
+         nodeNumber = (CM._nodesInModel model)
 
 makeBlankComparisonNodeLabel :: Int ->  (Int,V.Vector (Colour Double))
 makeBlankComparisonNodeLabel nodeNumber = (nodeNumber,V.singleton white)
@@ -779,7 +780,7 @@ getComparisonNodeLabels :: [CmcompareResult] -> V.Vector (String, Colour Double)
 getComparisonNodeLabels comparsionResults colorVector model = comparisonNodeLabels
    where modelName = T.unpack (CM._name model)
          relevantComparisons1 = filter ((modelName==) . model1Name) comparsionResults
-         modelNodeInterval1 = map (\a -> (model2Name a,model1matchednodes a))  relevantComparisons1 
+         modelNodeInterval1 = map (\a -> (model2Name a,model1matchednodes a))  relevantComparisons1
          relevantComparisons2 = filter ((modelName==) . model2Name) comparsionResults
          modelNodeInterval2 = map (\a -> (model1Name a,model2matchednodes a))  relevantComparisons2
          modelNodeIntervals =  V.fromList (modelNodeInterval1 ++ modelNodeInterval2)
@@ -809,7 +810,7 @@ makeArrow :: ([Char], [Char], Double) -> QDiagram Cairo V2 Double Any -> QDiagra
 makeArrow (lab1,lab2,weight) = connectOutside' arrowStyle1 ("e" ++ lab1) ("a" ++ lab2)
   where arrowStyle1 = with & arrowHead .~ spike & shaftStyle %~ lw (local 0.1) & headLength .~ local 0.01 & shaftStyle %~ dashingG [weight, 0.1] 0 & headStyle %~ fc black . opacity (weight * 2)
 
-makeSelfArrow :: ([Char], [Char], Double) -> QDiagram Cairo V2 Double Any -> QDiagram Cairo V2 Double Any  
+makeSelfArrow :: ([Char], [Char], Double) -> QDiagram Cairo V2 Double Any -> QDiagram Cairo V2 Double Any
 makeSelfArrow (lab1,_,weight) = connectPerim' arrowStyle ("s" ++ lab1) ("z" ++ lab1) (5/12 @@ turn) (8/12 @@ turn)
   where arrowStyle = with  & arrowHead .~ spike & arrowShaft .~ shaft' & arrowTail .~ lineTail & tailTexture .~ solid black  & shaftStyle %~ lw (local 0.1) & headLength .~ local 0.01  & tailLength .~ 0 & shaftStyle %~ dashingG [weight, 0.3] 0 & headStyle %~ fc black . opacity (weight * 2)
         shaft' = wedge 3 xDir (2/4 @@ turn)
@@ -823,18 +824,18 @@ makeLabel (n1,n2,weight) =
         (xOffset,yOffset) = setLabelOffset (location b1 ^. _x) (location b2 ^. _x) (location b1 ^. _y) (location b2 ^. _y)
       in
         Diagrams.Prelude.atop (position [(midpoint # translateX xOffset # translateY yOffset, setTransition ((show (roundPos 3 weight))))])
-        --Diagrams.Prelude.atop (position [(midpoint # translateX xOffset # translateY yOffset, setTransition (lclass ++"," ++ (show (roundPos 3 weight))))])         
-        --Diagrams.Prelude.atop (position [(midpoint # translateX xOffset # translateY yOffset, setTransition (n1 ++"," ++ n2 ++"," ++lclass ++"," ++ (show (roundPos 3 weight))))]) 
+        --Diagrams.Prelude.atop (position [(midpoint # translateX xOffset # translateY yOffset, setTransition (lclass ++"," ++ (show (roundPos 3 weight))))])
+        --Diagrams.Prelude.atop (position [(midpoint # translateX xOffset # translateY yOffset, setTransition (n1 ++"," ++ n2 ++"," ++lclass ++"," ++ (show (roundPos 3 weight))))])
 
 setLabelOffset :: Double -> Double -> Double -> Double -> (Double,Double)
 setLabelOffset x1 x2 y1 y2
-  -- 
+  --
   | ydiff < 2 = (0,0)
   | xdiff < 2 = (negate 1,negate 1)
-    -- 
+    --
   | x1 > x2 && (ydiff > 30) = (negate 1,negate 10)
-  -- 
-  | x1 < x2 && (ydiff > 30) = (1,negate 10)             
+  --
+  | x1 < x2 && (ydiff > 30) = (1,negate 10)
   -- between split and insert state of same node - left upper(A)
   | x1 > x2 && (ydiff < 30) = (negate 1,negate 12)
   -- between split and insert state of same node - right upper (B)
@@ -843,7 +844,7 @@ setLabelOffset x1 x2 y1 y2
   | otherwise = (0,0)
     where ydiff = abs (abs y1 - abs y2)
           xdiff = abs (abs x1 - abs x2)
-                
+
 makeSelfLabel :: (String, String, Double) -> QDiagram Cairo V2 Double Any -> QDiagram Cairo V2 Double Any
 makeSelfLabel (n1,_,weight)
   | weight == 0 = mempty
