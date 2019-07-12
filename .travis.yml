@@ -1,40 +1,34 @@
-# NB: don't set `language: haskell` here
-
-# explicitly request legacy non-sudo based build environment
 sudo: required
 
-# The following enables several GHC versions to be tested; often it's enough to test only against the last release in a major GHC version. Feel free to omit lines listings versions you don't need/want testing for.
-env:
- - CABALVER=1.24 GHCVER=8.0.2
- - CABALVER=2.0 GHCVER=8.2.2
- 
-# Note: the distinction between `before_install` and `install` is not important.
-before_install:
- - travis_retry sudo add-apt-repository -y ppa:hvr/ghc
- - travis_retry sudo apt-get update
- - travis_retry sudo apt-get install libcairo2 libpango1.0-0 libpangomm-1.4-dev
- - travis_retry sudo apt-get install happy-1.19.4 alex-3.1.3
- - export PATH=/opt/alex/3.1.3/bin:/opt/happy/1.19.4/bin:$PATH
- - travis_retry sudo apt-get install cabal-install-$CABALVER ghc-$GHCVER # see note about happy/alex
- - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
+language: c
 
-install:
- - cabal --version
- - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
- - travis_retry cabal update
- - cabal install --only-dependencies --enable-tests --enable-benchmarks
+services:
+  - docker
 
-# Here starts the actual work to be performed for the package under test; any command which exits with a non-zero exit code causes the build to fail.
+before_script:
+  - docker build --tag devel -f Dockerfile.dev .
+
 script:
- - if [ -f configure.ac ]; then autoreconf -i; fi
- - cabal configure --enable-tests --enable-benchmarks -v2  # -v2 provides useful information for debugging
- - cabal build   # this builds all libraries and executables (including tests/benchmarks)
- - cabal test
- - cabal check
- - cabal sdist   # tests that a source-distribution can be generated
+  - docker create --name develcontainer devel
+  - mkdir cmv
+  - docker cp develcontainer:/source/dist-newstyle/build/x86_64-linux/ghc-8.4.3/cmv-1.1.0/x/CMCV/build/CMCV/CMCV CMCV
+  - docker cp develcontainer:/source/dist-newstyle/build/x86_64-linux/ghc-8.4.3/cmv-1.1.0/x/CMV/build/CMV/CMV CMV
+  - docker cp develcontainer:/source/dist-newstyle/build/x86_64-linux/ghc-8.4.3/cmv-1.1.0/x/HMMCV/build/HMMCV/HMMCV HMMCV
+  - docker cp develcontainer:/source/dist-newstyle/build/x86_64-linux/ghc-8.4.3/cmv-1.1.0/x/HMMV/build/HMMV/HMMV HMMV
+  - docker cp develcontainer:/source/dist-newstyle/build/x86_64-linux/ghc-8.4.3/cmv-1.1.0/x/CMCWStoCMCV/build/CMCWStoCMCV/CMCWStoCMCV CMCWStoCMCV
+  - docker cp develcontainer:/source/dist-newstyle/build/x86_64-linux/ghc-8.4.3/cmv-1.1.0/x/CMCtoHMMC/build/CMCtoHMMC/CMCtoHMMC CMCtoHMMC
+  - docker cp develcontainer:/source/dist-newstyle/build/x86_64-linux/ghc-8.4.3/cmv-1.1.0/x/CMCtoHMMC/build/CMCtoHMMC/CMCtoHMMC CMCtoHMMC
+  - docker cp develcontainer:/source/dist-newstyle/build/x86_64-linux/ghc-8.4.3/cmv-1.1.0/x/HMMCtoCMC/build/HMMCtoCMC/HMMCtoCMC HMMCtoCMC
+  - docker cp develcontainer:/source/dist-newstyle/build/x86_64-linux/ghc-8.4.3/cmv-1.1.0/x/StockholmV/build/StockholmV/StockholmV StockholmV
+  - docker cp develcontainer:/source/dist-newstyle/build/x86_64-linux/ghc-8.4.3/cmv-1.1.0/x/CMVJson/build/CMVJson/CMVJson CMVJson
+  - cp LICENSE cmv
+  - tar -cvzf cmv.tar.gz cmv
 
-# Check that the resulting source distribution can be built & installed.
-# If there are no other `.tar.gz` files in `dist`, this can be even simpler:
-# `cabal install --force-reinstalls dist/*-*.tar.gz`
- - SRC_TGZ=$(cabal info . | awk '{print $2;exit}').tar.gz &&
-   (cd dist && cabal install --force-reinstalls "$SRC_TGZ")
+
+deploy:
+  provider: releases
+  skip_cleanup: true
+  api_key: $GITHUB_TOKEN
+  file: "cmv.tar.gz" 
+  on:
+    tags: true

@@ -1,12 +1,12 @@
 name:                cmv
-version:             1.0.8
+version:             1.1.0
 synopsis:            Detailed visualization of CMs, HMMs and their comparisions
 description:         cmv is a collection of tools for the visualisation of Hidden Markov Models (HMMV) and RNA-family models (CMV). Moreover it can visualise comparisons of these models (HMMCV,CMCV), and annotate linked regions in the structural alignments they were constructed from and via, 3rd party tools, in their consensus secondary structure.
 license:             GPL-3
 license-file:        LICENSE
 author:              Florian Eggenhofer
 maintainer:          egg@informatik.uni-freiburg.de
-Tested-With: GHC == 8.0.2, GHC == 8.2.2
+Tested-With: GHC == 8.4.4
 category:            Bioinformatics
 build-type:          Simple
 cabal-version:       >=1.8
@@ -20,8 +20,8 @@ source-repository head
 
 source-repository this
   type:     git
-  location: https://github.com/eggzilla/cmv/tree/1.0.8
-  tag:      1.0.8
+  location: https://github.com/eggzilla/cmv/tree/1.1.0
+  tag:      1.1.0
 
 library
   -- Modules exported by the library.
@@ -33,7 +33,7 @@ library
 
   -- Other library packages from which modules are imported.
   build-depends:       base >=4.5 && <5, parsec>=3.1.9, diagrams-lib, BiobaseInfernal, text, vector, ParsecTools, diagrams-cairo, filepath, colour, PrimitiveArray, BiobaseXNA, mtl, directory, either-unwrap, SVGFonts>=1.6.0.2, BioHMM>=1.2.0, StockholmAlignment>=1.1.2, BiobaseTypes,containers,diagrams-core
-  
+
   -- Directories containing source files.
   hs-source-dirs:      src
 
@@ -46,26 +46,26 @@ executable CMCV
 executable CMV
   Hs-Source-Dirs:      ./src/cmv/
   main-is:	       CMVisualisation.hs
-  ghc-options:         -Wall 
+  ghc-options:         -Wall
   build-depends:       base >=4.5, cmdargs, BiobaseInfernal==0.8.1.0, BiobaseXNA, diagrams-lib, parsec, colour, containers, bytestring, template-haskell, text, vector, directory, cmv, either-unwrap, filepath, StockholmAlignment>=1.1.2
 
 executable CMCWStoCMCV
   Hs-Source-Dirs:      ./src/cmcv/
   main-is:	       cmcwsvtocmcv.hs
-  ghc-options:         -Wall 
+  ghc-options:         -Wall
   build-depends:       base >=4.5, cmdargs, BiobaseInfernal==0.8.1.0, BiobaseXNA, diagrams-lib, parsec, colour, containers, bytestring, template-haskell, text, vector, directory, cmv, either-unwrap, filepath
 
 executable CMCtoHMMC
   Hs-Source-Dirs:      ./src/cmcv/
   main-is:	       cmctohmmc.hs
-  ghc-options:         -Wall 
+  ghc-options:         -Wall
   build-depends:       base >=4.5, cmdargs, BiobaseInfernal==0.8.1.0, BiobaseXNA, diagrams-lib, parsec, colour, containers, bytestring, template-haskell, text, vector, directory, cmv, either-unwrap, filepath, BioHMM>=1.2.0
 
 executable HMMCtoCMC
   Hs-Source-Dirs:      ./src/cmcv/
   main-is:	       hmmctocmc.hs
-  ghc-options:         -Wall 
-  build-depends:       base >=4.5, cmdargs, BiobaseInfernal==0.8.1.0, BiobaseXNA, diagrams-lib, parsec, colour, containers, bytestring, template-haskell, text, vector, directory, cmv, either-unwrap, filepath, BioHMM>=1.2.0 
+  ghc-options:         -Wall
+  build-depends:       base >=4.5, cmdargs, BiobaseInfernal==0.8.1.0, BiobaseXNA, diagrams-lib, parsec, colour, containers, bytestring, template-haskell, text, vector, directory, cmv, either-unwrap, filepath, BioHMM>=1.2.0
 
 executable CMVJson
   Hs-Source-Dirs:      ./src/cmv/
@@ -84,3 +84,9 @@ executable HMMV
   main-is:	       HMMVisualisation.hs
   ghc-options:         -Wall
   build-depends:       base >=4.5, cmdargs, diagrams-lib, parsec, colour, containers, bytestring, text, vector, directory, cmv, either-unwrap, filepath, BioHMM>=1.2.0, StockholmAlignment>=1.1.2
+
+executable StockholmV
+  Hs-Source-Dirs:      ./src/Stockholm/
+  main-is:	       StockholmVisualisation.hs
+  ghc-options:         -Wall
+  build-depends:       base >=4.5, cmdargs, diagrams-lib, parsec, colour, containers, bytestring, text, vector, directory, cmv, either-unwrap, filepath, StockholmAlignment>=1.1.2
