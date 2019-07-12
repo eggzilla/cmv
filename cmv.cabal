@@ -6,7 +6,7 @@ license:             GPL-3
 license-file:        LICENSE
 author:              Florian Eggenhofer
 maintainer:          egg@informatik.uni-freiburg.de
-Tested-With: GHC == 8.0.2, GHC == 8.2.2, GHC == 8.4.4
+Tested-With: GHC == 8.4.4
 category:            Bioinformatics
 build-type:          Simple
 cabal-version:       >=1.8
